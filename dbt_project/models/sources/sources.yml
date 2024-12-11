@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: BRONZE
+    description: state reporting sql tables
+    database: "INT_SR_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
+    schema: bronze
+    tables:
+      - name: state_reported_customer
+      - name: aditional_field_customer_ia
