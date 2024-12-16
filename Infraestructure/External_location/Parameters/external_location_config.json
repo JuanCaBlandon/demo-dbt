@@ -1,0 +1,31 @@
+{
+    "external_locations": {
+        "data_lake": {
+            "name": "data-lake-location",
+            "s3_path": "s3://your-data-lake-bucket",
+            "aws_iam_role": "arn:aws:iam::123456789012:role/your-databricks-role",
+            "access_control": {
+                "principal": "users",
+                "permission_level": "READ_ONLY"
+            }
+        },
+        "analytics": {
+            "name": "analytics-location",
+            "s3_path": "s3://your-analytics-bucket",
+            "aws_iam_role": "arn:aws:iam::123456789012:role/your-databricks-role",
+            "access_control": {
+                "principal": "groups/analysts",
+                "permission_level": "READ_WRITE"
+            }
+        },
+        "archive": {
+            "name": "archive-location",
+            "s3_path": "s3://your-archive-bucket",
+            "aws_iam_role": "arn:aws:iam::123456789012:role/your-databricks-role",
+            "access_control": {
+                "principal": "groups/admins",
+                "permission_level": "FULL_CONTROL"
+            }
+        }
+    }
+}
