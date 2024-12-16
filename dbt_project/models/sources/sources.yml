@@ -7,4 +7,4 @@ sources:
     schema: bronze
     tables:
       - name: state_reported_customer
-      - name: aditional_field_customer_ia
+      - name: state_batch_customer_data_ia
