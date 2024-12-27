@@ -17,8 +17,8 @@ SELECT
   MiddleName AS middle_name,
   DateOfBirth AS date_of_birth,
   VIN AS vin,
-  InstallDateConfirmed AS install_date_confirmed,
-  DeInstallDateConfirmed AS deinstall_date_confirmed,
+  InstallDate AS install_date,
+  DeInstallDate AS deinstall_date,
   DeviceLogRptgClassCd AS device_log_rptg_class_cd,
   ActiveStatus AS active_status,
   StateCode AS state_code,
@@ -35,7 +35,11 @@ SELECT
   row_number() over (partition by CustomerID, DriversLicenseNumber,VIN,StateCode, EffectiveStartDate, EffectiveEndDate order by EffectiveStartDate) as num_duplicates
 FROM
   {{ source('BRONZE', 'state_reported_customer') }}
-WHERE StateCode = 'IA' and creation_date >= (select MAX(created_at) from {{ this }})
+WHERE StateCode = 'IA' 
+{% if is_incremental() %}
+    and CreationDate >= Coalesce((select MAX(created_at) from {{ this }}),'2023-01-01')
+{% endif %}
+
 
 
 ),
@@ -51,8 +55,8 @@ SELECT
     middle_name,
     date_of_birth,
     vin,
-    install_date_confirmed,
-    deinstall_date_confirmed,
+    install_date,
+    deinstall_date,
     device_log_rptg_class_cd,
     active_status,
     state_code,
@@ -83,8 +87,8 @@ SELECT
     middle_name,
     date_of_birth,
     vin,
-    install_date_confirmed,
-    deinstall_date_confirmed,
+    install_date,
+    deinstall_date,
     device_log_rptg_class_cd,
     active_status,
     state_code,
@@ -116,8 +120,8 @@ SELECT
     middle_name,
     date_of_birth,
     vin,
-    install_date_confirmed,
-    deinstall_date_confirmed,
+    install_date,
+    deinstall_date,
     device_log_rptg_class_cd,
     active_status,
     state_code,
@@ -150,8 +154,8 @@ SELECT
     middle_name,
     date_of_birth,
     vin,
-    install_date_confirmed,
-    deinstall_date_confirmed,
+    install_date,
+    deinstall_date,
     device_log_rptg_class_cd,
     active_status,
     state_code,

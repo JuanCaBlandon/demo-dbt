@@ -17,13 +17,13 @@ SELECT
   DateOfBirth AS date_of_birth,
   VIN AS vin,
   offense_date,
-  repeat_offender,
+  case when repeat_offender = 1 and offense_date >= '2025-01-01' then 1 else 0 end as repeat_offender,
   IID_Start_Date as IID_Start_Date,
   IID_End_Date as IID_End_Date,
   current_timestamp() as created_at,
   row_number() over (partition by vendor_name,DriversLicenseNumber ,FirstName,LastName,MiddleName,DateOfBirth,VIN,offense_date,repeat_offender order by offense_date) as num_duplicates
 FROM
-  {{ source('BRONZE', 'aditional_field_customer_ia') }}
+  {{ source('BRONZE', 'state_batch_customer_data_ia') }}
 
 
 ),
@@ -93,9 +93,9 @@ SELECT
     Tmp.created_at,
     1 as is_inconsistent,
     'Without reference entity' as type_inconsistent,
-    num_duplicates
+    Tmp.num_duplicates
 FROM Tmp
-LEFT JOIN {{ ref('customer') }} as c
+LEFT JOIN {{ ref('customer_cleaned') }} as c
 ON  Tmp.drivers_license_number = c.drivers_license_number AND
     Tmp.first_name= c.first_name AND
     Tmp.last_name =c.last_name AND
@@ -124,9 +124,9 @@ SELECT
     Tmp.created_at,
     0 as is_inconsistent,
     'N/A' as type_inconsistent,
-    num_duplicates
+    Tmp.num_duplicates
 FROM Tmp
-INNER JOIN {{ ref('customer') }} as c
+INNER JOIN {{ ref('customer_cleaned') }} as c
 ON  Tmp.drivers_license_number = c.drivers_license_number AND
     Tmp.first_name= c.first_name AND
     Tmp.last_name =c.last_name AND
@@ -134,6 +134,7 @@ ON  Tmp.drivers_license_number = c.drivers_license_number AND
     Tmp.vin = c.vin
 WHERE Tmp.num_duplicates = 1 AND Tmp.drivers_license_number IS NOT NULL AND Tmp.first_name IS NOT NULL 
   AND Tmp.last_name IS NOT NULL  AND Tmp.date_of_birth IS NOT NULL AND Tmp.vin IS NOT NULL
+  AND c.is_inconsistent = 0
 
 )
 
