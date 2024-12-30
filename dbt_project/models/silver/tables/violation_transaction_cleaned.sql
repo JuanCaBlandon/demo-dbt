@@ -2,7 +2,7 @@
 		materialized='incremental',
     unique_key='violation_dw_id',
     post_hook=[
-        "OPTIMIZE {{ this }} ZORDER BY customer_id, violation_reporting_approval_date;",
+        "OPTIMIZE {{ this }} ZORDER BY customer_id, violation_id, violation_reporting_approval_date;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
         ]
 ) }}
@@ -26,7 +26,7 @@ SELECT
     ModifyDate AS modify_date,
     ModifyUser AS modify_user,
     current_timestamp() as created_at,
-    row_number() over (partition by CustomerId,ViolationReportingApprovalDate order by ViolationReportingApprovalDate) as num_duplicates
+    row_number() over (partition by CustomerId,ViolationID,ViolationReportingApprovalDate order by ViolationReportingApprovalDate) as num_duplicates
 FROM
   {{ source('BRONZE', 'customer_violations') }}
 
@@ -35,7 +35,7 @@ FROM
 cleaned_data AS(
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_reporting_approval_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_id','violation_reporting_approval_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     customer_id,
     device_usage_violation_id,
@@ -63,7 +63,7 @@ WHERE num_duplicates > 1
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_reporting_approval_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_id','violation_reporting_approval_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     customer_id,
     device_usage_violation_id,
@@ -92,7 +92,7 @@ WHERE num_duplicates = 1 AND
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_reporting_approval_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_id','violation_reporting_approval_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     tmp.customer_id,
     device_usage_violation_id,
@@ -123,7 +123,7 @@ AND c.customer_id IS NULL
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_reporting_approval_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_id','violation_reporting_approval_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     tmp.customer_id,
     device_usage_violation_id,

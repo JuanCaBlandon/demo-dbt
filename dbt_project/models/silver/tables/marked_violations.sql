@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    unique_key='violation_dw_id',
+    unique_key='violation_dw_id, violation_type',
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY customer_id;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
@@ -23,7 +23,7 @@ WITH base_data AS (
     WHERE violation_reporting_approval_date > (
         SELECT MAX(violation_reporting_approval_date) FROM {{ this }}
     )
-    AND is_inconsistent = 0
+    AND is_inconsistent = 0 and violation_id in (1,11)
     {% endif %}
 ),
 
@@ -67,15 +67,11 @@ marked_violations_24hr AS (
                 ORDER BY a.violation_reporting_approval_date
                 RANGE BETWEEN INTERVAL '24 HOURS' PRECEDING AND CURRENT ROW
             ) >= 5
-            AND ROW_NUMBER() OVER (
-                PARTITION BY a.customer_id,
-                    COUNT(*) OVER (
-                        PARTITION BY a.customer_id
-                        ORDER BY a.violation_reporting_approval_date
-                        RANGE BETWEEN INTERVAL '24 HOURS' PRECEDING AND CURRENT ROW
-                    )
+            AND COUNT(*) OVER (
+                PARTITION BY a.customer_id
                 ORDER BY a.violation_reporting_approval_date
-            ) = 1
+                RANGE BETWEEN INTERVAL '24 HOURS' PRECEDING AND CURRENT ROW
+            ) % 5 = 0
             THEN 1
             ELSE 0
         END AS is_marked_24hr
@@ -90,23 +86,23 @@ marked_violations_30d AS (
         COUNT(*) OVER (
             PARTITION BY a.customer_id
             ORDER BY a.violation_reporting_approval_date
-            RANGE BETWEEN INTERVAL '30 DAYS' PRECEDING AND CURRENT ROW
+            RANGE BETWEEN INTERVAL 30 DAYS PRECEDING AND CURRENT ROW
         ) AS violation_count_30d,
         CASE
             WHEN COUNT(*) OVER (
                 PARTITION BY a.customer_id
                 ORDER BY a.violation_reporting_approval_date
-                RANGE BETWEEN INTERVAL '30 DAYS' PRECEDING AND CURRENT ROW
-            ) >= 10
-            AND ROW_NUMBER() OVER (
-                PARTITION BY a.customer_id,
-                    COUNT(*) OVER (
-                        PARTITION BY a.customer_id
-                        ORDER BY a.violation_reporting_approval_date
-                        RANGE BETWEEN INTERVAL '30 DAYS' PRECEDING AND CURRENT ROW
-                    )
-                ORDER BY a.violation_reporting_approval_date
-            ) = 1
+                RANGE BETWEEN INTERVAL 30 DAYS PRECEDING AND CURRENT ROW
+            ) = 10
+            {% if is_incremental() %}
+            AND NOT EXISTS (
+                SELECT 1
+                FROM merged_data b
+                WHERE b.customer_id = a.customer_id
+                AND b.violation_reporting_approval_date BETWEEN a.violation_reporting_approval_date - INTERVAL 30 DAYS AND a.violation_reporting_approval_date
+                AND b.violation_type = 'Type 2 (30 days)'
+            )
+            {% endif %}
             THEN 1
             ELSE 0
         END AS is_marked_30d
@@ -118,15 +114,26 @@ SELECT
     v.device_usage_violation_id,
     v.violation_reporting_approval_date,
     CASE
-        WHEN m24.is_marked_24hr = 1 THEN 'Tipo 1 (24 hrs)'
-        WHEN m30.is_marked_30d = 1 THEN 'Tipo 2 (30 días)'
-        ELSE 'No marcado'
+        WHEN m24.is_marked_24hr = 1 THEN 'Type 1 (24 hrs)'
+        ELSE 'Not marked'
     END AS violation_type
 FROM base_data v
 LEFT JOIN marked_violations_24hr m24
     ON v.customer_id = m24.customer_id
     AND v.device_usage_violation_id = m24.device_usage_violation_id
+WHERE m24.is_marked_24hr = 1
+
+UNION all
+SELECT
+    v.customer_id,
+    v.device_usage_violation_id,
+    v.violation_reporting_approval_date,
+    CASE
+        WHEN m30.is_marked_30d = 1 THEN 'Type 2 (30 days)'
+        ELSE 'Not marked'
+    END AS violation_type
+FROM base_data v
 LEFT JOIN marked_violations_30d m30
     ON v.customer_id = m30.customer_id
     AND v.device_usage_violation_id = m30.device_usage_violation_id
-WHERE m24.is_marked_24hr = 1 OR m30.is_marked_30d = 1;
+WHERE m30.is_marked_30d = 1;
