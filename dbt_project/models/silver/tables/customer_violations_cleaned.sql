@@ -12,12 +12,14 @@ SELECT
     CustomerId AS customer_id,
     DeviceUsageViolationID AS device_usage_violation_id,
     DeviceUsageID AS device_usage_id,
+    ViolationType AS violation_type,
     ViolationID AS violation_id,
     StartingDeviceLogEntryID AS starting_device_log_entry_id,
     EndingDeviceLogEntryID AS ending_device_log_entry_id,
     ViolationReportingApprovalCd AS violation_reporting_approval_cd,
     ViolationReportingApprovalUser AS violation_reporting_approval_user,
     ViolationReportingApprovalDate AS violation_reporting_approval_date,
+    NormalizedDate AS normalized_date,
     ViolationReported AS violation_reported,
     RegulatoryRptgDt AS regulatory_rptg_dt,
     Comments AS comments,
@@ -26,7 +28,7 @@ SELECT
     ModifyDate AS modify_date,
     ModifyUser AS modify_user,
     current_timestamp() as created_at,
-    row_number() over (partition by CustomerId,ViolationID,ViolationReportingApprovalDate order by ViolationReportingApprovalDate) as num_duplicates
+    row_number() over (partition by CustomerId,ViolationID,NormalizedDate order by NormalizedDate) as num_duplicates
 FROM
   {{ source('BRONZE', 'customer_violations') }}
 
@@ -35,17 +37,19 @@ FROM
 cleaned_data AS(
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_id','violation_reporting_approval_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_id','normalized_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     customer_id,
     device_usage_violation_id,
     device_usage_id,
+    violation_type,
     violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
     violation_reporting_approval_user,
     violation_reporting_approval_date,
+    normalized_date,
     violation_reported,
     regulatory_rptg_dt,
     comments,
@@ -63,17 +67,19 @@ WHERE num_duplicates > 1
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_id','violation_reporting_approval_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_id','normalized_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     customer_id,
     device_usage_violation_id,
     device_usage_id,
+    violation_type,
     violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
     violation_reporting_approval_user,
     violation_reporting_approval_date,
+    normalized_date,
     violation_reported,
     regulatory_rptg_dt,
     comments,
@@ -92,17 +98,19 @@ WHERE num_duplicates = 1 AND
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_id','violation_reporting_approval_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_id','normalized_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     tmp.customer_id,
     device_usage_violation_id,
     device_usage_id,
+    violation_type,
     violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
     violation_reporting_approval_user,
     violation_reporting_approval_date,
+    normalized_date,
     violation_reported,
     regulatory_rptg_dt,
     comments,
@@ -123,17 +131,19 @@ AND c.customer_id IS NULL
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_id','violation_reporting_approval_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_id','normalized_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     tmp.customer_id,
     device_usage_violation_id,
     device_usage_id,
+    violation_type,
     violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
     violation_reporting_approval_user,
     violation_reporting_approval_date,
+    normalized_date,
     violation_reported,
     regulatory_rptg_dt,
     comments,
@@ -159,12 +169,14 @@ SELECT
     customer_id,
     device_usage_violation_id,
     device_usage_id,
+    violation_type,
     violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
     violation_reporting_approval_user,
     violation_reporting_approval_date,
+    normalized_date,
     violation_reported,
     regulatory_rptg_dt,
     comments,
