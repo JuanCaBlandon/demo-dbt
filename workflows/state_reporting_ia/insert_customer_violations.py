@@ -18,7 +18,7 @@ result_df = (spark.read
     .option("driver", driver)
     .option("url", url)
     .option("query", query)
-    .option("user", user)
+    .option("user", username)
     .option("password", password)
     .load())
 
