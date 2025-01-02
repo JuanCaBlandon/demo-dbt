@@ -1,6 +1,6 @@
 {{ config(
 		materialized='incremental',
-    unique_key='aditional_info_dw_id',
+    unique_key='batch_customer_dw_id',
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY offense_date ;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
@@ -30,7 +30,7 @@ FROM
 cleaned_data AS(
 
 SELECT
-  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} as aditional_info_dw_id, 
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} as batch_customer_dw_id, 
   'N/A' as customer_dw_id,
   vendor_name,
   drivers_license_number,
@@ -53,7 +53,7 @@ WHERE num_duplicates > 1
 UNION ALL
 
 SELECT
-  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} as aditional_info_dw_id,
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} as batch_customer_dw_id,
   'N/A' as customer_dw_id,
   vendor_name,
   drivers_license_number,
@@ -77,7 +77,7 @@ WHERE num_duplicates = 1 AND
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['vendor_name','Tmp.drivers_license_number','Tmp.first_name','Tmp.last_name','Tmp.middle_name','Tmp.date_of_birth', 'Tmp.vin', 'Tmp.offense_date']) }} as aditional_info_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['vendor_name','Tmp.drivers_license_number','Tmp.first_name','Tmp.last_name','Tmp.middle_name','Tmp.date_of_birth', 'Tmp.vin', 'Tmp.offense_date']) }} as batch_customer_dw_id,
     'N/A' as customer_dw_id,
     vendor_name,
     Tmp.drivers_license_number,
@@ -108,7 +108,7 @@ WHERE Tmp.num_duplicates = 1 AND Tmp.drivers_license_number IS NOT NULL AND Tmp.
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['vendor_name','Tmp.drivers_license_number','Tmp.first_name','Tmp.last_name','Tmp.middle_name','Tmp.date_of_birth', 'Tmp.vin', 'Tmp.offense_date']) }} as aditional_info_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['vendor_name','Tmp.drivers_license_number','Tmp.first_name','Tmp.last_name','Tmp.middle_name','Tmp.date_of_birth', 'Tmp.vin', 'Tmp.offense_date']) }} as batch_customer_dw_id,
     c.customer_dw_id,
     vendor_name,
     Tmp.drivers_license_number,
@@ -139,7 +139,7 @@ WHERE Tmp.num_duplicates = 1 AND Tmp.drivers_license_number IS NOT NULL AND Tmp.
 )
 
 SELECT
-    aditional_info_dw_id,
+    batch_customer_dw_id,
     customer_dw_id,
     vendor_name,
     drivers_license_number,
@@ -158,8 +158,5 @@ SELECT
     num_duplicates
   FROM cleaned_data
   {% if is_incremental() %}
-    where aditional_info_dw_id not in (select aditional_info_dw_id from {{ this }})
+    where batch_customer_dw_id not in (select batch_customer_dw_id from {{ this }})
 {% endif %}
-
-
-

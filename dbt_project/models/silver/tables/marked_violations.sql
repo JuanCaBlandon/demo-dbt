@@ -27,6 +27,7 @@ WITH base_data AS (
 -- Reglas dinámicas (24 horas, 30 días)
 marked_violations_24hr AS (
     SELECT
+        a.violation_dw_id,
         a.customer_id,
         a.device_usage_violation_id,
         a.violation_reporting_approval_date,
@@ -41,6 +42,7 @@ marked_violations_24hr AS (
 
 marked_violations_30d AS (
     SELECT
+        a.violation_dw_id,
         a.customer_id,
         a.device_usage_violation_id,
         a.violation_reporting_approval_date,
@@ -54,6 +56,7 @@ marked_violations_30d AS (
 )
 
 SELECT
+    violation_dw_id,
     customer_id,
     device_usage_violation_id,
     violation_reporting_approval_date,
@@ -67,6 +70,7 @@ WHERE violation_count_24hr >= 5 AND violation_count_24hr % 5 = 0
 
 UNION ALL
 SELECT
+    violation_dw_id,
     customer_id,
     device_usage_violation_id,
     violation_reporting_approval_date,
@@ -81,9 +85,10 @@ WHERE violation_count_30d >= 10 AND violation_count_30d % 10 = 0
 
 UNION ALL
 SELECT
-    b.customer_id,
-    b.device_usage_violation_id,
-    b.violation_reporting_approval_date,
+    violation_dw_id,
+    customer_id,
+    device_usage_violation_id,
+    violation_reporting_approval_date,
     '3' record_type,
     'Tampering' record_description
 FROM base_data b

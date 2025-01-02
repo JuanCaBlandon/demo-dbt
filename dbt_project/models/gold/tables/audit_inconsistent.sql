@@ -11,31 +11,14 @@ post_hook=[
 
 
 select
-    customer_dw_id,
-    customer_reporting_state_id,
-    customer_id,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    install_date_confirmed,
-    deinstall_date_confirmed,
-    device_log_rptg_class_cd,
-    active_status,
-    state_code,
-    report_status_cd,
-    effectice_start_date,
-    effectice_end_date,
-    first_report_date,
-    stop_report_date,
-    create_user,
-    modify_date,
-    modify_user,
-    created_at
+    {{ dbt_utils.generate_surrogate_key(['table_name','type_inconsistent']) }} as audit_inconsistent_dw_id, 
+    --customer_dw_id AD table_dw_id,
+    --table_name
+    --type_inconsistent,
+
+    --created_at current_timestamp
 from {{ ref('customer_cleaned') }}
-where is_inconsistent = 0
+where is_inconsistent = 1
 {% if is_incremental() %}
     and customer_dw_id not in (select customer_dw_id from {{ this }})
 {% endif %}
