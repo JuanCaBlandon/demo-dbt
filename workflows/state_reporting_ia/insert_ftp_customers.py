@@ -6,8 +6,8 @@ driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 database_host = "172.16.1.161"
 instanceName = "dev"
 database_name = "StateReporting"
-user = dbutils.secrets.get(scope="sql-credentials", key="username")
-password = dbutils.secrets.get(scope="sql-credentials", key="password")
+user = dbutils.secrets.get(scope="state_reporting", key="sql_server_user")
+password = dbutils.secrets.get(scope="state_reporting", key="sql_server_pass")
 
 
 # Build connection URL with SSL parameters
