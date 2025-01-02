@@ -26,6 +26,7 @@ try:
     connection = driver_manager.getConnection(url, username, password)
     callable_statement = connection.prepareCall(f"{{CALL dbo.{sp_name}}}")
     result_set = callable_statement.executeQuery()
+    print(f"SP {sp_name} executed successfully")
 except Exception as e:
     print(f"Execution failed with error:\n{str(e)}")
 
