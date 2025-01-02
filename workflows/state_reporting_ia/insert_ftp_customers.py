@@ -23,7 +23,7 @@ table_name = "dbo.FTPCustomerData"
 
 
 try:
-    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where("created_at=CAST(CURRRENT_DATE() AS DATE)")
+    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where("created_at=CAST(CURRENT_DATE() AS DATE)")
 
     result_df = result_df.select(col("vendor_name").alias("VendorName"), col("DriversLicenseNumber"),col("LastName"), col("FirstName"), col("MiddleName"), \
         col("DateOfBirth").cast("timestamp").alias("DateOfBirth"),col("VIN"), col("offense_date").alias("OffenseDate"), col("repeat_offender").alias("RepeatOffender"),\
