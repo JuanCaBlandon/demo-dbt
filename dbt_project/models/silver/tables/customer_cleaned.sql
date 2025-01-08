@@ -35,7 +35,7 @@ SELECT
   row_number() over (partition by CustomerID, DriversLicenseNumber,VIN,StateCode, EffectiveStartDate, EffectiveEndDate order by EffectiveStartDate) as num_duplicates
 FROM
   {{ source('BRONZE', 'state_reported_customer') }}
-WHERE StateCode = 'IA' 
+WHERE StateCode = 'IA'
 {% if is_incremental() %}
     and CreationDate >= Coalesce((select MAX(created_at) from {{ this }}),'2023-01-01')
 {% endif %}
