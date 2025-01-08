@@ -1,5 +1,6 @@
 {{ config(
-		materialized = 'table' , 
+		materialized='incremental',
+    unique_key='datetime_id',
     partition_by = "year" ,
 		post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY datetime_id;",
@@ -37,6 +38,9 @@ FROM (
     FROM {{ ref('dim_date') }}
     WHERE date_full >= '2024-01-01'  
     AND date_full <= DATE_TRUNC('MONTH', ADD_MONTHS(GETDATE(), 1)) 
+    {% if is_incremental() %}
+     AND month > (select MAX(month) from {{ this }})
+ {% endif %}
 ) AS dim_date
 CROSS JOIN hours
 CROSS JOIN minutes

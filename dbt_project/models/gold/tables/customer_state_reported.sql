@@ -15,7 +15,7 @@ WITH bc AS (
         mv.violation_dw_id,
         rt.record_type_dw_id,
         dd.datetime_id,
-        NULL AS error_detail_dw_id
+        '' AS error_detail_dw_id
     FROM {{ ref('marked_violations')}} AS mv
     INNER JOIN {{ ref('customer')}} AS c
         ON mv.customer_id = c.customer_id
@@ -26,12 +26,12 @@ WITH bc AS (
         AND bc.date_of_birth = c.date_of_birth
         AND bc.vin = c.vin
     INNER JOIN {{ ref('dim_date_time') }} AS dd 
-        ON year(mv.violation_reporting_approval_date) = dd.year
-        AND month(mv.violation_reporting_approval_date) = dd.month
-        AND day(mv.violation_reporting_approval_date) = dd.day
-        AND HOUR(mv.violation_reporting_approval_date) = dd.hour
-        AND  MINUTE(mv.violation_reporting_approval_date) = dd.minute
-        AND  SECOND(mv.violation_reporting_approval_date) = dd.second
+        ON year(mv.violation_date) = dd.year
+        AND month(mv.violation_date) = dd.month
+        AND day(mv.violation_date) = dd.day
+        AND HOUR(mv.violation_date) = dd.hour
+        AND  MINUTE(mv.violation_date) = dd.minute
+        AND  SECOND(mv.violation_date) = dd.second
     INNER JOIN {{ ref('record_type')}} AS rt
         ON mv.record_type = rt.id
 )

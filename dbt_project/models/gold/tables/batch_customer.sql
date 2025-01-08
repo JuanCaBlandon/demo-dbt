@@ -1,8 +1,6 @@
 {{ config(
     materialized='incremental',
     unique_key='batch_customer_dw_id',
-    incremental_strategy="merge",
-    merge_update_columns = ['effectice_end_date'],
 post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY customer_dw_id;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
