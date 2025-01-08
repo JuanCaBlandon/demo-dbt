@@ -38,7 +38,7 @@ marked_violations_24hr AS (
             RANGE BETWEEN INTERVAL '24 HOURS' PRECEDING AND CURRENT ROW
         ) AS violation_count_24hr
     FROM base_data a
-    WHERE violation_id in (1,11)
+    WHERE violation_type ='TYPE 1-2'
 ),
 
 marked_violations_30d AS (

@@ -13,7 +13,6 @@ SELECT
     DeviceUsageViolationID AS device_usage_violation_id,
     DeviceUsageID AS device_usage_id,
     ViolationType AS violation_type,
-    ViolationID AS violation_id,
     StartingDeviceLogEntryID AS starting_device_log_entry_id,
     EndingDeviceLogEntryID AS ending_device_log_entry_id,
     ViolationReportingApprovalCd AS violation_reporting_approval_cd,
@@ -37,13 +36,12 @@ FROM
 cleaned_data AS(
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_id','normalized_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_type','normalized_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     customer_id,
     device_usage_violation_id,
     device_usage_id,
     violation_type,
-    violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
@@ -67,13 +65,12 @@ WHERE num_duplicates > 1
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_id','normalized_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['customer_id','violation_type','normalized_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     customer_id,
     device_usage_violation_id,
     device_usage_id,
     violation_type,
-    violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
@@ -98,13 +95,12 @@ WHERE num_duplicates = 1 AND
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_id','normalized_date']) }} as violation_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_type','normalized_date']) }} as violation_dw_id, 
     'N/A' as customer_dw_id,
     tmp.customer_id,
     device_usage_violation_id,
     device_usage_id,
     violation_type,
-    violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
@@ -131,13 +127,12 @@ AND c.customer_id IS NULL
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_id','normalized_date']) }} as violation_dw_id, 
-    'N/A' as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','violation_type','normalized_date']) }} as violation_dw_id, 
+    customer_dw_id,
     tmp.customer_id,
     device_usage_violation_id,
     device_usage_id,
     violation_type,
-    violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
@@ -170,7 +165,6 @@ SELECT
     device_usage_violation_id,
     device_usage_id,
     violation_type,
-    violation_id,
     starting_device_log_entry_id,
     ending_device_log_entry_id,
     violation_reporting_approval_cd,
