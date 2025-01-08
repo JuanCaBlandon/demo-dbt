@@ -3,20 +3,12 @@
     post_hook=["ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"]
 ) }}
 
-WITH violations AS (
-    SELECT
-    {{ dbt_utils.generate_surrogate_key(['code','error_message']) }} as error_detail_dw_id, 
-    code,
-    error_message,
-    created_at
-    FROM {{ ref('error_detail_raw') }}
-)
 SELECT 
     error_detail_dw_id, 
     code,
     error_message,
     created_at
-FROM violations
+FROM {{ ref('error_detail_ia_cleaned') }}
 
 {% if is_incremental() %}
 

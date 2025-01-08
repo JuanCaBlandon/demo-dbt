@@ -23,8 +23,8 @@ SELECT
   ActiveStatus AS active_status,
   StateCode AS state_code,
   ReportStatusCd AS report_status_cd,
-  EffectiveStartDate AS effectice_start_date,
-  EffectiveEndDate AS effectice_end_date,
+  EffectiveStartDate AS effective_start_date,
+  EffectiveEndDate AS effective_end_date,
   FirstReportDate AS first_report_date,
   StopReportDate AS stop_report_date,
   CreateUser AS create_user,
@@ -46,7 +46,7 @@ WHERE StateCode = 'IA'
 cleaned_data AS(
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effectice_start_date','num_duplicates']) }} as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} as customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -61,8 +61,8 @@ SELECT
     active_status,
     state_code,
     report_status_cd,
-    effectice_start_date,
-    effectice_end_date,
+    effective_start_date,
+    effective_end_date,
     first_report_date,
     stop_report_date,
     create_user,
@@ -78,7 +78,7 @@ WHERE num_duplicates > 1
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effectice_start_date','num_duplicates']) }} as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} as customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -93,8 +93,8 @@ SELECT
     active_status,
     state_code,
     report_status_cd,
-    effectice_start_date,
-    effectice_end_date,
+    effective_start_date,
+    effective_end_date,
     first_report_date,
     stop_report_date,
     create_user,
@@ -111,7 +111,7 @@ WHERE num_duplicates = 1 AND
 UNION ALL
 
 SELECT
-      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effectice_start_date','num_duplicates']) }} as customer_dw_id,
+      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} as customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -126,8 +126,8 @@ SELECT
     active_status,
     state_code,
     report_status_cd,
-    effectice_start_date,
-    effectice_end_date,
+    effective_start_date,
+    effective_end_date,
     first_report_date,
     stop_report_date,
     create_user,
@@ -160,8 +160,8 @@ SELECT
     active_status,
     state_code,
     report_status_cd,
-    effectice_start_date,
-    effectice_end_date,
+    effective_start_date,
+    effective_end_date,
     first_report_date,
     stop_report_date,
     create_user,

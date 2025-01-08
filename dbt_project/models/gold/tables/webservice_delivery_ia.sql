@@ -6,6 +6,7 @@
 )}}
 
 SELECT
+    csr.customer_state_dw_id,
     c.drivers_license_number AS driversLicenseNumber,
     c.last_name AS lastName,
     c.first_name AS firstName,
@@ -26,4 +27,5 @@ INNER JOIN {{ref('batch_customer')}} bc
     ON csr.batch_customer_dw_id = bc.batch_customer_dw_id
 INNER JOIN {{ref('record_type')}} rt
     ON csr.record_type_dw_id = rt.record_type_dw_id
+WHERE csr.error_detail_dw_id IS NULL
      

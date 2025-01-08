@@ -2,9 +2,9 @@
     materialized='incremental',
     unique_key='customer_dw_id',
     incremental_strategy="merge",
-    merge_update_columns = ['effectice_end_date'],
+    merge_update_columns = ['effective_end_date'],
 post_hook=[
-        "OPTIMIZE {{ this }} ZORDER BY customer_reporting_state_id;",
+        "OPTIMIZE {{ this }} ZORDER BY customer_dw_id;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
         ]
 ) }}
@@ -26,8 +26,8 @@ select
     active_status,
     state_code,
     report_status_cd,
-    effectice_start_date,
-    effectice_end_date,
+    effective_start_date,
+    effective_end_date,
     first_report_date,
     stop_report_date,
     create_user,

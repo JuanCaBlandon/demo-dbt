@@ -15,11 +15,12 @@ WITH base_data AS (
         violation_type,
         violation_id,
         normalized_date violation_reporting_approval_date
-    FROM {{ ref('customer_violations_cleaned') }}
+    FROM {{ ref('customer_violations_cleaned') }} as cvc
     WHERE is_inconsistent = 0
     {% if is_incremental() %}
         AND normalized_date > (
-            SELECT MAX(violation_reporting_approval_date) FROM {{ this }}
+            SELECT MAX(violation_reporting_approval_date) FROM {{ this }} 
+            AND customer_id = cvc.customer_id AND record_type = cvc.record_type
         )
     {% endif %}
 ),

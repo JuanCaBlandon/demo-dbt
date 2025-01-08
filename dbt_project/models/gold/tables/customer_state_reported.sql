@@ -2,19 +2,20 @@
     materialized='incremental',
     unique_key='customer_state_dw_id',
     post_hook=[
-        "OPTIMIZE {{ this }} ZORDER BY customer_dw_id;",
+        "OPTIMIZE {{ this }} ZORDER BY datetime_id, customer_dw_id;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
     ]
 ) }}
 
 WITH bc AS (
     SELECT
-        {{ dbt_utils.generate_surrogate_key(['c.customer_dw_id', 'mv.violation_dw_id', 'rt.record_type_dw_id', 'dd.datetime_id']) }} AS customer_state_dw_id,
+        {{ dbt_utils.generate_surrogate_key(['c.customer_dw_id','batch_customer_dw_id', 'mv.violation_dw_id', 'rt.record_type_dw_id', 'dd.datetime_id']) }} AS customer_state_dw_id,
         c.customer_dw_id,
         bc.batch_customer_dw_id,
         mv.violation_dw_id,
         rt.record_type_dw_id,
-        dd.datetime_id
+        dd.datetime_id,
+        NULL AS error_detail_dw_id
     FROM {{ ref('marked_violations')}} AS mv
     INNER JOIN {{ ref('customer')}} AS c
         ON mv.customer_id = c.customer_id
@@ -41,10 +42,10 @@ SELECT
     violation_dw_id,
     record_type_dw_id,
     datetime_id,
+    error_detail_dw_id,
     current_timestamp() AS current_timestamp
 FROM bc
-WHERE datetime_id <= concat(year(current_timestamp()),month(current_timestamp()),day(current_timestamp()),HOUR(current_timestamp()),MINUTE(current_timestamp()),SECOND(current_timestamp())) 
- {% if is_incremental() %}
-     AND customer_state_dw_id NOT IN (select customer_state_dw_id from {{ this }})
+{% if is_incremental() %}
+     WHERE datetime_id > (select MAX(datetime_id) from {{ this }})
  {% endif %}
 
