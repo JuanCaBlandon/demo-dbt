@@ -111,7 +111,7 @@ FROM tmp
 LEFT JOIN {{ ref('customer_cleaned') }} as c
 ON  tmp.customer_id = c.customer_id
 WHERE tmp.num_duplicates = 1 AND tmp.customer_id IS NOT NULL AND tmp.violation_date IS NOT NULL 
-AND c.customer_id IS NULL
+AND (c.customer_id IS NULL or c.active_status = false)
   
 UNION ALL
 
@@ -140,7 +140,7 @@ FROM tmp
 INNER JOIN {{ ref('customer_cleaned') }} as c
 ON  tmp.customer_id = c.customer_id
 WHERE tmp.num_duplicates = 1 AND tmp.customer_id IS NOT NULL AND tmp.violation_date IS NOT NULL 
-AND c.is_inconsistent = 0
+AND c.is_inconsistent = 0 and c.active_status = true
 
 )
 

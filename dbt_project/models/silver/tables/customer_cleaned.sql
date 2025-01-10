@@ -141,6 +141,7 @@ FROM Tmp
 WHERE num_duplicates = 1 AND drivers_license_number IS NOT NULL AND first_name IS NOT NULL 
   AND last_name IS NOT NULL  AND date_of_birth IS NOT NULL AND vin IS NOT NULL
 
+
 )
 
 
