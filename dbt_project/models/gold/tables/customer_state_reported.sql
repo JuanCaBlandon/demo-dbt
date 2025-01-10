@@ -9,10 +9,10 @@
 
 WITH bc AS (
     SELECT
-        {{ dbt_utils.generate_surrogate_key(['c.customer_dw_id','batch_customer_dw_id', 'mv.violation_dw_id', 'rt.record_type_dw_id', 'dd.datetime_id']) }} AS customer_state_dw_id,
+        {{ dbt_utils.generate_surrogate_key(['c.customer_dw_id','batch_customer_dw_id', 'mv.event_dw_id', 'rt.record_type_dw_id', 'dd.datetime_id']) }} AS customer_state_dw_id,
         c.customer_dw_id,
         bc.batch_customer_dw_id,
-        mv.violation_dw_id,
+        mv.event_dw_id,
         rt.record_type_dw_id,
         dd.datetime_id,
         '' AS error_detail_dw_id
@@ -26,12 +26,12 @@ WITH bc AS (
         AND bc.date_of_birth = c.date_of_birth
         AND bc.vin = c.vin
     INNER JOIN {{ ref('dim_date_time') }} AS dd 
-        ON year(mv.violation_date) = dd.year
-        AND month(mv.violation_date) = dd.month
-        AND day(mv.violation_date) = dd.day
-        AND HOUR(mv.violation_date) = dd.hour
-        AND  MINUTE(mv.violation_date) = dd.minute
-        AND  SECOND(mv.violation_date) = dd.second
+        ON year(mv.event_date) = dd.year
+        AND month(mv.event_date) = dd.month
+        AND day(mv.event_date) = dd.day
+        AND HOUR(mv.event_date) = dd.hour
+        AND  MINUTE(mv.event_date) = dd.minute
+        AND  SECOND(mv.event_date) = dd.second
     INNER JOIN {{ ref('record_type')}} AS rt
         ON mv.record_type = rt.id
 )
@@ -39,7 +39,7 @@ SELECT
     customer_state_dw_id,
     batch_customer_dw_id,
     customer_dw_id,
-    violation_dw_id,
+    event_dw_id,
     record_type_dw_id,
     datetime_id,
     error_detail_dw_id,

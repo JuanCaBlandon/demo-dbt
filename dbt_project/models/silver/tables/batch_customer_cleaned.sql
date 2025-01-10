@@ -104,6 +104,7 @@ ON  Tmp.drivers_license_number = c.drivers_license_number AND
 WHERE Tmp.num_duplicates = 1 AND Tmp.drivers_license_number IS NOT NULL AND Tmp.first_name IS NOT NULL 
   AND Tmp.last_name IS NOT NULL  AND Tmp.date_of_birth IS NOT NULL AND Tmp.vin IS NOT NULL
   AND c.drivers_license_number IS NULL
+  AND (c.customer_id IS NULL or c.active_status = false)
   
 UNION ALL
 
@@ -134,7 +135,7 @@ ON  Tmp.drivers_license_number = c.drivers_license_number AND
     Tmp.vin = c.vin
 WHERE Tmp.num_duplicates = 1 AND Tmp.drivers_license_number IS NOT NULL AND Tmp.first_name IS NOT NULL 
   AND Tmp.last_name IS NOT NULL  AND Tmp.date_of_birth IS NOT NULL AND Tmp.vin IS NOT NULL
-  AND c.is_inconsistent = 0
+  AND c.is_inconsistent = 0 and c.active_status = true
 
 )
 

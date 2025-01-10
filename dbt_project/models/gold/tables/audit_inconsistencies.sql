@@ -7,56 +7,53 @@
     ]
 ) }}
 
-with source as (
-    select
-        customer_dw_id as source_table_id,
-        'customer_cleaned' as source_table_name,
+WITH source AS (
+    SELECT
+        customer_dw_id AS source_table_id,
+        'customer_cleaned' AS source_table_name,
         is_inconsistent,
         type_inconsistent,
         created_at
-    from {{ ref('customer_cleaned') }}
-    where is_inconsistent = 1
+    FROM {{ ref('customer_cleaned') }}
+    WHERE is_inconsistent = 1
     UNION ALL
-    select
-        batch_customer_dw_id as source_table_id,
-        'batch_customer_cleaned' as source_table_name,
+    SELECT
+        batch_customer_dw_id AS source_table_id,
+        'batch_customer_cleaned' AS source_table_name,
         is_inconsistent,
         type_inconsistent,
         created_at
-    from {{ ref('batch_customer_cleaned') }}
-    where is_inconsistent = 1
+    FROM {{ ref('batch_customer_cleaned') }}
+    WHERE is_inconsistent = 1
     UNION ALL
-    select
-        violation_dw_id as source_table_id,
-        'customer_violations_cleaned' as source_table_name,
+    SELECT
+        event_dw_id AS source_table_id,
+        'customer_violations_cleaned' AS source_table_name,
         is_inconsistent,
         type_inconsistent,
         created_at
-    from {{ ref('customer_violations_cleaned') }}
-    where is_inconsistent = 1
-)
-
-,
-
-source2 as (
-    select
-        {{ dbt_utils.generate_surrogate_key(['source_table_id','source_table_name',]) }} as audit_inconsistent_dw_id,
+    FROM {{ ref('customer_violations_cleaned') }}
+    WHERE is_inconsistent = 1
+),
+source2 AS (
+    SELECT
+        {{ dbt_utils.generate_surrogate_key(['source_table_id','source_table_name',]) }} AS audit_inconsistent_dw_id,
         source_table_id,
         source_table_name,
         is_inconsistent,
         type_inconsistent,
         created_at
-    from source
+    FROM source
 )
 
-select
+SELECT
     audit_inconsistent_dw_id,
     source_table_id,
     source_table_name,
     is_inconsistent,
     type_inconsistent,
     created_at
-from source2
+FROM source2
 {% if is_incremental() %}
-    where created_at > (select max(created_at) from {{ this }})
+    WHERE created_at > (SELECT max(created_at) FROM {{ this }})
 {% endif %}
