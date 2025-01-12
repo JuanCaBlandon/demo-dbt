@@ -1,144 +1,299 @@
-USE [StateReporting]
-GO
-/****** Object:  StoredProcedure [dbo].[GetCustomersViolationsIA]    Script Date: 1/2/2025 5:10:06 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+USE StateReporting
 GO
 
-ALTER   PROCEDURE [dbo].[GetCustomersViolationsIA]
+CREATE OR ALTER PROCEDURE databricks.GetCustomersEventsIA
 AS
 
 /*
-	Autor: Yeison Ortiz
-	Company: SourceMeridian
-	Short description: SP to get customers violations for IOWA State
-	Creation date: 2024-12-27
-	Modification date: 2024-12-31
+		Autor: Yeison Ortiz
+		Company: SourceMeridian
+		Short description: SP to get customers violations for IOWA State
+		Creation date: 2025-01-12
 */
+TRUNCATE TABLE databricks.TmpCustomerEvents;
 
-INSERT INTO StateReporting.dbo.CustomerViolations(
-	ViolationType,
+INSERT INTO databricks.TmpCustomerEvents(
+	EventType,
 	CustomerID,
 	DeviceUsageViolationID,
+	DeviceUsageEventViolationID,
+	CustomerTransactionID,
 	DeviceUsageID,
-    ViolationID,
-    StartingDeviceLogEntryID,
-    EndingDeviceLogEntryID,
-    ViolationReportingApprovalCd,
-    ViolationReportingApprovalUser,
-    ViolationReportingApprovalDate,
-    ViolationReported,
-    RegulatoryRptgDt,
-    Comments,
-    CreateDate,
-    CreateUser,
-    ModifyDate,
-    ModifyUser,
-	NormalizedDate
-	)
+	ViolationReportingApprovalCd,
+	ViolationReportingApprovalUser,
+	CreateDate,
+	CreateUser,
+	ModifyDate,
+	ModifyUser,
+	LogEntryTime,
+	Eventdate,
+	VIN,
+	NewVIN,
+	CreationDate
+)
 
--- Violation type 1 and 2
+-- Record Type 1 and 2
 SELECT
-	'TYPE 1-2' AS ViolationType,
-	[DeviceUsage].CustomerId, 
-    [DeviceUsageViolation].* ,
-	CAST(FORMAT(ViolationReportingApprovalDate, 'yyyy-MM-dd HH:mm:ss.000') AS DATETIME) AS NormalizedDate
-
-FROM [CustSrv].[dbo].[DeviceUsageViolation]  
-INNER JOIN  [CustSrv].[dbo].[DeviceUsage] ON [DeviceUsage].DeviceUsageId  = [DeviceUsageViolation].DeviceUsageId
-INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] AS custst ON [DeviceUsage].CustomerId = custst.CustomerID
+	'TYPE 1-2' EventType,
+	DU.CustomerId,
+	DUV.DeviceUsageViolationID,
+	NULL DeviceUsageEventViolationID,
+	NULL CustomerTransactionID,
+	DUV.DeviceUsageID,
+	DUV.ViolationReportingApprovalCd,
+	DUV.ViolationReportingApprovalUser,
+	DUV.CreateDate,
+	DUV.CreateUser,
+	DUV.ModifyDate,
+	DUV.ModifyUser,
+	DLE.LogEntryTime,
+	CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' EventDate,
+	NULL VIN,
+	NULL NewVIN
+FROM 
+    CustSrv.dbo.DeviceUsageViolation DUV
+INNER JOIN CustSrv.dbo.DeviceUsage DU
+	ON DU.DeviceUsageId = DUV.DeviceUsageId
+INNER JOIN CustSrv.dbo.CustomerReportingStates CRS
+	ON DU.CustomerId = CRS.CustomerID
+INNER JOIN DevicelogData.dbo.DeviceLogEntry DLE
+	ON DU.DeviceUsageID = DLE.DeviceUsageID 
+	AND DLE.DeviceLogEntryID = StartingDeviceLogEntryID
 WHERE
-	([DeviceUsageViolation].[ViolationID] = 1 OR [DeviceUsageViolation].[ViolationID] = 11)
-	AND (
-			[DeviceUsageViolation].[ViolationReportingApprovalCd] = 344 --Approved 
-			OR [DeviceUsageViolation].[ViolationReportingApprovalCd] = 345  --Auto-Approved 
-		)
-	AND custst.StateCode = 'IA'
-    AND [DeviceUsageViolation].violationReportingApprovalDate 
-        BETWEEN custst.EffectiveStartDate
-        AND COALESCE(custst.EffectiveEndDate, GETDATE())
+    DUV.ViolationID IN (1, 11)
+    AND (
+        DUV.ViolationReportingApprovalCd = 344 -- Approved
+        OR DUV.ViolationReportingApprovalCd = 345 -- Auto-Approved
+    )
+    AND CRS.StateCode = 'IA'
+    AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time'
+        BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+
 
 UNION ALL
--- Violation type 3
+-- Record Type 3
 -- Manual Event Violations to trigger Record
 -- (Power Interruption - 30 min)  ID (2)
 -- Lockout - Power Off After Car Start (ID 66)
 SELECT
-	'TYPE 3' AS ViolationType,
-	[DeviceUsage].CustomerId, 
-    [DeviceUsageViolation].* ,
-	CAST(FORMAT(ViolationReportingApprovalDate, 'yyyy-MM-dd HH:mm:ss.000') AS DATETIME) AS NormalizedDate
-
-FROM [CustSrv].[dbo].[DeviceUsageViolation]  
-INNER JOIN  [CustSrv].[dbo].[DeviceUsage] ON [DeviceUsage].DeviceUsageId  = [DeviceUsageViolation].DeviceUsageId 
-INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] AS custst ON [DeviceUsage].CustomerId = custst.CustomerID
+	'TYPE 3' EventType,
+	DU.CustomerId,
+	DUV.DeviceUsageViolationID,
+	NULL DeviceUsageEventViolationID,
+	NULL CustomerTransactionID,
+	DUV.DeviceUsageID,
+	DUV.ViolationReportingApprovalCd,
+	DUV.ViolationReportingApprovalUser,
+	DUV.CreateDate,
+	DUV.CreateUser,
+	DUV.ModifyDate,
+	DUV.ModifyUser,
+	DLE.LogEntryTime,
+	CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' Eventdate,
+	NULL VIN,
+	NULL NewVIN
+FROM 
+    CustSrv.dbo.DeviceUsageViolation DUV
+INNER JOIN CustSrv.dbo.DeviceUsage DU
+	ON DU.DeviceUsageId = DUV.DeviceUsageId
+INNER JOIN CustSrv.dbo.CustomerReportingStates CRS
+	ON DU.CustomerId = CRS.CustomerID
+INNER JOIN DevicelogData.dbo.DeviceLogEntry DLE
+	ON DU.DeviceUsageID = DLE.DeviceUsageID 
+	AND DLE.DeviceLogEntryID = StartingDeviceLogEntryID
 WHERE
-	[DeviceUsageViolation].[ViolationID] IN (2,66) 
-	AND (
-			[DeviceUsageViolation]. [ViolationReportingApprovalCd] = 344 --Approved 
-			OR [DeviceUsageViolation]. [ViolationReportingApprovalCd] = 345 --Auto-Approved 
-	)
-	AND custst.StateCode = 'IA'
-    AND [DeviceUsageViolation].violationReportingApprovalDate 
-        BETWEEN custst.EffectiveStartDate
-        AND COALESCE(custst.EffectiveEndDate, GETDATE())
+    DUV.ViolationID IN (2, 66)
+    AND (
+        DUV.ViolationReportingApprovalCd = 344 -- Approved
+        OR DUV.ViolationReportingApprovalCd = 345 -- Auto-Approved
+    )
+    AND CRS.StateCode = 'IA'
+    AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time'
+        BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+
 
 UNION ALL
 SELECT
-	'TYPE 3' AS ViolationType,
-    DU.CustomerId, 
-    DUEV.DeviceUsageEventViolationID AS DeviceUsageViolationID,
-    DUEV.DeviceUsageID,
-    DUEV.EventViolationCd AS ViolationID,
-    Null StartingDeviceLogEntryID,
-    Null EndingDeviceLogEntryID,
-    Null ViolationReportingApprovalCd,
-    Null ViolationReportingApprovalUser,
-    DUEV.ViolationDate AS ViolationReportingApprovalDate,
-    DUEV.ApprovalStatusInd AS ViolationReported,-- Is it the real field?
-    Null RegulatoryRptgDt,
-    DUEV.Comments,
-    DUEV.ViolationDate AS CreateDate,
-    DUEV.CreateUser,
-    DUEV.ModifyDate,
-    DUEV.ModifyUser,
-	CAST(FORMAT(ViolationDate, 'yyyy-MM-dd HH:mm:00.000') AS DATETIME) AS NormalizedDate
-FROM [CustSrv].[dbo].[DeviceUsageEventViolation] AS DUEV
-INNER JOIN [CustSrv].[dbo].[DeviceUsage] AS DU ON DU.DeviceUsageId  = DUEV.DeviceUsageId
-INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] AS custst ON DU.CustomerId = custst.CustomerID
+	'TYPE 3' EventType,
+	DU.CustomerId,
+	NULL DeviceUsageViolationID,
+	DUEV.DeviceUsageEventViolationID,
+	NULL CustomerTransactionID,
+	DUEV.DeviceUsageID,
+	Null ViolationReportingApprovalCd,
+	Null ViolationReportingApprovalUser,
+	DUEV.CreateDate,
+	DUEV.CreateUser,
+	DUEV.ModifyDate,
+	DUEV.ModifyUser,
+	NULL LogEntryTime,
+	DUEV.ViolationDate EventDate,
+	NULL VIN,
+	NULL NewVIN
+FROM CustSrv.dbo.DeviceUsageEventViolation DUEV
+INNER JOIN CustSrv.dbo.DeviceUsage DU ON DU.DeviceUsageId  = DUEV.DeviceUsageId
+INNER JOIN CustSrv.dbo.CustomerReportingStates CRS ON DU.CustomerId = CRS.CustomerID
 WHERE
 	DUEV.EventViolationCd = 965 -- Tamper
-	AND custst.StateCode = 'IA'
+	AND CRS.StateCode = 'IA'
+	AND DUEV.ApprovalStatusInd = 1 -- TODO: should I add this? it's on record type 4 
     AND DUEV.ViolationDate 
-        BETWEEN custst.EffectiveStartDate
-        AND COALESCE(custst.EffectiveEndDate, GETDATE())
+        BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+
 
 UNION ALL
+-- Record Type 4 – Uninstall Violation 
 SELECT
-	'TYPE 4' AS ViolationType,
-	[DeviceUsage].CustomerId, 
-	[DeviceUsageEventViolation].DeviceUsageEventViolationID AS DeviceUsageViolationID,
-	[DeviceUsageEventViolation].DeviceUsageID,
-	[DeviceUsageEventViolation].EventViolationCd AS ViolationID,
-	NULL AS StartingDeviceLogEntryID,
-	NULL AS EndingDeviceLogEntryID,
-	[DeviceUsageEventViolation].ApprovalStatusInd AS ViolationReportingApprovalCd,
-	NULL AS ViolationReportingApprovalUser,
-	[DeviceUsageEventViolation].ViolationDate AS ViolationReportingApprovalDate,
-	NULL AS ViolationReported,
-	NULL AS RegulatoryRptgDt,
-	[DeviceUsageEventViolation].Comments,
-	[DeviceUsageEventViolation].CreateDate,
-	[DeviceUsageEventViolation].CreateUser,
-	[DeviceUsageEventViolation].ModifyDate,
-	[DeviceUsageEventViolation].ModifyUser,
-	CAST(FORMAT(ViolationDate, 'yyyy-MM-dd HH:mm:00.000') AS DATETIME) AS NormalizedDate
-	--[DeviceUsageEventViolation].CustomerReportingStateID
+	'TYPE 4' EventType,
+	DU.CustomerId,
+	NULL DeviceUsageViolationID,
+	DUEV.DeviceUsageEventViolationID,
+	NULL CustomerTransactionID,
+	DUEV.DeviceUsageID,
+	NULL ViolationReportingApprovalCd,
+	NULL ViolationReportingApprovalUser,
+	DUEV.CreateDate,
+	DUEV.CreateUser,
+	DUEV.ModifyDate,
+	DUEV.ModifyUser,
+	NULL LogEntryTime,
+	DUEV.ViolationDate EventDate,
+	NULL VIN,
+	NULL NewVIN
+FROM CustSrv.dbo.DeviceUsageEventViolation DUEV
+INNER JOIN CustSrv.dbo.DeviceUsage DU ON DU.DeviceUsageId  = DUEV.DeviceUsageId
+INNER JOIN CustSrv.dbo.CustomerReportingStates CRS ON DU.CustomerId = CRS.CustomerID
+WHERE
+	DUEV.EventViolationCd = 1099 -- Unauthorized Removal  
+	AND DUEV.ApprovalStatusInd = 1
+	AND DUEV.ViolationDate 
+		BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+		
+UNION ALL
+-- Record type 5
+SELECT
+	'TYPE 5' EventType,
+	C.CustomerID,
+	NULL DeviceUsageViolationID,
+	NULL DeviceUsageEventViolationID,
+	CT.CustomerTransactionID,
+	NULL DeviceUsageID,
+	NULL ViolationReportingApprovalCd,
+	NULL ViolationReportingApprovalUser,
+	CT.CreateDate,
+	CT.CreateUser,
+	CT.ModifyDate,
+	CT.ModifyUser,
+	NULL LogEntryTime,
+	CT.TrnParm3 EventDate,
+	NULL VIN,
+	NULL NewVIN
+FROM dbo.Customer C
+INNER JOIN dbo.CustomerReportingStates CRS
+    ON C.CustomerID = CRS.CustomerID
+INNER JOIN dbo.CustomerTransaction CT
+    ON C.CustomerID = CT.CustomerID 
+    AND CT.TransactionCode = 'De-install' 
+    AND CT.StatusCode <> 'C' 
+    AND CT.TrnParm3 IS NOT NULL
+INNER JOIN  Mongoose.DnAccountClosureDispositionDetails DACDD
+    ON CT.AccountClosureDispositionDetailId = DACDD.AccountClosureDispositionDetailId
+INNER JOIN  Mongoose.DnAccountClosureDispositions DACD
+    ON DACDD.AccountClosureDispositionId = DACD.AccountClosureDispositionId
+WHERE 
+    CRS.StateCode = 'IA' 
+    AND C.DeInstallDateConfirmed BETWEEN '2024-01-01' AND CONVERT(DATE, GETDATE()) 
+    AND DACD.AccountClosureDispositionId = 1  -- Requirement Complete
 
-FROM [CustSrv].[dbo].[DeviceUsageEventViolation] 
-	INNER JOIN [CustSrv].[dbo].[DeviceUsage] ON [DeviceUsage].DeviceUsageId  = [DeviceUsageEventViolation].DeviceUsageId 
-WHERE [DeviceUsageEventViolation].[EventViolationCd] = 1099 -- Unauthorized Removal  
-	AND [DeviceUsageEventViolation].[ApprovalStatusInd] = 1 ;
+UNION ALL
+-- Record type 6
+SELECT 
+    'TYPE 6' EventType,
+    C.CustomerID,
+    NULL DeviceUsageEventViolationID,
+    NULL DeviceUsageViolationID,
+    CT.CustomerTransactionID,
+    NULL DeviceUsageID,
+    NULL ViolationReportingApprovalCd,
+    NULL ViolationReportingApprovalUser,
+    CT.CreateDate,
+    CT.CreateUser,
+    CT.ModifyDate,
+    CT.ModifyUser,
+    NULL LogEntryTime,
+    CT.TrnParm3 EventDate,
+    CT.VIN,
+    CT.NewVIN
+FROM CustSrv.dbo.Customer c
+INNER JOIN CustSrv.dbo.CustomerTransaction CT
+    ON CT.CustomerID = C.CustomerID
+    AND CT.CustomerTransactionTypeID = 49 -- Switch
+WHERE
+	CT.TrnParm3 IS NOT NULL
+;
 
-SELECT * FROM StateReporting.dbo.CustomerViolations;
+
+MERGE databricks.CustomerEvents  AS TA
+USING databricks.TmpCustomerEvents AS SO
+ON COALESCE(SO.DeviceUsageViolationID,SO.DeviceUsageEventViolationID,SO.CustomerTransactionID) = COALESCE(TA.DeviceUsageViolationID,TA.DeviceUsageEventViolationID,TA.CustomerTransactionID)
+
+-- For Updates
+WHEN MATCHED THEN UPDATE SET
+	TA.CustomerID = SO.CustomerID,
+	TA.DeviceUsageID = SO.DeviceUsageID,
+	TA.ViolationReportingApprovalCd = SO.ViolationReportingApprovalCd,
+	TA.ViolationReportingApprovalUser = SO.ViolationReportingApprovalUser,
+	TA.CreateDate = SO.CreateDate,
+	TA.CreateUser = SO.CreateUser,
+	TA.ModifyDate = SO.ModifyDate,
+	TA.ModifyUser = SO.ModifyUser,
+	TA.LogEntryTime = SO.LogEntryTime,
+	TA.Eventdate = SO.Eventdate,
+	TA.VIN = SO.VIN,
+	TA.NewVIN = SO.NewVIN,
+	TA.ModificationDate = CAST(GETDATE() AS DATE)
+
+   -- For Inserts
+WHEN NOT MATCHED BY TARGET THEN
+	INSERT (	
+		EventType,
+		CustomerID,
+		DeviceUsageViolationID,
+		DeviceUsageEventViolationID,
+		CustomerTransactionID,
+		DeviceUsageID,
+		ViolationReportingApprovalCd,
+		ViolationReportingApprovalUser,
+		CreateDate,
+		CreateUser,
+		ModifyDate,
+		ModifyUser,
+		LogEntryTime,
+		Eventdate,
+		VIN,
+		NewVIN,
+		CreationDate
+	) 
+	VALUES (
+		EventType,
+		CustomerID,
+		DeviceUsageViolationID,
+		DeviceUsageEventViolationID,
+		CustomerTransactionID,
+		DeviceUsageID,
+		ViolationReportingApprovalCd,
+		ViolationReportingApprovalUser,
+		CreateDate,
+		CreateUser,
+		ModifyDate,
+		ModifyUser,
+		LogEntryTime,
+		Eventdate,
+		VIN,
+		NewVIN,
+		CAST(GETDATE() AS DATE)
+	)
+;
+
+SELECT TOP 1 * 
+FROM databricks.TmpCustomerEvents;

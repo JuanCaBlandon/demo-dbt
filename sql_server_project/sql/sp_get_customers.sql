@@ -14,9 +14,9 @@ AS
 
 -- Get the customers for SQL and Databricks implementation
 
-TRUNCATE TABLE StateReporting.dbo.TpmStateReportedCustomer;
+TRUNCATE TABLE StateReporting.databricks.TpmStateReportedCustomer;
 
-INSERT INTO StateReporting.dbo.TpmStateReportedCustomer(
+INSERT INTO StateReporting.databricks.TpmStateReportedCustomer(
 	CustomerReportingStateID ,
 	CustomerID ,
 	DriversLicenseNumber,
@@ -92,8 +92,8 @@ FROM (
     ) AS CU;
 
 -- Update customers with incoming batch file data (FTP server)
-MERGE StateReporting.dbo.TpmStateReportedCustomer  AS Target
-USING StateReporting.dbo.FtpCustomerData AS Source
+MERGE StateReporting.databricks.TpmStateReportedCustomer  AS Target
+USING StateReporting.databricks.FtpCustomerData AS Source
 ON Source.DriversLicenseNumber = Target.DriversLicenseNumber
     AND UPPER(Source.FirstName) = UPPER(Target.FirstName)
     AND UPPER(Source.LastName) = UPPER(Target.LastName)
@@ -109,7 +109,7 @@ WHEN MATCHED THEN UPDATE SET
 
 
 --For SQL implementation
-INSERT INTO StateReporting.dbo.StateReportedCustomer 
+INSERT INTO StateReporting.databricks.StateReportedCustomer 
 	(
     CustomerReportingStateID,
 	CustomerID,
@@ -154,8 +154,8 @@ SELECT
     CU.RepeatOffender,
 	CU.CreationDate
 
-FROM StateReporting.dbo.StateReportedCustomer HC
-	INNER JOIN StateReporting.dbo.TpmStateReportedCustomer CU ON HC.CustomerID = CU.CustomerID
+FROM StateReporting.databricks.StateReportedCustomer HC
+	INNER JOIN StateReporting.databricks.TpmStateReportedCustomer CU ON HC.CustomerID = CU.CustomerID
 WHERE (HC.CustomerStatus <> CU.CustomerStatus
 	OR CASE WHEN HC.ModifyDate IS NULL THEN '' ELSE HC.ModifyDate END <> CASE WHEN CU.ModifyDate IS NULL THEN '' ELSE CU.ModifyDate END
     OR CASE WHEN HC.OffenseDate IS NULL THEN '' ELSE HC.OffenseDate END <> CASE WHEN CU.OffenseDate IS NULL THEN '' ELSE CU.OffenseDate END
@@ -171,7 +171,7 @@ WHERE (HC.CustomerStatus <> CU.CustomerStatus
     ;
 
 -- Insert new customers
-INSERT INTO StateReporting.dbo.StateReportedCustomer 
+INSERT INTO StateReporting.databricks.StateReportedCustomer 
 	(
     CustomerReportingStateID,
 	CustomerID,
@@ -214,8 +214,8 @@ SELECT
     CU.RepeatOffender,
 	CU.CreationDate
 
-FROM StateReporting.dbo.TpmStateReportedCustomer CU
-WHERE NOT EXISTS (SELECT CustomerID FROM StateReporting.dbo.StateReportedCustomer ST WHERE CU.CustomerID =  ST.CustomerID)
+FROM StateReporting.databricks.TpmStateReportedCustomer CU
+WHERE NOT EXISTS (SELECT CustomerID FROM StateReporting.databricks.StateReportedCustomer ST WHERE CU.CustomerID =  ST.CustomerID)
     AND CU.ActiveStatus = 1
  -- AND CU.OffenseDate >= '2025-01-01'
     ;
@@ -223,13 +223,13 @@ WHERE NOT EXISTS (SELECT CustomerID FROM StateReporting.dbo.StateReportedCustome
 -- Put date to inactive customers, ActiveStatus = 0
 UPDATE ST
 SET ST.ActiveStatusEndDate = GETDATE()
-FROM StateReporting.dbo.TpmStateReportedCustomer CU
-    INNER JOIN StateReporting.dbo.StateReportedCustomer ST ON CU.CustomerID = ST.CustomerID
+FROM StateReporting.databricks.TpmStateReportedCustomer CU
+    INNER JOIN StateReporting.databricks.StateReportedCustomer ST ON CU.CustomerID = ST.CustomerID
 WHERE CU.ActiveStatus = 0
     --AND CU.OffenseDate >= '2025-01-01'
     ;
 
 -- This top one is only for databricks because spark needs something to return when the SP is running 
 SELECT TOP 1 * 
-FROM StateReporting.dbo.TpmStateReportedCustomer
+FROM StateReporting.databricks.TpmStateReportedCustomer
 ;
