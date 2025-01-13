@@ -50,7 +50,7 @@ spark.sql("""
             CED.LogEntryTime = CESQL.LogEntryTime,
             CED.Eventdate = CESQL.Eventdate,
             CED.VIN = CESQL.VIN,
-            CED.ModificationDate = CESQL.ModificationDate,
+            CED.ModificationDate = CESQL.ModificationDate
     WHEN NOT MATCHED THEN
         INSERT (
             EventType,
