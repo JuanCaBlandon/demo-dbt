@@ -189,9 +189,9 @@ SELECT
 	NULL VIN,
 	NULL NewVIN
 FROM CustSrv.dbo.Customer C
-INNER JOIN dbo.CustomerReportingStates CRS
+INNER JOIN CustSrv.dbo.CustomerReportingStates CRS
     ON C.CustomerID = CRS.CustomerID
-INNER JOIN dbo.CustomerTransaction CT
+INNER JOIN CustSrv.dbo.CustomerTransaction CT
     ON C.CustomerID = CT.CustomerID 
     AND CT.TransactionCode = 'De-install' 
     AND CT.StatusCode <> 'C' 

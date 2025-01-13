@@ -30,5 +30,7 @@ try:
     result_set = callable_statement.executeQuery()
     print(f"SP {sp_name} executed successfully")
 except Exception as e:
+    sys.exit(1)
     print(f"Execution failed with error:\n{str(e)}")
+
 
