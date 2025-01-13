@@ -7,7 +7,7 @@
         ]
 ) }}
 
-with tmp as(
+WITH tmp AS(
 SELECT
     CustomerId AS customer_id,
     DeviceUsageViolationID AS device_usage_violation_id,
@@ -17,7 +17,6 @@ SELECT
     EventType AS event_type,
     ViolationReportingApprovalCd AS violation_reporting_approval_cd,
     ViolationReportingApprovalUser AS violation_reporting_approval_user,
-    Comments AS comments,
     CreateDate AS create_date,
     CreateUser AS create_user,
     ModifyDate AS modify_date,
@@ -26,10 +25,11 @@ SELECT
     EventDate AS event_date,
     VIN AS vin,
     NewVIN AS new_vin,
-    current_timestamp() AS created_at,
-    row_number() over (partition by CustomerId,EventType,EventDate order by EventDate) AS num_duplicates
+    CreationDate AS creation_date,
+    ModificationDate AS modification_date,
+    row_number() OVER (PARTITION BY CustomerId,EventType,EventDate ORDER BY EventDate) AS num_duplicates
 FROM
-  {{ source('BRONZE', 'customer_violations') }}
+  {{ source('BRONZE', 'customer_events') }}
 
 
 ),
@@ -55,7 +55,8 @@ SELECT
     event_date,
     vin,
     new_vin,
-    created_at,
+    creation_date,
+    modification_date,
     1 AS is_inconsistent,
     'duplicates' AS type_inconsistent,
     num_duplicates
@@ -83,7 +84,8 @@ SELECT
     event_date,
     vin,
     new_vin,
-    created_at,
+    creation_date,
+    modification_date,
     1 AS is_inconsistent,
     'NULL values' AS type_inconsistent,
   num_duplicates
@@ -105,22 +107,26 @@ SELECT
     violation_reporting_approval_user,
     comments,
     create_date,
-    tmp.create_user,
-    tmp.modify_date,
-    tmp.modify_user,
+    create_user,
+    modify_date,
+    modify_user,
     log_entry_time,
     event_date,
     vin,
     new_vin,
-    tmp.created_at,
+    creation_date,
+    modification_date,
     1 AS is_inconsistent,
     'Without reference entity' AS type_inconsistent,
     tmp.num_duplicates
 FROM tmp
 LEFT JOIN {{ ref('customer_cleaned') }} AS c
-ON  tmp.customer_id = c.customer_id
-WHERE tmp.num_duplicates = 1 AND tmp.customer_id IS NOT NULL AND tmp.event_date IS NOT NULL 
-AND c.customer_id IS NULL
+  ON  tmp.customer_id = c.customer_id
+WHERE 
+  tmp.num_duplicates = 1
+  AND tmp.customer_id IS NOT NULL
+  AND tmp.event_date IS NOT NULL 
+  AND c.customer_id IS NULL
   
 UNION ALL
 SELECT
@@ -136,22 +142,26 @@ SELECT
     violation_reporting_approval_user,
     comments,
     create_date,
-    tmp.create_user,
-    tmp.modify_date,
-    tmp.modify_user,
+    create_user,
+    modify_date,
+    modify_user,
     log_entry_time,
     event_date,
     vin,
     new_vin,
-    tmp.created_at,
+    creation_date,
+    modification_date,
     0 AS is_inconsistent,
     'N/A' AS type_inconsistent,
     tmp.num_duplicates
 FROM tmp
 INNER JOIN {{ ref('customer_cleaned') }} AS c
-ON  tmp.customer_id = c.customer_id
-WHERE tmp.num_duplicates = 1 AND tmp.customer_id IS NOT NULL AND tmp.event_date IS NOT NULL 
-AND c.is_inconsistent = 0
+  ON  tmp.customer_id = c.customer_id
+WHERE 
+  tmp.num_duplicates = 1
+  AND tmp.customer_id IS NOT NULL
+  AND tmp.event_date IS NOT NULL 
+  AND c.is_inconsistent = 0
 
 )
 
@@ -175,13 +185,14 @@ SELECT
     event_date,
     vin,
     new_vin,
-    created_at,
+    creation_date,
+    modification_date,
     is_inconsistent,
     type_inconsistent,
     num_duplicates
   FROM cleaned_data
   {% if is_incremental() %}
-    where event_dw_id not in (select event_dw_id from {{ this }})
+    WHERE event_dw_id NOT IN (SELECT event_dw_id FROM {{ this }})
 {% endif %}
 
 

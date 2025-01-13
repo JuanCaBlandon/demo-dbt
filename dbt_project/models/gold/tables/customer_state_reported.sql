@@ -16,7 +16,7 @@ WITH bc AS (
         rt.record_type_dw_id,
         dd.datetime_id,
         '' AS error_detail_dw_id
-    FROM {{ ref('marked_violations')}} AS mv
+    FROM {{ ref('marked_events')}} AS mv
     INNER JOIN {{ ref('customer')}} AS c
         ON mv.customer_id = c.customer_id
     INNER JOIN {{ ref('batch_customer') }} AS bc
@@ -25,6 +25,7 @@ WITH bc AS (
         AND bc.last_name =c.last_name
         AND bc.date_of_birth = c.date_of_birth
         AND bc.vin = c.vin
+        AND bc.date = (SELECT MAX(created_at FROM {{ ref('batch_customer') }})) --TODO: Needed? Ask Cami
     INNER JOIN {{ ref('dim_date_time') }} AS dd 
         ON year(mv.event_date) = dd.year
         AND month(mv.event_date) = dd.month

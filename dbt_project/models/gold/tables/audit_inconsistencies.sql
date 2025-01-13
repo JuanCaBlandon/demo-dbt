@@ -28,11 +28,11 @@ WITH source AS (
     UNION ALL
     SELECT
         event_dw_id AS source_table_id,
-        'customer_violations_cleaned' AS source_table_name,
+        'customer_events_cleaned' AS source_table_name,
         is_inconsistent,
         type_inconsistent,
-        created_at
-    FROM {{ ref('customer_violations_cleaned') }}
+        creation_date
+    FROM {{ ref('customer_events_cleaned') }}
     WHERE is_inconsistent = 1
 ),
 source2 AS (

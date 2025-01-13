@@ -170,7 +170,7 @@ WHERE
 		BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
 		
 UNION ALL
--- Record type 5
+-- Record type 5 - Authorized Uninstall
 SELECT
 	'TYPE 5' EventType,
 	C.CustomerID,
@@ -206,7 +206,7 @@ WHERE
     AND DACD.AccountClosureDispositionId = 1  -- Requirement Complete
 
 UNION ALL
--- Record type 6
+-- Record type 6 - switched_vehicle
 SELECT 
     'TYPE 6' EventType,
     C.CustomerID,
@@ -235,7 +235,7 @@ WHERE
 
 MERGE databricks.CustomerEvents  AS TA
 USING databricks.TmpCustomerEvents AS SO
-ON COALESCE(SO.DeviceUsageViolationID,SO.DeviceUsageEventViolationID,SO.CustomerTransactionID) = COALESCE(TA.DeviceUsageViolationID,TA.DeviceUsageEventViolationID,TA.CustomerTransactionID)
+ON COALESCE(SO.DeviceUsageViolationID,SO.DeviceUsageEventViolationID,SO.CustomerTransactionID) = COALESCE(TA.DeviceUsageViolationID,TA.DeviceUsageEventViolationID,TA.CustomerTransactionID) -- TODO: What if a usageViolationId is the same as one of the others IDs? This will lead to duplicates
 
 -- For Updates
 WHEN MATCHED THEN UPDATE SET

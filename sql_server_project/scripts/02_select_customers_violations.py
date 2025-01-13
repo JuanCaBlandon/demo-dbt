@@ -34,17 +34,20 @@ try:
 
     # Insert the results into delta table bronze layer 
     spark.sql("""
-        INSERT INTO state_reporting_dev.bronze.customer_violations (
-            ViolationType,CustomerID,DeviceUsageViolationID,DeviceUsageID,ViolationID,StartingDeviceLogEntryID,EndingDeviceLogEntryID,ViolationReportingApprovalCd,ViolationReportingApprovalUser,
-            ViolationReportingApprovalDate,ViolationReported,RegulatoryRptgDt,Comments,CreateDate,CreateUser,ModifyDate,ModifyUser
-            )
+        INSERT INTO state_reporting_dev.bronze.customer_events (
+            EventType,CustomerID,DeviceUsageViolationID,DeviceUsageEventViolationID,CustomerTransactionID,DeviceUsageID,
+            ViolationReportingApprovalCd,ViolationReportingApprovalUser,CreateDate,CreateUser,ModifyDate,ModifyUser,
+            LogEntryTime,Eventdate,VIN,NewVIN,CreationDate,ModificationDate
+        )
         SELECT 
-            ViolationType,CustomerID,DeviceUsageViolationID,DeviceUsageID,ViolationID,StartingDeviceLogEntryID,EndingDeviceLogEntryID,ViolationReportingApprovalCd,ViolationReportingApprovalUser,
-            ViolationReportingApprovalDate,ViolationReported,RegulatoryRptgDt,Comments,CreateDate,CreateUser,ModifyDate,ModifyUser
-        FROM CustomerViolations
+            EventType,CustomerID,DeviceUsageViolationID,DeviceUsageEventViolationID,CustomerTransactionID,DeviceUsageID,
+            ViolationReportingApprovalCd,ViolationReportingApprovalUser,CreateDate,CreateUser,ModifyDate,ModifyUser,
+            LogEntryTime,Eventdate,VIN,NewVIN,CreationDate,ModificationDate
+        FROM CustomerEvents
         """)
 
     print("ingestion successful!")
 
 except Exception as e:
     print(f"Connection failed with error:\n{str(e)}")
+

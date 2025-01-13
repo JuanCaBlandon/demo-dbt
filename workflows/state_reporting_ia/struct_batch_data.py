@@ -115,4 +115,4 @@ part_5 = part_5.withColumn("created_at", current_timestamp())
 
 
 #Write to delta table
-part_5.write.format("delta").mode("overwrite").saveAsTable("state_reporting_dev.bronze.state_batch_customer_data_ia_test")
+part_5.write.format("delta").mode("append").saveAsTable("state_reporting_dev.bronze.state_batch_customer_data_ia_test")

@@ -14,7 +14,7 @@ WITH base_data AS (
         device_usage_violation_id,
         event_type,
         event_date
-    FROM {{ ref('customer_violations_cleaned') }} as cvc
+    FROM {{ ref('customer_events_cleaned') }} as cvc
     WHERE is_inconsistent = 0
     {% if is_incremental() %}
         AND normalized_date > (
@@ -24,7 +24,7 @@ WITH base_data AS (
     {% endif %}
 ),
 
--- Reglas dinámicas (24 horas, 30 días)
+-- Dynamic rules (24 hours, 30 days)
 marked_violations_24hr AS (
     SELECT
         a.event_dw_id,
@@ -72,7 +72,8 @@ UNION ALL
 SELECT
     event_dw_id,
     customer_id,
-    device_usage_violation_id,
+    'device_usage_violation_id' event_id_type,
+    device_usage_violation_id event_id,
     event_date,
     CASE
         WHEN violation_count_30d >= 10 AND violation_count_30d % 10 = 0 THEN 2
@@ -87,9 +88,48 @@ UNION ALL
 SELECT
     event_dw_id,
     customer_id,
-    device_usage_violation_id,
+    CASE WHEN device_usage_violation_id IS NULL THEN 'device_usage_event_violation_id' ELSE 'device_usage_violation_id' END event_id_type,
+    COALESCE(device_usage_violation_id, device_usage_event_violation_id) event_id,
     event_date,
     '3' record_type,
     'Tampering' record_description
 FROM base_data b
 WHERE event_type = 'TYPE 3'
+
+UNION ALL
+SELECT
+    event_dw_id,
+    customer_id,
+    'device_usage_event_violation_id' event_id_type,
+    device_usage_event_violation_id event_id,
+    event_date,
+    '4' record_type,
+    'autorized_uninstall' record_description
+FROM base_data b
+WHERE event_type = 'TYPE 4'
+--TODO: Update client status when submited
+
+UNION ALL
+SELECT
+    event_dw_id,
+    customer_id,
+    'customer_transaction_id' event_id_type,
+    customer_transaction_id event_id,
+    event_date,
+    '5' record_type,
+    'unautorized_uninstall' record_description
+FROM base_data b
+WHERE event_type = 'TYPE 5'
+
+UNION ALL
+SELECT
+    event_dw_id,
+    customer_id,
+    'customer_transaction_id' event_id_type,
+    customer_transaction_id event_id,
+    event_date,
+    '6' record_type,
+    'switched_vehicle' record_description
+FROM base_data b
+WHERE event_type = 'TYPE 6'
+
