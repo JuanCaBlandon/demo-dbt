@@ -188,7 +188,7 @@ SELECT
 	CT.TrnParm3 EventDate,
 	NULL VIN,
 	NULL NewVIN
-FROM dbo.Customer C
+FROM CustSrv.dbo.Customer C
 INNER JOIN dbo.CustomerReportingStates CRS
     ON C.CustomerID = CRS.CustomerID
 INNER JOIN dbo.CustomerTransaction CT
