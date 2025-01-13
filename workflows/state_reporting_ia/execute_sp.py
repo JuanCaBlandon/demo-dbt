@@ -23,7 +23,8 @@ print(url)
 
 spark = SparkSession.builder.appName("StoredProcedureExecution").getOrCreate()
 try:
-    driver_manager = spark._sc._gateway.jvm.java.sql.DriverManager
+    sc = spark.sparkContext
+    driver_manager = sc._gateway.jvm.java.sql.DriverManager
     connection = driver_manager.getConnection(url, username, password)
     callable_statement = connection.prepareCall(f"{{CALL {schema}.{sp_name}}}")
     result_set = callable_statement.executeQuery()
