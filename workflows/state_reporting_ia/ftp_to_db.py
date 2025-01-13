@@ -33,7 +33,6 @@
 
 from ftplib import FTP, error_perm
 import os
-from databricks import dbutils
 
 # FTP server details
 ftp_host = "ftp.dlptest.com"
@@ -42,7 +41,7 @@ ftp_pass = "rNrKYTX9g7z3RgJRmxWuGHbeu"
 ftp_file_path = "/actorstoday.txt"
 local_file_path = "/dbfs/tmp/actorstoday.txt"
 
-# Ensure the directory exists in DBFS
+# Ensure the directory exists in DBFS using dbutils
 dbutils.fs.mkdirs("dbfs:/tmp")
 
 try:
