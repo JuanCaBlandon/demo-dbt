@@ -78,7 +78,7 @@ part_4 = part_3.select(
     substring(col("rest"), 12, 10000).alias("remaining_rest")
 ).withColumn(
     "rest",
-    regexp_replace(col("rest_comma"), r"^,", "")
+    regexp_replace(col("remaining_rest"), r"^,", "")
 ).drop("remaining_rest")
 
 part_4 = part_4.withColumn("offense_date", to_timestamp(col("offense_date"), "yyyy-MM-dd"))
