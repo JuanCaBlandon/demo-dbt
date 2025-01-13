@@ -1,3 +1,5 @@
+from args_parser import get_parser
+
 # Get the parser
 parser = get_parser()
 args = parser.parse_args()

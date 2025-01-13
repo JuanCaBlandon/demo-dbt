@@ -1,4 +1,6 @@
 from pyspark.sql.functions import col
+from args_parser import get_parser
+
 
 # Get the parser
 parser = get_parser()
