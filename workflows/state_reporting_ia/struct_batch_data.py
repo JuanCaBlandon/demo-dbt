@@ -1,3 +1,4 @@
+print("test reconnect repo")
 # Databricks notebook source
 from pyspark.sql.functions import col, length, substring, regexp_replace, split, when, regexp_extract, current_timestamp, to_timestamp
 
