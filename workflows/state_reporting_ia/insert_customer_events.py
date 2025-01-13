@@ -37,7 +37,7 @@ spark.sql("""
     MERGE INTO state_reporting_dev.bronze.customer_events AS CED
     USING CustomerEvents AS CESQL
     ON COALESCE(CED.DeviceUsageViolationID,CED.DeviceUsageEventViolationID,CED.CustomerTransactionID) = COALESCE(CESQL.DeviceUsageViolationID,CESQL.DeviceUsageEventViolationID,CESQL.CustomerTransactionID)
-    WHEN MATCHED AND CESQL.ModificationDate = current_date()
+    WHEN MATCHED AND CESQL.ModificationDate = current_date() THEN
         UPDATE SET
           	CED.CustomerID = CESQL.CustomerID,
             CED.DeviceUsageID = CESQL.DeviceUsageID,
