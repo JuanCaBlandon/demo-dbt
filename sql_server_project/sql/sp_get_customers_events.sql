@@ -1,3 +1,4 @@
+--Test Comment
 USE StateReporting
 GO
 
@@ -28,8 +29,7 @@ INSERT INTO databricks.TmpCustomerEvents(
 	LogEntryTime,
 	Eventdate,
 	VIN,
-	NewVIN,
-	CreationDate
+	NewVIN
 )
 
 -- Record Type 1 and 2
@@ -196,9 +196,9 @@ INNER JOIN CustSrv.dbo.CustomerTransaction CT
     AND CT.TransactionCode = 'De-install' 
     AND CT.StatusCode <> 'C' 
     AND CT.TrnParm3 IS NOT NULL
-INNER JOIN  Mongoose.DnAccountClosureDispositionDetails DACDD
+INNER JOIN  CustSrv.Mongoose.DnAccountClosureDispositionDetails DACDD
     ON CT.AccountClosureDispositionDetailId = DACDD.AccountClosureDispositionDetailId
-INNER JOIN  Mongoose.DnAccountClosureDispositions DACD
+INNER JOIN  CustSrv.Mongoose.DnAccountClosureDispositions DACD
     ON DACDD.AccountClosureDispositionId = DACD.AccountClosureDispositionId
 WHERE 
     CRS.StateCode = 'IA' 
