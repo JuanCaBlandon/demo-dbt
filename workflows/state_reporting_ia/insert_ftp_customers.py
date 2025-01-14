@@ -19,7 +19,7 @@ url = (f"jdbc:sqlserver://{database_host};instanceName={instanceName};"
          f"password={password}")  
 
 # Table details
-table_name = "dbo.FTPCustomerData"
+table_name = "databricks.FTPCustomerData"
 
 
 try:
