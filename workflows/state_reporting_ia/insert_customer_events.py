@@ -11,7 +11,6 @@ driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 database_host = "172.16.1.161\dev"  # Note the escaped backslash
 database_port = "1433"
 database_name = "statereporting"
-table = "TpmStateReportedCustomer"
 username = dbutils.secrets.get(scope="state_reporting", key="sql_server_user")
 password = dbutils.secrets.get(scope="state_reporting", key="sql_server_pass")
 

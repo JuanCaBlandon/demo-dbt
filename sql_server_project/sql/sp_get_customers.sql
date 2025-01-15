@@ -1,7 +1,7 @@
 USE StateReporting
 GO
 
-CREATE OR ALTER PROCEDURE GetCustomersIA
+CREATE OR ALTER PROCEDURE databricks.GetCustomersIA
 AS
 
 /*
@@ -14,9 +14,9 @@ AS
 
 -- Get the customers for SQL and Databricks implementation
 
-TRUNCATE TABLE StateReporting.databricks.TpmStateReportedCustomer;
+TRUNCATE TABLE StateReporting.databricks.TmpStateReportedCustomer;
 
-INSERT INTO StateReporting.databricks.TpmStateReportedCustomer(
+INSERT INTO StateReporting.databricks.TmpStateReportedCustomer(
 	CustomerReportingStateID ,
 	CustomerID ,
 	DriversLicenseNumber,
@@ -79,20 +79,22 @@ FROM (
         CAST(GETDATE() AS DATE) AS CreationDate
 
     FROM [CustSrv].[dbo].[Customer] cus
-        INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst on cus.CustomerID = custst.CustomerID
-            AND Installdateconfirmed IS NOT NULL
-            AND cus.RelayTypeCd != 924 -- Home Monitor
-            AND custst.StateCode = 'IA'
-            AND  custst.DeviceLogRptgClassCd
-                NOT IN  (1333, --Teen Voluntary
-                        356) -- Voluntary
-            AND cus.StatusCd 
-                NOT IN (506, --Demo
-                        849,507) --Webdemo
+    INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst 
+        ON cus.CustomerID = custst.CustomerID
+        AND Installdateconfirmed IS NOT NULL
+        AND cus.RelayTypeCd != 924 -- Home Monitor
+        AND custst.StateCode = 'IA'
+        AND  custst.DeviceLogRptgClassCd
+            NOT IN  (1333, --Teen Voluntary
+                    356) -- Voluntary
+        AND cus.StatusCd 
+            NOT IN (506, --Demo
+                    849,507) --Webdemo
     ) AS CU;
 
+-- Question fot Yeison: In this case, when it does insert records for the first time, fields are not populated
 -- Update customers with incoming batch file data (FTP server)
-MERGE StateReporting.databricks.TpmStateReportedCustomer  AS Target
+MERGE StateReporting.databricks.TmpStateReportedCustomer  AS Target
 USING StateReporting.databricks.FtpCustomerData AS Source
 ON Source.DriversLicenseNumber = Target.DriversLicenseNumber
     AND UPPER(Source.FirstName) = UPPER(Target.FirstName)
@@ -155,7 +157,7 @@ SELECT
 	CU.CreationDate
 
 FROM StateReporting.databricks.StateReportedCustomer HC
-	INNER JOIN StateReporting.databricks.TpmStateReportedCustomer CU ON HC.CustomerID = CU.CustomerID
+INNER JOIN StateReporting.databricks.TmpStateReportedCustomer CU ON HC.CustomerID = CU.CustomerID
 WHERE (HC.CustomerStatus <> CU.CustomerStatus
 	OR CASE WHEN HC.ModifyDate IS NULL THEN '' ELSE HC.ModifyDate END <> CASE WHEN CU.ModifyDate IS NULL THEN '' ELSE CU.ModifyDate END
     OR CASE WHEN HC.OffenseDate IS NULL THEN '' ELSE HC.OffenseDate END <> CASE WHEN CU.OffenseDate IS NULL THEN '' ELSE CU.OffenseDate END
@@ -213,8 +215,7 @@ SELECT
     CU.IIDEndDate,
     CU.RepeatOffender,
 	CU.CreationDate
-
-FROM StateReporting.databricks.TpmStateReportedCustomer CU
+FROM StateReporting.databricks.TmpStateReportedCustomer CU
 WHERE NOT EXISTS (SELECT CustomerID FROM StateReporting.databricks.StateReportedCustomer ST WHERE CU.CustomerID =  ST.CustomerID)
     AND CU.ActiveStatus = 1
  -- AND CU.OffenseDate >= '2025-01-01'
@@ -223,7 +224,7 @@ WHERE NOT EXISTS (SELECT CustomerID FROM StateReporting.databricks.StateReported
 -- Put date to inactive customers, ActiveStatus = 0
 UPDATE ST
 SET ST.ActiveStatusEndDate = GETDATE()
-FROM StateReporting.databricks.TpmStateReportedCustomer CU
+FROM StateReporting.databricks.TmpStateReportedCustomer CU
     INNER JOIN StateReporting.databricks.StateReportedCustomer ST ON CU.CustomerID = ST.CustomerID
 WHERE CU.ActiveStatus = 0
     --AND CU.OffenseDate >= '2025-01-01'
@@ -231,5 +232,5 @@ WHERE CU.ActiveStatus = 0
 
 -- This top one is only for databricks because spark needs something to return when the SP is running 
 SELECT TOP 1 * 
-FROM StateReporting.databricks.TpmStateReportedCustomer
+FROM StateReporting.databricks.TmpStateReportedCustomer
 ;
