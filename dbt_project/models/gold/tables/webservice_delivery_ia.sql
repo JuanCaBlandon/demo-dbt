@@ -25,7 +25,7 @@ INNER JOIN {{ref('dim_date_time')}} dd
     ON csr.datetime_id = dd.datetime_id
 INNER JOIN {{ref('batch_customer')}} bc 
     ON csr.batch_customer_dw_id = bc.batch_customer_dw_id
-    AND bc.date = (SELECT MAX(created_at FROM {{ ref('batch_customer') }}))
+    AND bc.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer') }})
 INNER JOIN {{ref('record_type')}} rt
     ON csr.record_type_dw_id = rt.record_type_dw_id
 WHERE csr.error_detail_dw_id = ''

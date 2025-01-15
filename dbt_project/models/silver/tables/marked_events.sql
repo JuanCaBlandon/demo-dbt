@@ -12,6 +12,8 @@ WITH base_data AS (
         event_dw_id,
         customer_id,
         device_usage_violation_id,
+        device_usage_event_violation_id,
+        customer_transaction_id,
         event_type,
         event_date
     FROM {{ ref('customer_events_cleaned') }} as cvc
@@ -58,7 +60,8 @@ marked_violations_30d AS (
 SELECT
     event_dw_id,
     customer_id,
-    device_usage_violation_id,
+    'device_usage_violation_id' event_id_type,
+    device_usage_violation_id event_id,
     event_date,
     CASE
         WHEN violation_count_24hr >= 5 AND violation_count_24hr % 5 = 0 THEN 1
