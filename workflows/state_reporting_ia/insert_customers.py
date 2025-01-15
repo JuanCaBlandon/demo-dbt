@@ -22,7 +22,7 @@ url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database
 
 sql_where = "WHERE OffenseDate >= '2025-01-01'" if env == "prod" else "WHERE OffenseDate >= '2024-01-01'"
 query = f"""
-SELECT * FROM StateReportedCustomer {sql_where}
+SELECT * FROM {database_name}.databricks.TmpStateReportedCustomer {sql_where}
 """
 
 result_df = (spark.read

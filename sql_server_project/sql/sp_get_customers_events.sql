@@ -1,4 +1,3 @@
---Test Comment
 USE StateReporting
 GO
 
@@ -61,10 +60,10 @@ INNER JOIN DevicelogData.dbo.DeviceLogEntry DLE
 	AND DLE.DeviceLogEntryID = StartingDeviceLogEntryID
 WHERE
     DUV.ViolationID IN (1, 11)
-    AND (
-        DUV.ViolationReportingApprovalCd = 344 -- Approved
-        OR DUV.ViolationReportingApprovalCd = 345 -- Auto-Approved
-    )
+    AND DUV.ViolationReportingApprovalCd IN (
+				344, -- Approved
+        345 -- Auto-Approved
+		)
     AND CRS.StateCode = 'IA'
     AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time'
         BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
@@ -103,10 +102,10 @@ INNER JOIN DevicelogData.dbo.DeviceLogEntry DLE
 	AND DLE.DeviceLogEntryID = StartingDeviceLogEntryID
 WHERE
     DUV.ViolationID IN (2, 66)
-    AND (
-        DUV.ViolationReportingApprovalCd = 344 -- Approved
-        OR DUV.ViolationReportingApprovalCd = 345 -- Auto-Approved
-    )
+    AND DUV.ViolationReportingApprovalCd IN (
+				344,-- Approved
+        345 -- Auto-Approved
+		)
     AND CRS.StateCode = 'IA'
     AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time'
         BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
@@ -164,7 +163,8 @@ FROM CustSrv.dbo.DeviceUsageEventViolation DUEV
 INNER JOIN CustSrv.dbo.DeviceUsage DU ON DU.DeviceUsageId  = DUEV.DeviceUsageId
 INNER JOIN CustSrv.dbo.CustomerReportingStates CRS ON DU.CustomerId = CRS.CustomerID
 WHERE
-	DUEV.EventViolationCd = 1099 -- Unauthorized Removal  
+	CRS.StateCode = 'IA'
+	AND DUEV.EventViolationCd = 1099 -- Unauthorized Removal  
 	AND DUEV.ApprovalStatusInd = 1
 	AND DUEV.ViolationDate 
 		BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
@@ -203,7 +203,7 @@ INNER JOIN  CustSrv.Mongoose.DnAccountClosureDispositions DACD
 WHERE 
     CRS.StateCode = 'IA' 
     AND C.DeInstallDateConfirmed BETWEEN '2024-01-01' AND CONVERT(DATE, GETDATE()) 
-    AND DACD.AccountClosureDispositionId = 1  -- Requirement Complete
+    AND DACD.AccountClosureDispositionId = 1  -- Requirement Complete -- 2 Uncomplete
 
 UNION ALL
 -- Record type 6 - switched_vehicle
@@ -228,8 +228,10 @@ FROM CustSrv.dbo.Customer c
 INNER JOIN CustSrv.dbo.CustomerTransaction CT
     ON CT.CustomerID = C.CustomerID
     AND CT.CustomerTransactionTypeID = 49 -- Switch
+INNER JOIN CustSrv.dbo.CustomerReportingStates CRS ON C.CustomerId = CRS.CustomerID
 WHERE
 	CT.TrnParm3 IS NOT NULL
+	AND CRS.StateCode = 'IA'
 ;
 
 
