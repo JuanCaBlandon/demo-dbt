@@ -1,0 +1,93 @@
+from args_parser import get_parser
+
+# Get the parser
+parser = get_parser()
+args = parser.parse_args()
+
+# Access parameters
+env = args.environment
+
+driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+database_host = "172.16.1.161\dev"  # Note the escaped backslash
+database_port = "1433"
+database_name = "statereporting"
+table = "TpmStateReportedCustomer"
+username = dbutils.secrets.get(scope="state_reporting", key="sql_server_user")
+password = dbutils.secrets.get(scope="state_reporting", key="sql_server_pass")
+
+url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
+
+sql_where = "'2025-01-01'" if env == "prod" else "'2024-01-01'"
+query = f"""
+SELECT * FROM databricks.CustomerEvents WHERE EventDate >= {sql_where}
+"""
+
+result_df = (spark.read
+    .format("jdbc")
+    .option("driver", driver)
+    .option("url", url)
+    .option("query", query)
+    .option("user", username)
+    .option("password", password)
+    .load())
+
+result_df.createOrReplaceTempView("CustomerEvents")
+
+spark.sql(""" 
+    MERGE INTO state_reporting_dev.bronze.customer_events AS CED
+    USING CustomerEvents AS CESQL
+    ON COALESCE(CED.DeviceUsageViolationID,CED.DeviceUsageEventViolationID,CED.CustomerTransactionID) = COALESCE(CESQL.DeviceUsageViolationID,CESQL.DeviceUsageEventViolationID,CESQL.CustomerTransactionID)
+    WHEN MATCHED AND CESQL.ModificationDate = current_date() THEN
+        UPDATE SET
+          	CED.CustomerID = CESQL.CustomerID,
+            CED.DeviceUsageID = CESQL.DeviceUsageID,
+            CED.ViolationReportingApprovalCd = CESQL.ViolationReportingApprovalCd,
+            CED.ViolationReportingApprovalUser = CESQL.ViolationReportingApprovalUser,
+            CED.CreateDate = CESQL.CreateDate,
+            CED.CreateUser = CESQL.CreateUser,
+            CED.ModifyDate = CESQL.ModifyDate,
+            CED.ModifyUser = CESQL.ModifyUser,
+            CED.LogEntryTime = CESQL.LogEntryTime,
+            CED.Eventdate = CESQL.Eventdate,
+            CED.VIN = CESQL.VIN,
+            CED.ModificationDate = CESQL.ModificationDate
+    WHEN NOT MATCHED THEN
+        INSERT (
+            EventType,
+            CustomerID,
+            DeviceUsageViolationID,
+            DeviceUsageEventViolationID,
+            CustomerTransactionID,
+            DeviceUsageID,
+            ViolationReportingApprovalCd,
+            ViolationReportingApprovalUser,
+            CreateDate,
+            CreateUser,
+            ModifyDate,
+            ModifyUser,
+            LogEntryTime,
+            Eventdate,
+            VIN,
+            NewVIN,
+            CreationDate
+        )
+        VALUES (
+            CESQL.EventType,
+            CESQL.CustomerID,
+            CESQL.DeviceUsageViolationID,
+            CESQL.DeviceUsageEventViolationID,
+            CESQL.CustomerTransactionID,
+            CESQL.DeviceUsageID,
+            CESQL.ViolationReportingApprovalCd,
+            CESQL.ViolationReportingApprovalUser,
+            CESQL.CreateDate,
+            CESQL.CreateUser,
+            CESQL.ModifyDate,
+            CESQL.ModifyUser,
+            CESQL.LogEntryTime,
+            CESQL.Eventdate,
+            CESQL.VIN,
+            CESQL.NewVIN,
+            CESQL.CreationDate
+        )
+""")
