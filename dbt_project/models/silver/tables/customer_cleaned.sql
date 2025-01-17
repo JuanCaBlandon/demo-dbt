@@ -37,7 +37,7 @@ FROM
   {{ source('BRONZE', 'state_reported_customer') }}
 WHERE StateCode = 'IA'
 {% if is_incremental() %}
-    and CreationDate >= Coalesce((select MAX(created_at) from {{ this }}),'2023-01-01')
+    AND CreationDate >= COALESCE((SELECT MAX(created_at) from {{ this }}),'2024-01-01')
 {% endif %}
 
 

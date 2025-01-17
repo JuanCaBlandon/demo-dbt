@@ -16,13 +16,16 @@ WITH base_data AS (
         customer_transaction_id,
         event_type,
         event_date
-    FROM {{ ref('customer_events_cleaned') }} as cvc
+    FROM {{ ref('customer_events_cleaned') }} AS cec
     WHERE is_inconsistent = 0
     {% if is_incremental() %}
-        AND normalized_date > (
-            SELECT MAX(event_date) FROM {{ this }} 
-            AND customer_id = cvc.customer_id AND record_type = cvc.record_type
+        AND event_date > (
+            SELECT COALESCE(MAX(event_date), '2024-01-01') FROM {{ this }}
+            WHERE 
+                customer_id = cec.customer_id
+                AND CONCAT('TYPE ', record_type) = cec.event_type
         )
+        
     {% endif %}
 ),
 
