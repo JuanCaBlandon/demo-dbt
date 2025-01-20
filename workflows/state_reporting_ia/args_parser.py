@@ -5,4 +5,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Process parameters for the Databricks job.")
     parser.add_argument("--environment", required=False, help="Execution Environment")
     parser.add_argument("--sp_name", required=False, help="Name of the SP to execute")
+    parser.add_argument("--start_date", required=False, help="Start date for Events processing")
+    parser.add_argument("--end_date", required=False, help="End date for Events processing")
+
     return parser

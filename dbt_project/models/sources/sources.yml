@@ -8,5 +8,4 @@ sources:
     tables:
       - name: state_reported_customer
       - name: state_batch_customer_data_ia
-      - name: violation_transaction #TODO: Really needed?
       - name: customer_events

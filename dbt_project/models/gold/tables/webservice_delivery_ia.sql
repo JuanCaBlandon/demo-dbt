@@ -13,12 +13,14 @@ SELECT
     c.middle_name AS middleName,
     c.date_of_birth AS dateOfBirth,
     c.vin AS VIN,
-    NULL AS newVIN, --NO ESTÁ, MIRAR
+    me. AS newVIN, 
     bc.iid_start_date AS ignitionInterlockDeviceInstalledDate,
     bc.iid_end_date AS ignitionInterlockDeviceRemovedDate,
     dd.datetime_full AS violationDate,
     rt.id AS recordType
 FROM {{ref('customer_state_reported')}} AS csr
+INNER JOIN {{ref('marked_events')}} AS me
+    ON csr.event_dw_id = me.event_dw_id
 INNER JOIN {{ref('customer')}} AS c
     ON csr.customer_dw_id = c.customer_dw_id
 INNER JOIN {{ref('dim_date_time')}} dd

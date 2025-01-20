@@ -19,8 +19,6 @@ password = dbutils.secrets.get(scope="state_reporting", key="sql_server_pass")
 
 url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
 
-
-sql_where = "WHERE OffenseDate >= '2025-01-01'" if env == "prod" else "WHERE OffenseDate >= '2024-01-01'"
 query = f"""
 SELECT * FROM {database_name}.databricks.TmpStateReportedCustomer {sql_where}
 """
@@ -50,13 +48,62 @@ spark.sql("""
         UPDATE SET ST.ActiveStatusEndDate = current_date()
     WHEN NOT MATCHED THEN
         INSERT (
-            CustomerReportingStateID, CustomerID, DriversLicenseNumber, FirstName, LastName, MiddleName, DateOfBirth, VIN, InstallDate,
-            DeInstallDate, StateCode, ActiveStatus, EffectiveStartDate, EffectiveEndDate, DeviceLogRptgClassCd, CreateDate, CreateUser,
-            ModifyDate, ModifyUser, CreationDate, ReportStatusCd, CustomerStatus, ActiveStatusStartDate, OffenseDate, IIDStartDate, IIDEndDate, RepeatOffender
+            CustomerReportingStateID,
+            CustomerID,
+            DriversLicenseNumber,
+            FirstName,
+            LastName,
+            MiddleName,
+            DateOfBirth,
+            VIN,
+            InstallDate,
+            DeInstallDate,
+            StateCode,
+            ActiveStatus,
+            ReportStatusCD,
+            CustomerStatus,
+            ActiveStatusStartDate,
+            EffectiveStartDate,
+            EffectiveEndDate,
+            DeviceLogRptgClassCd,
+            CreateDate,
+            CreateUser,
+            ModifyDate,
+            ModifyUser,
+            RepeatOffender,
+            OffenseDate,
+            IIDStartDate,
+            IIDEndDate,
+            CreationDate
         )
         VALUES (
-            CU.CustomerReportingStateID, CU.CustomerID, CU.DriversLicenseNumber, CU.FirstName, CU.LastName, CU.MiddleName, try_cast(CU.DateOfBirth AS TIMESTAMP), CU.VIN, try_cast(CU.InstallDate AS TIMESTAMP),
-            try_cast(CU.DeInstallDate AS TIMESTAMP), CU.StateCode, CU.ActiveStatus, try_cast(CU.EffectiveStartDate AS TIMESTAMP), try_cast(CU.EffectiveEndDate AS TIMESTAMP), CU.DeviceLogRptgClassCd, try_cast(CU.CreateDate AS TIMESTAMP), CU.CreateUser,
-            try_cast(CU.ModifyDate AS TIMESTAMP), CU.ModifyUser, try_cast(CU.CreationDate AS TIMESTAMP), CU.ReportStatusCd, CU.CustomerStatus, CU.ActiveStatusStartDate, CU.OffenseDate, CU.IIDStartDate, CU.IIDEndDate, CU.RepeatOffender
+            CU.CustomerReportingStateID,
+            CU.CustomerID,
+            CU.DriversLicenseNumber,
+            CU.FirstName,
+            CU.LastName,
+            CU.MiddleName,
+            try_cast(CU.DateOfBirth AS TIMESTAMP),
+            CU.VIN,
+            try_cast(CU.InstallDate AS TIMESTAMP),
+            try_cast(CU.DeInstallDate AS TIMESTAMP),
+            CU.StateCode,
+            CU.ActiveStatus,
+            CU.ReportStatusCD,
+            CU.CustomerStatus,
+            CU.ActiveStatusStartDate,
+            try_cast(CU.EffectiveStartDate AS TIMESTAMP),
+            try_cast(CU.EffectiveEndDate AS TIMESTAMP),
+            CU.DeviceLogRptgClassCd,
+            try_cast(CU.CreateDate AS TIMESTAMP),
+            CU.CreateUser,
+            try_cast(CU.ModifyDate AS TIMESTAMP),
+            CU.ModifyUser,
+            CU.RepeatOffender
+            CU.OffenseDate,
+            CU.IIDStartDate,
+            CU.IIDEndDate,
+            try_cast(CU.CreationDate AS TIMESTAMP)
         )
 """)
+

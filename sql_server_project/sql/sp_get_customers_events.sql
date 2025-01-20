@@ -2,6 +2,9 @@ USE StateReporting
 GO
 
 CREATE OR ALTER PROCEDURE databricks.GetCustomersEventsIA
+    @START_DATE DATE,
+    @END_DATE DATE
+
 AS
 
 /*
@@ -9,6 +12,7 @@ AS
 		Company: SourceMeridian
 		Short description: SP to get customers violations for IOWA State
 		Creation date: 2025-01-12
+		Modification date: 2025-01-20
 */
 TRUNCATE TABLE databricks.TmpCustomerEvents;
 
@@ -67,6 +71,7 @@ WHERE
     AND CRS.StateCode = 'IA'
     AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time'
         BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+		AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' BETWEEN @START_DATE AND @END_DATE
 
 
 UNION ALL
@@ -109,6 +114,8 @@ WHERE
     AND CRS.StateCode = 'IA'
     AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time'
         BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+		AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' BETWEEN @START_DATE AND @END_DATE
+		
 
 
 UNION ALL
@@ -138,6 +145,7 @@ WHERE
 	AND DUEV.ApprovalStatusInd = 1 -- TODO: should I add this? it's on record type 4 
     AND DUEV.ViolationDate 
         BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+	AND DUEV.ViolationDate BETWEEN @START_DATE AND @END_DATE
 
 
 UNION ALL
@@ -166,8 +174,9 @@ WHERE
 	CRS.StateCode = 'IA'
 	AND DUEV.EventViolationCd = 1099 -- Unauthorized Removal  
 	AND DUEV.ApprovalStatusInd = 1
-	AND DUEV.ViolationDate 
-		BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+	AND DUEV.ViolationDate BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
+	AND DUEV.ViolationDate BETWEEN @START_DATE AND @END_DATE
+
 		
 UNION ALL
 -- Record type 5 - Authorized Uninstall
@@ -204,6 +213,8 @@ WHERE
     CRS.StateCode = 'IA' 
     AND C.DeInstallDateConfirmed BETWEEN '2024-01-01' AND CONVERT(DATE, GETDATE()) 
     AND DACD.AccountClosureDispositionId = 1  -- Requirement Complete -- 2 Uncomplete
+		AND CT.TrnParm3 BETWEEN @START_DATE AND @END_DATE
+		
 
 UNION ALL
 -- Record type 6 - switched_vehicle
@@ -232,6 +243,8 @@ INNER JOIN CustSrv.dbo.CustomerReportingStates CRS ON C.CustomerId = CRS.Custome
 WHERE
 	CT.TrnParm3 IS NOT NULL
 	AND CRS.StateCode = 'IA'
+	AND CT.TrnParm3 BETWEEN @START_DATE AND @END_DATE
+
 ;
 
 
