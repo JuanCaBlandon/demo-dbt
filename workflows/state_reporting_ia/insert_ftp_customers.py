@@ -7,17 +7,17 @@ parser = get_parser()
 args = parser.parse_args()
 
 # Access parameters
+env = args.environment
 execution_date = args.execution_date
-print(execution_date)
 
 
 # SQL Server Connection Parameters
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 database_host = "172.16.1.161"
-instanceName = "dev"
+instanceName = env
 database_name = "StateReporting"
-user = dbutils.secrets.get(scope="state_reporting", key="sql_server_user")
-password = dbutils.secrets.get(scope="state_reporting", key="sql_server_pass")
+username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{env}")
+password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
 
 
 # Build connection URL with SSL parameters
