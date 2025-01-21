@@ -1,7 +1,6 @@
 
 from pyspark.sql.functions import col, to_date
 from args_parser import get_parser
-import sys
 
 # Get the parser
 parser = get_parser()
@@ -33,7 +32,7 @@ table_name = "databricks.FTPCustomerData"
 
 
 try:
-    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where(f"CAST(created_at AS DATE) = {execution_date}")
+    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where(f"CAST(created_at AS DATE) = '{execution_date}'")
 
     batch_data = result_df.select(
         col("vendor_name").alias("VendorName"),
@@ -50,6 +49,9 @@ try:
         col("created_at").cast("date").alias("CreationDate")
     )
     
+    if batch_data.count() == 0:
+        raise ValueError("No rows to insert")
+
     # Write DataFrame to SQL Server
     batch_data.write \
         .format("jdbc") \
@@ -65,5 +67,3 @@ try:
 
 except Exception as e:
     print(f"Error inserting DataFrame: {str(e)}")
-    sys.exit(1)
-
