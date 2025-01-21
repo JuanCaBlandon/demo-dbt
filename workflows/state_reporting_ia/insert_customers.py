@@ -20,7 +20,7 @@ password = dbutils.secrets.get(scope="state_reporting", key="sql_server_pass")
 url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
 
 query = f"""
-SELECT * FROM {database_name}.databricks.TmpStateReportedCustomer {sql_where}
+SELECT * FROM {database_name}.databricks.TmpStateReportedCustomer
 """
 
 result_df = (spark.read

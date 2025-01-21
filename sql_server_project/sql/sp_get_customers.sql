@@ -2,7 +2,8 @@ USE StateReporting
 GO
 
 CREATE OR ALTER PROCEDURE databricks.GetCustomersIA
-    @MIN_OFFENSE_DATE DATE
+    @MIN_OFFENSE_DATE DATE,
+    @MAX_INSTALL_DATE DATE -- ONLY FOR TESTING, TODO: REMOVE THIS BEFORE GOING TO PROD
 AS
 
 /*
@@ -89,6 +90,7 @@ INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst
     AND cus.StatusCd 
         NOT IN (506, --Demo
                 849,507) --Webdemo
+    AND Installdateconfirmed <= @MAX_INSTALL_DATE -- ONLY FOR TESTING, TODO: REMOVE THIS BEFORE GOING TO PROD
 
 
 -- Update customers with incoming batch file data (FTP server)
