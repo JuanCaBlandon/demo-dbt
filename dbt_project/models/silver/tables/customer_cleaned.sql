@@ -41,9 +41,9 @@ WITH Tmp AS(
     {{ source('BRONZE', 'state_reported_customer') }}
   WHERE
     StateCode = 'IA'
-    AND OffenseDate >= {{ var("start_date", "2024-01-01") }}
+    AND OffenseDate >= "{{ var("start_date", "2024-01-01") }}"
   {% if is_incremental() %}
-      AND CreationDate >= COALESCE((SELECT MAX(created_at) from {{ this }}),{{ var("start_date", "2024-01-01") }})
+      AND CreationDate >= COALESCE((SELECT MAX(created_at) from {{ this }}),CAST({{ var("start_date", "2024-01-01") }} AS DATE))
   {% endif %}
 
 
