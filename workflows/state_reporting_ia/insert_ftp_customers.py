@@ -9,8 +9,6 @@ args = parser.parse_args()
 # Access parameters
 execution_date = args.execution_date
 print(execution_date)
-ed = dbutils.widgets.get("execution_date")
-print("El de DB: ", ed)
 
 
 # SQL Server Connection Parameters
