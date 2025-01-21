@@ -8,7 +8,7 @@ parser = get_parser()
 args = parser.parse_args()
 
 # Access parameters
-end_date = args.end_date
+execution_date = args.end_date
 
 
 # SQL Server Connection Parameters
@@ -33,7 +33,7 @@ table_name = "databricks.FTPCustomerData"
 
 
 try:
-    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where(f"CAST(created_at AS DATE) = {end_date}")
+    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where(f"CAST(created_at AS DATE) = {execution_date}")
 
     batch_data = result_df.select(
         col("vendor_name").alias("VendorName"),
