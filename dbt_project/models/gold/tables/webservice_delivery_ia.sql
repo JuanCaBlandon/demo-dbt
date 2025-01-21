@@ -13,7 +13,7 @@ SELECT
     c.middle_name AS middleName,
     c.date_of_birth AS dateOfBirth,
     c.vin AS VIN,
-    me. AS newVIN, 
+    me.new_vin AS newVIN, 
     bc.iid_start_date AS ignitionInterlockDeviceInstalledDate,
     bc.iid_end_date AS ignitionInterlockDeviceRemovedDate,
     dd.datetime_full AS violationDate,
