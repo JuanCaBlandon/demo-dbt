@@ -24,7 +24,7 @@ table_name = "databricks.FTPCustomerData"
 
 
 try:
-    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where("created_at=CAST(CURRENT_DATE() AS DATE)")
+    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where("CAST(created_at AS DATE) = CAST(CURRENT_DATE() AS DATE)")
 
     batch_data = result_df.select(
         col("vendor_name").alias("VendorName"),
