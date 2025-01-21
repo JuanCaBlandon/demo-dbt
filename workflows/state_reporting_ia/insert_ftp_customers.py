@@ -67,3 +67,4 @@ try:
 
 except Exception as e:
     print(f"Error inserting DataFrame: {str(e)}")
+    raise
