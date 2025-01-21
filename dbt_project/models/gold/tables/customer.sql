@@ -29,7 +29,7 @@ select
     customer_status,
     effective_start_date,
     effective_end_date,
-    actice_status_start_date,
+    active_status_start_date,
     create_user,
     modify_date,
     modify_user,
