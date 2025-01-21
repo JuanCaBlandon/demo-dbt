@@ -25,7 +25,7 @@ url = (f"jdbc:sqlserver://{database_host};instanceName={instanceName};"
          f"database={database_name};"
          "encrypt=true;"
          "trustServerCertificate=true;"
-         f"user={user};"
+         f"user={username};"
          f"password={password}")  
 
 # Table details
@@ -59,7 +59,7 @@ try:
         .option("url", url) \
         .option("driver", driver) \
         .option("dbtable", table_name) \
-        .option("user", user) \
+        .option("user", username) \
         .option("password", password) \
         .mode("append") \
         .save()
