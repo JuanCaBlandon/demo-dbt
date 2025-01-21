@@ -8,6 +8,7 @@ args = parser.parse_args()
 
 # Access parameters
 execution_date = args.execution_date
+print(execution_date)
 
 
 # SQL Server Connection Parameters
