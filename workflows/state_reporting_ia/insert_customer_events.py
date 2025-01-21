@@ -6,7 +6,7 @@ args = parser.parse_args()
 
 # Access parameters
 env = args.environment
-start_date = args.star_date
+start_date = args.start_date
 end_date = args.end_date
 
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
