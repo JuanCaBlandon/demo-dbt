@@ -31,7 +31,6 @@ result_df = (spark.read
     .option("user", username)
     .option("password", password)
     .load())
-print(f"DF count {result_df.count()}")
 
 result_df = result_df.select(
     [col(column).alias(column.replace(' ', '_').replace(',', '_').replace(';', '_')
@@ -39,7 +38,6 @@ result_df = result_df.select(
                       .replace(')', '_').replace('\n', '_').replace('\t', '_')
                       .replace('=', '_')) for column in result_df.columns]
 )
-print(f"DF count {result_df.count()}-2")
 
 result_df.createOrReplaceTempView("CustomersIA")
 

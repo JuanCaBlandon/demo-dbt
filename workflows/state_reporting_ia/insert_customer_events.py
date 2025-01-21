@@ -31,6 +31,8 @@ result_df = (spark.read
     .option("password", password)
     .load())
 
+print(f"DF count {result_df.count()}-2")
+
 result_df.createOrReplaceTempView("CustomerEvents")
 
 spark.sql(""" 
