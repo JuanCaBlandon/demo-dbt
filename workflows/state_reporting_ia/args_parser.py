@@ -7,5 +7,6 @@ def get_parser():
     parser.add_argument("--sp_name", required=False, help="Name of the SP to execute")
     parser.add_argument("--start_date", required=False, help="Start date for Events processing")
     parser.add_argument("--end_date", required=False, help="End date for Events processing")
+    parser.add_argument("--execution_date", required=False, help="Date when the process is executed")
 
     return parser

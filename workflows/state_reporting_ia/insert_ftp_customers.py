@@ -1,6 +1,15 @@
 
 from pyspark.sql.functions import col, to_date
+from args_parser import get_parser
 import sys
+
+# Get the parser
+parser = get_parser()
+args = parser.parse_args()
+
+# Access parameters
+end_date = args.end_date
+
 
 # SQL Server Connection Parameters
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
@@ -24,7 +33,7 @@ table_name = "databricks.FTPCustomerData"
 
 
 try:
-    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where("CAST(created_at AS DATE) = CAST(CURRENT_DATE() AS DATE)")
+    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where(f"CAST(created_at AS DATE) = {end_date}")
 
     batch_data = result_df.select(
         col("vendor_name").alias("VendorName"),
