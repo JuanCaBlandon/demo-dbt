@@ -99,7 +99,7 @@ spark.sql("""
             CU.CreateUser,
             try_cast(CU.ModifyDate AS TIMESTAMP),
             CU.ModifyUser,
-            CU.RepeatOffender
+            CU.RepeatOffender,
             CU.OffenseDate,
             CU.IIDStartDate,
             CU.IIDEndDate,
