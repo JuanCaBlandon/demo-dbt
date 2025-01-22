@@ -45,8 +45,8 @@ try:
         col("VIN"),
         col("offense_date").alias("OffenseDate"),
         col("repeat_offender").alias("RepeatOffender"),
-        to_date(col("IID_Start_Date"), "M/d/yy").alias("IIDStartDate"),
-        to_date(col("IID_End_Date"), "M/d/yy").alias("IIDEndDate"),
+        col("IID_Start_Date").alias("IIDStartDate"),
+        col("IID_End_Date").alias("IIDEndDate"),
         col("created_at").cast("date").alias("CreationDate")
     )
     
