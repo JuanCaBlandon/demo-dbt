@@ -50,7 +50,7 @@ SELECT
 	DUV.ModifyDate,
 	DUV.ModifyUser,
 	DLE.LogEntryTime,
-	CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' EventDate,
+	CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) EventDate,
 	NULL VIN,
 	NULL NewVIN
 FROM 
@@ -69,9 +69,9 @@ WHERE
         345 -- Auto-Approved
 		)
     AND CRS.StateCode = 'IA'
-    AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time'
+    AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime)
         BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
-		AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' BETWEEN @START_DATE AND @END_DATE
+		AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) BETWEEN @START_DATE AND @END_DATE
 
 
 UNION ALL
@@ -93,7 +93,7 @@ SELECT
 	DUV.ModifyDate,
 	DUV.ModifyUser,
 	DLE.LogEntryTime,
-	CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' Eventdate,
+	CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) Eventdate,
 	NULL VIN,
 	NULL NewVIN
 FROM 
@@ -112,9 +112,9 @@ WHERE
         345 -- Auto-Approved
 		)
     AND CRS.StateCode = 'IA'
-    AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time'
+    AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime)
         BETWEEN CRS.EffectiveStartDate AND COALESCE(CRS.EffectiveEndDate, GETDATE())
-		AND CAST(DLE.LogEntryTime AS datetime) AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' BETWEEN @START_DATE AND @END_DATE
+		AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) BETWEEN @START_DATE AND @END_DATE
 		
 
 

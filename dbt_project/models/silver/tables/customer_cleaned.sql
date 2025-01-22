@@ -168,9 +168,9 @@ WHERE
   AND last_name IS NOT NULL 
   AND date_of_birth IS NOT NULL
   AND vin IS NOT NULL
-  AND iid_start_date IS NULL
-  AND repeat_offender IS NULL 
-  AND offense_date IS NULL
+  AND iid_start_date IS NOT NULL
+  AND repeat_offender IS NOT NULL 
+  AND offense_date IS NOT NULL
 
 UNION ALL
 SELECT
