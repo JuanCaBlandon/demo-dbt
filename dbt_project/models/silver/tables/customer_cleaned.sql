@@ -78,7 +78,7 @@ SELECT
     modify_date,
     modify_user,
     repeat_offender,
-    offense_date,
+    tmp.offense_date,
     iid_start_date,
     iid_end_date,
     created_at,
@@ -161,8 +161,16 @@ SELECT
     'N/A' as type_inconsistent,
     num_duplicates
 FROM Tmp
-WHERE num_duplicates = 1 AND drivers_license_number IS NOT NULL AND first_name IS NOT NULL 
-  AND last_name IS NOT NULL  AND date_of_birth IS NOT NULL AND vin IS NOT NULL
+WHERE
+  num_duplicates = 1
+  AND drivers_license_number IS NOT NULL
+  AND first_name IS NOT NULL 
+  AND last_name IS NOT NULL 
+  AND date_of_birth IS NOT NULL
+  AND vin IS NOT NULL
+  AND iid_start_date IS NULL
+  AND repeat_offender IS NULL 
+  AND offense_date IS NULL
 
 UNION ALL
 SELECT
@@ -206,7 +214,7 @@ WHERE iid_start_date IS NULL OR repeat_offender IS NULL OR offense_date IS NULL
 
 
 SELECT
-    customer_dw_id,,
+    customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -240,7 +248,7 @@ SELECT
     num_duplicates
   FROM cleaned_data
   {% if is_incremental() %}
-    WHERE customer_dw_id NOT IN (SELECT customer_dw_id FROM {{ this }})
+    WHERE customer_dw_id NOT IN (SELECT c.customer_dw_id FROM {{ this }} c)
 {% endif %}
 
 
