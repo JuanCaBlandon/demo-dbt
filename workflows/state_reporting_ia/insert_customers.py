@@ -42,7 +42,7 @@ result_df = result_df.select(
 result_df.createOrReplaceTempView("CustomersIA")
 
 spark.sql(""" 
-    MERGE INTO state_reporting_dev.bronze.state_reported_customer AS ST
+    MERGE INTO state_reporting_dev.bronze.customer_raw AS ST
     USING CustomersIA AS CU ON ST.CustomerID = CU.CustomerID
     WHEN MATCHED AND CU.ActiveStatus = 0 THEN
         UPDATE SET ST.ActiveStatusEndDate = current_date()

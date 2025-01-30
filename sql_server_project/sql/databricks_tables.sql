@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS state_reporting_dev.bronze.state_reported_customer(
+CREATE TABLE IF NOT EXISTS state_reporting_dev.bronze.customer_raw(
         CustomerReportingStateID INT,
         CustomerID INT,
         DriversLicenseNumber STRING,

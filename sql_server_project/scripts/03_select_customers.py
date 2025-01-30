@@ -39,7 +39,7 @@ try:
 
     # Insert the results into delta table bronze layer 
     spark.sql("""
-        INSERT INTO state_reporting_dev.bronze.state_reported_customer (
+        INSERT INTO state_reporting_dev.bronze.customer_raw (
             CustomerReportingStateID, CustomerID, DriversLicenseNumber, FirstName, LastName, MiddleName, DateOfBirth, VIN, InstallDate,
             DeInstallDate, StateCode, ActiveStatus, EffectiveStartDate, EffectiveEndDate, DeviceLogRptgClassCd, CreateDate, CreateUser,
             ModifyDate, ModifyUser, CreationDate, ReportStatusCd,CustomerStatus,ActiveStatusStartDate,OffenseDate,IIDStartDate,IIDEndDate,RepeatOffender
@@ -52,7 +52,7 @@ try:
         """)
 
     spark.sql(""" 
-        MERGE INTO state_reporting_dev.bronze.state_reported_customer AS ST
+        MERGE INTO state_reporting_dev.bronze.customer_raw AS ST
         USING CustomersIA AS CU
         ON ST.CustomerID = CU.CustomerID
             AND CU.ActiveStatus = 0
