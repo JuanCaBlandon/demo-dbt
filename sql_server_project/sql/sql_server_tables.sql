@@ -47,7 +47,7 @@ CREATE TABLE [databricks].[FtpCustomerData](
 	[CreationDate] [date] NULL
 ) ON [PRIMARY]
 
-CREATE TABLE [databricks].[TpmStateReportedCustomer](
+CREATE TABLE [databricks].[TmpStateReportedCustomer](
 	[CustomerReportingStateID] [int] NULL,
 	[CustomerID] [int]  NULL,
 	[DriversLicenseNumber] [nvarchar](30),

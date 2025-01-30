@@ -32,80 +32,67 @@ WITH base_data AS (
         
     {% endif %}
 ),
-
--- 24 hours violations with reset counter
-marked_violations_24hr AS (
+--Logic to group violations by drivers license and identify record types 1-2 groups
+violation_counts AS (
     SELECT
-        a.event_dw_id,
-        a.drivers_license_number,
-        a.customer_id,
-        a.device_usage_violation_id,
-        a.event_date,
+        event_dw_id,
+        customer_id,
+        drivers_license_number,
+        device_usage_violation_id,
+        event_date,
         COUNT(*) OVER (
-            PARTITION BY a.drivers_license_number
-            ORDER BY a.event_date
-            RANGE BETWEEN INTERVAL '24 HOURS' PRECEDING AND CURRENT ROW
-        ) AS violation_count_24hr,
+            PARTITION BY drivers_license_number
+            ORDER BY event_date
+            RANGE BETWEEN INTERVAL 24 HOURS PRECEDING AND CURRENT ROW
+        ) AS violation_count_24h,
         COUNT(*) OVER (
-            PARTITION BY a.drivers_license_number
-            ORDER BY a.event_date
-        ) - 
-        COALESCE(
-            MAX(CASE 
-                WHEN COUNT(*) OVER (
-                    PARTITION BY a.drivers_license_number
-                    ORDER BY a.event_date
-                    RANGE BETWEEN INTERVAL '24 HOURS' PRECEDING AND CURRENT ROW
-                ) >= 5 
-                THEN COUNT(*) OVER (PARTITION BY a.drivers_license_number ORDER BY a.event_date)
-            END) OVER (
-                PARTITION BY a.drivers_license_number
-                ORDER BY a.event_date
-                ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-            ),
-            0
-        ) AS events_since_last_mark_24hr
-    FROM base_data a
-    WHERE event_type = 'TYPE 1-2'
+            PARTITION BY drivers_license_number
+            ORDER BY event_date
+            RANGE BETWEEN INTERVAL 30 DAYS PRECEDING AND CURRENT ROW
+        ) AS violation_count_30d
+    FROM base_data
 ),
 
--- 30 days violations with reset counter
-marked_violations_30d AS (
+marking_data AS (
     SELECT
-        a.event_dw_id,
-        a.drivers_license_number,
-        a.customer_id,
-        a.device_usage_violation_id,
-        a.event_date,
-        COUNT(*) OVER (
-            PARTITION BY a.drivers_license_number
-            ORDER BY a.event_date
-            RANGE BETWEEN INTERVAL 30 DAYS PRECEDING AND CURRENT ROW
-        ) AS violation_count_30d,
-        COUNT(*) OVER (
-            PARTITION BY a.drivers_license_number
-            ORDER BY a.event_date
-        ) - 
-        COALESCE(
-            MAX(CASE 
-                WHEN COUNT(*) OVER (
-                    PARTITION BY a.drivers_license_number
-                    ORDER BY a.event_date
-                    RANGE BETWEEN INTERVAL 30 DAYS PRECEDING AND CURRENT ROW
-                ) >= 10 
-                THEN COUNT(*) OVER (PARTITION BY a.drivers_license_number ORDER BY a.event_date)
-            END) OVER (
-                PARTITION BY a.drivers_license_number
-                ORDER BY a.event_date
-                ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-            ),
+        *,
+        -- Calculate cumulative events since last mark
+        COUNT(*) OVER (PARTITION BY drivers_license_number ORDER BY event_date)
+        - COALESCE(
+            MAX(CASE WHEN violation_count_24h >= 5 AND violation_count_24h % 5 = 0 
+                     THEN COUNT(*) OVER (PARTITION BY drivers_license_number ORDER BY event_date) END)
+            OVER (PARTITION BY drivers_license_number ORDER BY event_date ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
             0
-        ) AS events_since_last_mark_30d
-    FROM base_data a
-    WHERE event_type = 'TYPE 1-2'
+        ) AS events_since_last_24_mark,
+        COUNT(*) OVER (PARTITION BY drivers_license_number ORDER BY event_date)
+        - COALESCE(
+            MAX(CASE WHEN violation_count_30d >= 10 AND violation_count_30d % 10 = 0 
+                     THEN COUNT(*) OVER (PARTITION BY drivers_license_number ORDER BY event_date) END)
+            OVER (PARTITION BY drivers_license_number ORDER BY event_date ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+            0
+        ) AS events_since_last_30_mark
+    FROM violation_counts
+),
+
+event_groups_1_2 AS (
+    SELECT
+        *,
+        -- Determine if it should be marked
+        CASE 
+            WHEN violation_count_24h >= 5 
+                 AND events_since_last_24_mark >= 5 THEN 1
+            ELSE 0
+        END AS should_mark_24,
+        CASE 
+            WHEN violation_count_30d >= 10
+                 AND events_since_last_30_mark >= 10 THEN 1
+            ELSE 0
+        END AS should_mark_30
+    FROM marking_data
 )
 
--- 24 hour violations
+
+-- 24 hours violations
 SELECT
     event_dw_id,
     drivers_license_number,
@@ -116,13 +103,11 @@ SELECT
     event_date,
     1 AS record_type,
     '24 hrs' record_description
-FROM marked_violations_24hr m24
-WHERE violation_count_24hr >= 5 
-    AND events_since_last_mark_24hr >= 5
-
-UNION ALL
+FROM event_groups_1_2
+WHERE should_mark_24 = 1
 
 -- 30 day violations
+UNION ALL
 SELECT
     event_dw_id,
     drivers_license_number,
@@ -133,13 +118,12 @@ SELECT
     event_date,
     2 AS record_type,
     '30 days' record_description
-FROM marked_violations_30d m30
-WHERE violation_count_30d >= 10 
-    AND events_since_last_mark_30d >= 10
+FROM event_groups_1_2
+WHERE should_mark_30 = 1
 
-UNION ALL
 
 -- Tampering events
+UNION ALL
 SELECT
     event_dw_id,
     drivers_license_number,
@@ -153,9 +137,9 @@ SELECT
 FROM base_data b
 WHERE event_type = 'TYPE 3'
 
-UNION ALL
 
 -- Authorized uninstall
+UNION ALL
 SELECT
     event_dw_id,
     drivers_license_number,
@@ -169,9 +153,9 @@ SELECT
 FROM base_data b
 WHERE event_type = 'TYPE 4'
 
-UNION ALL
 
 -- Unauthorized uninstall
+UNION ALL
 SELECT
     event_dw_id,
     drivers_license_number,
@@ -185,9 +169,9 @@ SELECT
 FROM base_data b
 WHERE event_type = 'TYPE 5'
 
-UNION ALL
 
 -- Switched vehicle
+UNION ALL
 SELECT
     event_dw_id,
     drivers_license_number,

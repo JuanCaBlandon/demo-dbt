@@ -2,8 +2,8 @@ USE StateReporting
 GO
 
 CREATE OR ALTER PROCEDURE databricks.GetCustomersIA
-    @MIN_OFFENSE_DATE DATE,
-    @MAX_INSTALL_DATE DATE -- ONLY FOR TESTING, TODO: REMOVE THIS BEFORE GOING TO PROD
+    @START_DATE DATE,
+    @END_DATE DATE
 AS
 
 /*
@@ -45,7 +45,8 @@ INSERT INTO StateReporting.databricks.TmpStateReportedCustomer(
 	OffenseDate ,
 	IIDStartDate,
 	IIDEndDate ,
-	CreationDate)
+	CreationDate
+)
 
 SELECT 
     custst.[CustomerReportingStateID],
@@ -59,9 +60,7 @@ SELECT
     cus.[InstallDateConfirmed] AS InstallDate,
     cus.[DeInstallDateConfirmed] AS DeInstallDate,
     custst.[StateCode],
-    CASE WHEN custst.[EffectiveEndDate] IS NULL AND cus.[DeInstallDateConfirmed] IS NULL THEN 1
-            WHEN custst.[EffectiveEndDate] IS NULL AND CAST(cus.[DeInstallDateConfirmed] AS DATE) > CAST(GETDATE() AS DATE) THEN 1
-            ELSE 0 END AS ActiveStatus,
+    1 AS ActiveStatus,
     'Active-NoReported' AS ReportStatusCD,
     cus.[StatusCd] AS CustomerStatus,
     GETDATE() AS ActiveStatusStartDate,
@@ -72,43 +71,30 @@ SELECT
     cus.[CreateUser],
     cus.[ModifyDate],
     cus.[ModifyUser],
-    CAST(NULL AS DATETIME) AS OffenseDate,
-    CAST(NULL AS DATETIME) AS IIDStartDate,
-    CAST(NULL AS DATETIME) AS IIDEndDate,
-    '' AS RepeatOffender,
+    ftp.RepeatOffender,
+    ftp.OffenseDate,
+	ftp.IIDStartDate,
+	ftp.IIDEndDate,
     CAST(GETDATE() AS DATE) AS CreationDate
-
-FROM [CustSrv].[dbo].[Customer] cus
-INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst 
+FROM [CustSrv].[dbo].[Customer] cus WITH (NOLOCK)
+INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst  WITH (NOLOCK)
     ON cus.CustomerID = custst.CustomerID
     AND Installdateconfirmed IS NOT NULL
     AND cus.RelayTypeCd != 924 -- Home Monitor
     AND custst.StateCode = 'IA'
-    AND  custst.DeviceLogRptgClassCd
-        NOT IN  (1333, --Teen Voluntary
-                356) -- Voluntary
-    AND cus.StatusCd 
-        NOT IN (506, --Demo
-                849,507) --Webdemo
-    AND Installdateconfirmed <= @MAX_INSTALL_DATE -- ONLY FOR TESTING, TODO: REMOVE THIS BEFORE GOING TO PROD
-
-
--- Update customers with incoming batch file data (FTP server)
-MERGE StateReporting.databricks.TmpStateReportedCustomer  AS Target
-USING StateReporting.databricks.FtpCustomerData AS Source
-ON Source.DriversLicenseNumber = Target.DriversLicenseNumber
-    AND UPPER(Source.FirstName) = UPPER(Target.FirstName)
-    AND UPPER(Source.LastName) = UPPER(Target.LastName)
-    AND UPPER(Source.VIN) = UPPER(target.VIN)
-    AND Source.CreationDate = Target.CreationDate
-
--- For Updates
-WHEN MATCHED THEN UPDATE SET
-    Target.OffenseDate	= Source.OffenseDate,
-    Target.IIDStartDate	= Source.IIDStartDate,
-    Target.IIDEndDate	= Source.IIDEndDate,
-    Target.RepeatOffender = Source.RepeatOffender;
-
+	AND  custst.DeviceLogRptgClassCd NOT IN  (1333, 356) --Teen Voluntary, -- Voluntary
+	AND cus.StatusCd NOT IN (506, 849, 507) --Demo, --Webdemo
+LEFT JOIN StateReporting.databricks.FtpCustomerData ftp
+	ON cus.DriversLicenseNumber = ftp.DriversLicenseNumber
+	AND cus.VIN = ftp.VIN
+	AND ftp.CreationDate = CAST(GETDATE() AS DATE)
+WHERE
+	(custst.[EffectiveEndDate] IS NULL AND cus.[DeInstallDateConfirmed] IS NULL)
+	OR (custst.[EffectiveEndDate] IS NULL AND CAST(cus.[DeInstallDateConfirmed] AS DATE) > CAST(GETDATE() AS DATE))
+	OR (
+        custst.[EffectiveEndDate] > CAST(GETDATE() AS DATE)
+        AND (cus.[DeInstallDateConfirmed] IS NULL OR CAST(cus.[DeInstallDateConfirmed] AS DATE) > CAST(GETDATE() AS DATE))
+    );
 -- TODO: Start Compliance Workflow when not matched
 
 
@@ -171,7 +157,7 @@ WHERE (HC.CustomerStatus <> CU.CustomerStatus
 	OR UPPER(HC.ModifyUser) <> UPPER(CU.ModifyUser)
     )
     AND CU.ActiveStatus = 1
-    AND CU.OffenseDate >= @MIN_OFFENSE_DATE
+    AND CU.OffenseDate BETWEEN @START_DATE AND @END_DATE
     ;
 
 -- Insert new customers
@@ -220,7 +206,7 @@ SELECT
 FROM StateReporting.databricks.TmpStateReportedCustomer CU
 WHERE NOT EXISTS (SELECT CustomerID FROM StateReporting.databricks.StateReportedCustomer ST WHERE CU.CustomerID =  ST.CustomerID)
     AND CU.ActiveStatus = 1
- AND CU.OffenseDate >= @MIN_OFFENSE_DATE
+ AND CU.OffenseDate BETWEEN @START_DATE AND @END_DATE
     ;
 
 -- Put date to inactive customers, ActiveStatus = 0
@@ -229,7 +215,7 @@ SET ST.ActiveStatusEndDate = GETDATE()
 FROM StateReporting.databricks.TmpStateReportedCustomer CU
     INNER JOIN StateReporting.databricks.StateReportedCustomer ST ON CU.CustomerID = ST.CustomerID
 WHERE CU.ActiveStatus = 0
-    AND CU.OffenseDate >= @MIN_OFFENSE_DATE
+    AND CU.OffenseDate BETWEEN @START_DATE AND @END_DATE
     ;
 
 -- This top one is only for databricks because spark needs something to return when the SP is running 

@@ -11,7 +11,7 @@ post_hook=[
 
 
 select
-    customer_dw_id,,
+    customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
