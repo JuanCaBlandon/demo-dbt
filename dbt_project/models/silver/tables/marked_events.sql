@@ -94,6 +94,7 @@ event_groups_1_2 AS (
 
 -- 24 hours violations
 SELECT
+    {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'1'"]) }} AS record_dw_id, 
     event_dw_id,
     drivers_license_number,
     customer_id,
@@ -109,6 +110,7 @@ WHERE should_mark_24 = 1
 -- 30 day violations
 UNION ALL
 SELECT
+    {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'2'"]) }} AS record_dw_id, 
     event_dw_id,
     drivers_license_number,
     customer_id,
@@ -125,6 +127,7 @@ WHERE should_mark_30 = 1
 -- Tampering events
 UNION ALL
 SELECT
+    {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'3'"]) }} AS record_dw_id, 
     event_dw_id,
     drivers_license_number,
     customer_id,
@@ -141,6 +144,7 @@ WHERE event_type = 'TYPE 3'
 -- Authorized uninstall
 UNION ALL
 SELECT
+    {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'4'"]) }} AS record_dw_id, 
     event_dw_id,
     drivers_license_number,
     customer_id,
@@ -157,6 +161,7 @@ WHERE event_type = 'TYPE 4'
 -- Unauthorized uninstall
 UNION ALL
 SELECT
+    {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'5'"]) }} AS record_dw_id, 
     event_dw_id,
     drivers_license_number,
     customer_id,
@@ -173,6 +178,7 @@ WHERE event_type = 'TYPE 5'
 -- Switched vehicle
 UNION ALL
 SELECT
+    {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'6'"]) }} AS record_dw_id, 
     event_dw_id,
     drivers_license_number,
     customer_id,

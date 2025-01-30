@@ -39,7 +39,7 @@ WITH Tmp AS(
     CreationDate AS created_at,
     ROW_NUMBER() OVER (PARTITION BY CustomerID, DriversLicenseNumber, VIN, StateCode, EffectiveStartDate, EffectiveEndDate ORDER BY EffectiveStartDate) as num_duplicates
   FROM
-    {{ source('BRONZE', 'state_reported_customer') }}
+    {{ source('BRONZE', 'customer_raw') }}
   WHERE
     StateCode = 'IA'
     AND OffenseDate >= "{{ var("start_date", "2024-01-01") }}"

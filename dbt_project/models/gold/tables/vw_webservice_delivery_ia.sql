@@ -20,7 +20,7 @@ SELECT
     rt.id AS recordType
 FROM {{ref('customer_state_reported')}} AS csr
 INNER JOIN {{ref('marked_events')}} AS me
-    ON csr.event_dw_id = me.event_dw_id
+    ON csr.record_dw_id = me.record_dw_id
 INNER JOIN {{ref('customer')}} AS c
     ON csr.customer_dw_id = c.customer_dw_id
 INNER JOIN {{ref('dim_date_time')}} dd

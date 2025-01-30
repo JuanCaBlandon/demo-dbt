@@ -9,10 +9,10 @@
 
 WITH bc AS (
     SELECT
-        {{ dbt_utils.generate_surrogate_key(['c.customer_dw_id','batch_customer_dw_id', 'me.event_dw_id', 'rt.record_type_dw_id', 'dd.datetime_id']) }} AS customer_state_dw_id,
+        {{ dbt_utils.generate_surrogate_key(['c.customer_dw_id','batch_customer_dw_id', 'me.record_dw_id', 'rt.record_type_dw_id', 'dd.datetime_id']) }} AS customer_state_dw_id,
         c.customer_dw_id,
         bc.batch_customer_dw_id,
-        me.event_dw_id,
+        me.record_dw_id,
         rt.record_type_dw_id,
         dd.datetime_id,
         '' AS error_detail_dw_id
@@ -40,7 +40,7 @@ SELECT
     customer_state_dw_id,
     batch_customer_dw_id,
     customer_dw_id,
-    event_dw_id,
+    record_dw_id,
     record_type_dw_id,
     datetime_id,
     error_detail_dw_id,
