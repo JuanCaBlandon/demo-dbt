@@ -33,7 +33,7 @@ class IgnitionInterlockDeviceServiceLog:
             errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid driver's license number"))
         if not self.lastName or len(self.lastName) > 80:
             errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid last name"))
-        if not self.firstName or len(self.firstName) > 80:
+        if not self.firstName or len(self.firstName) > 8:
             errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid first name"))
         if self.middleName and len(self.middleName) > 80:
             errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid middle name"))
