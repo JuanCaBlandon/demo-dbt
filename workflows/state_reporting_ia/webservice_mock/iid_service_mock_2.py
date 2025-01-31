@@ -46,60 +46,22 @@ class ReturnValue:
 
 class IIDService:
 
-    def __init__(self):
-        self.submissions_file = "successful_submissions.json"
-        if not os.path.exists(self.submissions_file):
-            self._initialize_submissions_file()
-    
-    def _initialize_submissions_file(self):
-        try:
-            with open(self.submissions_file, 'w') as f:
-                json.dump([], f)
-        except Exception as e:
-            print(f"Warning: Could not initialize submissions file: {e}")
+    def has_matching_type_7_submission(self, log: IgnitionInterlockDeviceServiceLog, previous_submissions: List[dict]) -> bool:
+        """Check if there's a matching type 7 submission for the given record in-memory."""
+        
+        for submission in previous_submissions:
+            test_data = submission["test_data"]
+            service_response = submission["service_response"]
 
-    def load_all_submissions(self) -> List[dict]:
-        """Load all historical submissions"""
-        if not os.path.exists(self.submissions_file):
-            # Create the file if it doesn't exist
-            with open(self.submissions_file, 'w') as f:
-                json.dump([], f)
-            return []
-            
-        try:
-            with open(self.submissions_file, 'r') as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            print(f"Warning: Submissions file {self.submissions_file} contains invalid JSON")
-            # Backup corrupted file and create new one
-            backup_file = f"{self.submissions_file}.backup"
-            os.rename(self.submissions_file, backup_file)
-            print(f"Corrupted file backed up to {backup_file}")
-            with open(self.submissions_file, 'w') as f:
-                json.dump([], f)
-            return []
-        except Exception as e:
-            print(f"Warning: Error loading submissions: {e}")
-            return []
+            if (test_data["recordType"] == 7 and
+                test_data["driversLicenseNumber"] == log.driversLicenseNumber and
+                all(rv["ErrorCode"] == 0 for rv in service_response)):
+                return True
 
-    def has_matching_type_7_submission(self, log: IgnitionInterlockDeviceServiceLog) -> bool:
-            """Check if there's a matching type 7 submission for the given record"""
-            submissions = self.load_all_submissions()
-            print(f"Sumissions{submissions}")
-            
-            for submission in submissions:
-                test_data = submission["test_data"]
-                service_response = submission["service_response"]
+        return False
 
-                if (test_data["recordType"] == 7 and
-                    test_data["driversLicenseNumber"] == log.driversLicenseNumber and
-                    all(rv["ErrorCode"] == 0 for rv in service_response)):
-                    return True
-            
-            return False
-
-    def validate_business_rules(self, log: IgnitionInterlockDeviceServiceLog) -> List[ReturnValue]:
-        """Validate business rules and return any errors"""
+    def validate_business_rules(self, log: IgnitionInterlockDeviceServiceLog, previous_submissions: List[dict]) -> List[ReturnValue]:
+        """Validate business rules dynamically using in-memory submissions."""
         errors = []
         
         # Validate record type 6 requires newVIN
@@ -110,43 +72,37 @@ class IIDService:
                     Message="Record type 6 requires a new VIN"
                 )
             )
-            
+        
         # Validate record type 5 requires matching type 7
         if log.recordType == 5:
-            if not self.has_matching_type_7_submission(log):
+            if not self.has_matching_type_7_submission(log, previous_submissions):
                 errors.append(
                     ReturnValue(
                         ErrorCode=ErrorCodes.BUSINESS_RULE_VIOLATION,
                         Message="Record type 5 requires a matching record type 7 submission with the same driversLicenseNumber"
                     )
                 )
-            
+        
         return errors
 
-def SubmitIgnitionInterlockDevice(self, log: IgnitionInterlockDeviceServiceLog) -> dict:
+
+def SubmitIgnitionInterlockDevice(self, log: IgnitionInterlockDeviceServiceLog, previous_submissions: List[dict]) -> List[ReturnValue]:
     """
-    Submit a record and return a JSON-formatted response instead of a list of ReturnValue objects.
+    Processes the submission dynamically without file operations.
     """
     try:
         # Validate business rules
-        validation_errors = self.validate_business_rules(log)
+        validation_errors = self.validate_business_rules(log, previous_submissions)
         if validation_errors:
-            return {
-                "ErrorCode": ErrorCodes.BUSINESS_RULE_VIOLATION,
-                "Message": [rv.Message for rv in validation_errors]
-            }
+            return validation_errors
 
-        # If validation passes, return success
-        return {
-            "ErrorCode": ErrorCodes.SUCCESS,
-            "Message": "Successfully submitted"
-        }
+        # If validation passes, return success response
+        return [ReturnValue(ErrorCode=ErrorCodes.SUCCESS, Message="Successfully submitted")]
     
     except ValueError as e:
-        return {"ErrorCode": ErrorCodes.VALIDATION_ERROR, "Message": str(e)}
-    
+        return [ReturnValue(ErrorCode=ErrorCodes.VALIDATION_ERROR, Message=str(e))]
     except Exception as e:
-        return {"ErrorCode": ErrorCodes.VALIDATION_ERROR, "Message": str(e)}
+        return [ReturnValue(ErrorCode=ErrorCodes.VALIDATION_ERROR, Message=str(e))]
 
 
 # Example usage:
