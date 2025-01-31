@@ -37,7 +37,7 @@ class IgnitionInterlockDeviceServiceLog:
             errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid first name"))
         if self.middleName and len(self.middleName) > 80:
             errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid middle name"))
-        if not self.VIN or len(self.VIN) > 17:
+        if not self.VIN or len(self.VIN) > 16:
             errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid VIN"))
         if self.newVIN and len(self.newVIN) > 17:
             errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid new VIN"))
