@@ -86,23 +86,23 @@ class IIDService:
         return errors
 
 
-def SubmitIgnitionInterlockDevice(self, log: IgnitionInterlockDeviceServiceLog, previous_submissions: List[dict]) -> List[ReturnValue]:
-    """
-    Processes the submission dynamically without file operations.
-    """
-    try:
-        # Validate business rules
-        validation_errors = self.validate_business_rules(log, previous_submissions)
-        if validation_errors:
-            return validation_errors
+    def SubmitIgnitionInterlockDevice(self, log: IgnitionInterlockDeviceServiceLog, previous_submissions: List[dict]) -> List[ReturnValue]:
+        """
+        Processes the submission dynamically without file operations.
+        """
+        try:
+            # Validate business rules
+            validation_errors = self.validate_business_rules(log, previous_submissions)
+            if validation_errors:
+                return validation_errors
 
-        # If validation passes, return success response
-        return [ReturnValue(ErrorCode=ErrorCodes.SUCCESS, Message="Successfully submitted")]
-    
-    except ValueError as e:
-        return [ReturnValue(ErrorCode=ErrorCodes.VALIDATION_ERROR, Message=str(e))]
-    except Exception as e:
-        return [ReturnValue(ErrorCode=ErrorCodes.VALIDATION_ERROR, Message=str(e))]
+            # If validation passes, return success response
+            return [ReturnValue(ErrorCode=ErrorCodes.SUCCESS, Message="Successfully submitted")]
+        
+        except ValueError as e:
+            return [ReturnValue(ErrorCode=ErrorCodes.VALIDATION_ERROR, Message=str(e))]
+        except Exception as e:
+            return [ReturnValue(ErrorCode=ErrorCodes.VALIDATION_ERROR, Message=str(e))]
 
 
 # Example usage:
