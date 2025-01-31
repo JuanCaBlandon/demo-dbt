@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 import pandas as pd
-from test_runner_2 import process_record
+from test_runner import process_record
 
 spark = SparkSession.builder.appName("Databricks Webservice Integration").getOrCreate()
 
@@ -9,12 +9,12 @@ df = spark.read.table(source_table)
 df = df.drop('customer_state_dw_id')
 records_pd = df.toPandas()
 
-submissions = []
+submissions = []  # Track previous submissions dynamically
 
 for index, record in records_pd.iterrows():
-    response_json = process_record(record.to_dict(), index + 1)
+    response_json = process_record(record.to_dict(), index + 1, submissions)
     if response_json:
-        submissions.append(response_json)
+        submissions.append(response_json)  # Store in-memory instead of JSON file
 
 # Convert to Spark DataFrame and save
 spark_df = spark.createDataFrame(pd.DataFrame(submissions))

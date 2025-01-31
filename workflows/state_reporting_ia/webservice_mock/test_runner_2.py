@@ -23,19 +23,29 @@ def generate_successful_case_json(test_name: str, test_data: dict, result: list)
     return submission_data  # Return JSON instead of writing to a file
 
 
-def process_record(record: dict, record_id: int):
-    """Processes a single record and returns the response JSON instead of writing it to a file."""
+def process_record(record: dict, record_id: int, previous_submissions: List[dict]):
+    """Processes a single record dynamically without file dependencies."""
     service = IIDService()
-    
+
     try:
         log = IgnitionInterlockDeviceServiceLog(**record)
-        result_json = service.SubmitIgnitionInterlockDevice(log)  # Now returning a JSON dict
+        result = service.SubmitIgnitionInterlockDevice(log, previous_submissions)
 
         print("\nService Response:")
         print("-----------------")
-        print(json.dumps(result_json, indent=2))  # Pretty-print response
+        for rv in result:
+            print(f"Error Code: {rv.ErrorCode}")
+            print(f"Message: {rv.Message}")
 
-        return result_json  # Return JSON instead of saving to a file
+        # Convert result to JSON format
+        submission_json = {
+            "test_name": f"Record_{record_id}",
+            "submission_date": datetime.now().isoformat(),
+            "test_data": record,
+            "service_response": [{"ErrorCode": rv.ErrorCode, "Message": rv.Message} for rv in result]
+        }
+
+        return submission_json  # Return JSON instead of writing to a file
 
     except ValueError as e:
         print(f"\nValidation Error: {str(e)}")
@@ -43,6 +53,7 @@ def process_record(record: dict, record_id: int):
         print(f"\nUnexpected Error: {str(e)}")
 
     return None  # Return None if processing failed
+
 
 
 def process_multiple_records(records: list):
