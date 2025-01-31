@@ -4,7 +4,7 @@ from test_runner_2 import process_record
 
 spark = SparkSession.builder.appName("Databricks Webservice Integration").getOrCreate()
 
-source_table = "state_reporting_dev.gold.webservice_delivery_ia"
+source_table = "state_reporting_dev.gold.vw_webservice_delivery_ia"
 df = spark.read.table(source_table)
 records_pd = df.toPandas()
 
