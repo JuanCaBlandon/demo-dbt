@@ -1,4 +1,5 @@
 from pyspark.sql import SparkSession, Row
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 import pandas as pd
 import json
 from datetime import datetime
@@ -20,7 +21,6 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
     submission_json = {
         "record_id": record_id,
         "submission_date": datetime.now().isoformat(),
-        "test_data": record,
         "service_response": []
     }
 
@@ -54,6 +54,14 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
 def save_responses(spark, submissions: list):  # Pass spark explicitly
     print('Starting to save')
     rows = []
+
+    schema = StructType([
+        StructField("record_id", StringType(), False),
+        StructField("error_code", IntegerType(), False),  # Ensure it's an integer
+        StructField("error_message", StringType(), False),
+        StructField("submission_date", StringType(), False)
+    ])
+
     for record in submissions:
         record_id = record['record_id']
         submission_date = record['submission_date']
@@ -70,7 +78,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
             )
     
     print(json.dumps(rows, indent=2, cls=DateTimeEncoder))
-    processed_submissions = spark.createDataFrame(rows)
+    processed_submissions = spark.createDataFrame(rows, schema=schema)
     processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.proccessed_sumbissions_ia")
 
 def main():
