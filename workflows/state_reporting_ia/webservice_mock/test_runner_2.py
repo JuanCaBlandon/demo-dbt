@@ -40,7 +40,7 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
 
         # Convert result to JSON format
         submission_json = {
-            "record_id": f"customer_state_dw_id",
+            "record_id": record_id,
             "submission_date": datetime.now().isoformat(),
             "test_data": record,
             "service_response": [{"ErrorCode": rv.ErrorCode, "Message": rv.Message} for rv in result]
