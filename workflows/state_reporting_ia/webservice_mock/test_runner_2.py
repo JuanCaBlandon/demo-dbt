@@ -1,12 +1,28 @@
+from pyspark.sql import SparkSession
+import pandas as pd
 import json
 from datetime import datetime
-from iid_service_mock_2 import IIDService, IgnitionInterlockDeviceServiceLog
+from iid_service_mock_2 import IIDService, IgnitionInterlockDeviceServiceLog, ErrorCodes
 from typing import List
 
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder to handle datetime objects"""
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
 
 def process_record(record: dict, record_id: str, previous_submissions: List[dict]):
     """Processes a single record dynamically without file dependencies."""
     service = IIDService()
+
+    # Prepare the base submission JSON
+    submission_json = {
+        "record_id": record_id,
+        "submission_date": datetime.now().isoformat(),
+        "test_data": record,
+        "service_response": []
+    }
 
     try:
         log = IgnitionInterlockDeviceServiceLog(**record)
@@ -18,19 +34,86 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
             print(f"Error Code: {rv.ErrorCode}")
             print(f"Message: {rv.Message}")
 
-        # Convert result to JSON format
-        submission_json = {
-            "record_id": record_id,
-            "submission_date": datetime.now().isoformat(),
-            "response_code": result,
-            "service_response": [{"ErrorCode": rv.ErrorCode, "Message": rv.Message} for rv in result]
-        }
-
-        return submission_json  # Return JSON instead of writing to a file
+        submission_json["service_response"] = [{"ErrorCode": rv.ErrorCode, "Message": rv.Message} for rv in result]
 
     except ValueError as e:
         print(f"\nValidation Error: {str(e)}")
+        submission_json["service_response"] = [{
+            "ErrorCode": ErrorCodes.VALIDATION_ERROR,
+            "Message": str(e)
+        }]
     except Exception as e:
         print(f"\nUnexpected Error: {str(e)}")
+        submission_json["service_response"] = [{
+            "ErrorCode": ErrorCodes.VALIDATION_ERROR,
+            "Message": str(e)
+        }]
 
-    return None  # Return None if processing failed
+    return submission_json
+
+def main():
+    # Initialize Spark session
+    spark = SparkSession.builder \
+        .appName("Databricks Webservice Integration") \
+        .getOrCreate()
+
+    try:
+        # Read from source table
+        source_table = "state_reporting_dev.gold.vw_webservice_delivery_ia"
+        print(f"\nReading from source table: {source_table}")
+        df = spark.read.table(source_table)
+        
+        # Convert to pandas for easier processing
+        print("Converting to pandas dataframe...")
+        records_pd = df.toPandas()
+        
+        # Track submissions in memory
+        submissions = []
+        
+        # Process each record
+        total_records = len(records_pd)
+        print(f"\nProcessing {total_records} records...")
+        
+        for index, record in records_pd.iterrows():
+            print(f"\nProcessing record {index + 1} of {total_records}")
+            
+            # Extract and remove customer_state_dw_id
+            customer_state_dw_id = record['customer_state_dw_id']
+            record = record.drop('customer_state_dw_id')
+            
+            # Convert record to dict and process
+            response_json = process_record(record.to_dict(), customer_state_dw_id, submissions)
+            submissions.append(response_json)
+
+        # Convert submissions to DataFrame and save
+        print("\nConverting submissions to Spark DataFrame...")
+        submissions_json = json.dumps(submissions, cls=DateTimeEncoder)
+        submissions_df = spark.read.json(
+            spark.sparkContext.parallelize([submissions_json])
+        )
+
+        # Write to target table
+        target_table = "state_reporting_dev.gold.processed_submissions"
+        print(f"\nWriting to target table: {target_table}")
+        submissions_df.write.mode("append").saveAsTable(target_table)
+        
+        print("\nProcessing completed successfully!")
+        
+        # Print summary
+        print("\nProcessing Summary:")
+        print(f"Total records processed: {total_records}")
+        success_count = sum(1 for s in submissions 
+                          if any(r["ErrorCode"] == 0 for r in s["service_response"]))
+        error_count = total_records - success_count
+        print(f"Successful submissions: {success_count}")
+        print(f"Failed submissions: {error_count}")
+
+    except Exception as e:
+        print(f"\nError in main processing: {str(e)}")
+        raise
+    finally:
+        # Stop Spark session
+        spark.stop()
+
+if __name__ == "__main__":
+    main()
