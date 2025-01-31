@@ -22,20 +22,27 @@ class IgnitionInterlockDeviceServiceLog:
     violationDate: Optional[datetime]
     recordType: int
 
-    def __post_init__(self):
+    def validate(self) -> List[tuple]:
+        """Validates all fields and returns list of errors"""
+        errors = []
+        
         # Validate required fields
-        if not self.driversLicenseNumber or len(self.driversLicenseNumber) > 50:
-            raise ValueError("Invalid driver's license number")
+        if not self.driversLicenseNumber:
+            errors.append((ErrorCodes.VALIDATION_ERROR, "Driver's license number is required"))
+        elif len(self.driversLicenseNumber) > 50:
+            errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid driver's license number"))
         if not self.lastName or len(self.lastName) > 80:
-            raise ValueError("Invalid last name")
+            errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid last name"))
         if not self.firstName or len(self.firstName) > 80:
-            raise ValueError("Invalid first name")
+            errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid first name"))
         if self.middleName and len(self.middleName) > 80:
-            raise ValueError("Invalid middle name")
-        if not self.VIN or len(self.VIN) > 16:
-            raise ValueError("Invalid VIN")
-        if self.newVIN and len(self.newVIN) > 16:
-            raise ValueError("Invalid new VIN")
+            errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid middle name"))
+        if not self.VIN or len(self.VIN) > 17:
+            errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid VIN"))
+        if self.newVIN and len(self.newVIN) > 17:
+            errors.append((ErrorCodes.VALIDATION_ERROR, "Invalid new VIN"))
+            
+        return errors
 
 @dataclass
 class ReturnValue:
@@ -43,11 +50,11 @@ class ReturnValue:
     Message: str
 
 class IIDService:
-
     def has_matching_type_7_submission(self, log: IgnitionInterlockDeviceServiceLog, previous_submissions: List[dict]) -> bool:
-        """Check if there's a matching type 7 submission for the given record in-memory."""
+        """Check if there's a matching type 7 submission for the given record"""
+        submissions = previous_submissions
         
-        for submission in previous_submissions:
+        for submission in submissions:
             test_data = submission["test_data"]
             service_response = submission["service_response"]
 
@@ -55,11 +62,11 @@ class IIDService:
                 test_data["driversLicenseNumber"] == log.driversLicenseNumber and
                 all(rv["ErrorCode"] == 0 for rv in service_response)):
                 return True
-
+        
         return False
 
     def validate_business_rules(self, log: IgnitionInterlockDeviceServiceLog, previous_submissions: List[dict]) -> List[ReturnValue]:
-        """Validate business rules dynamically using in-memory submissions."""
+        """Validate all business rules and return list of errors"""
         errors = []
         
         # Validate record type 6 requires newVIN
@@ -83,53 +90,26 @@ class IIDService:
         
         return errors
 
-
     def SubmitIgnitionInterlockDevice(self, log: IgnitionInterlockDeviceServiceLog, previous_submissions: List[dict]) -> List[ReturnValue]:
         """
-        Processes the submission dynamically without file operations.
+        Process submission and return all validation errors or success
         """
         try:
-            # Validate business rules
-            validation_errors = self.validate_business_rules(log, previous_submissions)
-            if validation_errors:
-                return validation_errors
-
-            # If validation passes, return success response
+            # Collect all validation errors
+            all_errors = []
+            
+            # Field validation errors
+            field_errors = log.validate()
+            all_errors.extend([ReturnValue(code, msg) for code, msg in field_errors])
+            
+            # Always check business rules to get all possible errors
+            business_errors = self.validate_business_rules(log, previous_submissions)
+            all_errors.extend(business_errors)
+            
+            # Return errors if any, otherwise success
+            if all_errors:
+                return all_errors
             return [ReturnValue(ErrorCode=ErrorCodes.SUCCESS, Message="Successfully submitted")]
-        
-        except ValueError as e:
-            return [ReturnValue(ErrorCode=ErrorCodes.VALIDATION_ERROR, Message=str(e))]
+            
         except Exception as e:
             return [ReturnValue(ErrorCode=ErrorCodes.VALIDATION_ERROR, Message=str(e))]
-
-
-# Example usage:
-def example_usage():
-    # Create service instance
-    service = IIDService()
-
-    # Create a sample log entry
-    log = IgnitionInterlockDeviceServiceLog(
-        driversLicenseNumber="DL123456",
-        lastName="Smith",
-        firstName="John",
-        middleName="Robert",
-        dateOfBirth=datetime(1990, 1, 1),
-        VIN="1HGCM82633A123456",
-        newVIN=None,
-        ignitionInterlockDeviceInstalledDate=datetime(2024, 1, 1),
-        ignitionInterlockDeviceRemovedDate=None,
-        violationDate=None,
-        recordType=1
-    )
-
-    # Submit to service
-    result = service.SubmitIgnitionInterlockDevice(log)
-    
-    # Print results
-    for rv in result:
-        print(f"Error Code: {rv.ErrorCode}")
-        print(f"Message: {rv.Message}")
-
-if __name__ == "__main__":
-    example_usage()
