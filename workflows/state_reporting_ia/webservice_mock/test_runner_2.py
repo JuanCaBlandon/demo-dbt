@@ -63,7 +63,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
             rows.append(Row(record_id=record_id, error_code=response['ErrorCode'], error_message=response['Message'], submission_date=submission_date))
     
     print("rows: ", rows)
-    # processed_submissions = spark.createDataFrame(rows)
+    processed_submissions = spark.createDataFrame(rows)
     # processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.proccessed_sumbissions_ia")
 
 def main():
