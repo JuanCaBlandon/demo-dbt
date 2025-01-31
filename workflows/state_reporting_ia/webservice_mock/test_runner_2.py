@@ -51,7 +51,7 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
 
     return submission_json
 
-def save_responses(submissions:list):
+def save_responses(spark, submissions: list):  # Pass spark explicitly
     rows = []
     for record in submissions:
         record_id = record['record_id']
@@ -59,8 +59,8 @@ def save_responses(submissions:list):
         responses = record['service_response']
         for response in responses:
             rows.append(Row(record_id=record_id, error_code=response['ErrorCode'], error_message=response['Message'], submission_date=submission_date))
+    
     processed_submissions = spark.createDataFrame(rows)
-
     processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.error_responses")
 
 def main():
@@ -102,7 +102,7 @@ def main():
         raise
 
     print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
-    save_responses(submissions)
+    save_responses(spark, submissions)
 
 if __name__ == "__main__":
     main()
