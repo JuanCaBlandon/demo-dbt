@@ -8,6 +8,7 @@ spark = SparkSession.builder.appName("Databricks Webservice Integration").getOrC
 # Define the source table
 source_table = "state_reporting_dev.gold.vw_webservice_delivery_ia"
 df = spark.read.table(source_table)
+df = df.drop('customer_state_dw_id')
 records_pd = df.toPandas()
 
 
