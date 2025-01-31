@@ -15,7 +15,7 @@ WITH bc AS (
         me.record_dw_id,
         rt.record_type_dw_id,
         dd.datetime_id,
-        '' AS error_detail_dw_id
+        CAST(NULL AS INT) AS status
     FROM {{ ref('marked_events')}} AS me
     INNER JOIN {{ ref('customer')}} AS c
         ON me.customer_id = c.customer_id
@@ -43,10 +43,9 @@ SELECT
     record_dw_id,
     record_type_dw_id,
     datetime_id,
-    error_detail_dw_id,
+    status,
     current_timestamp() AS current_timestamp
 FROM bc
 {% if is_incremental() %}
      WHERE datetime_id > (select MAX(datetime_id) from {{ this }})
  {% endif %}
-
