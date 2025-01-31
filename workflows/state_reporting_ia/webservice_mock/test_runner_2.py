@@ -4,26 +4,6 @@ from iid_service_mock_2 import IIDService, IgnitionInterlockDeviceServiceLog
 from typing import List
 
 
-class DateTimeEncoder(json.JSONEncoder):
-    """Custom JSON encoder to handle datetime objects"""
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return super().default(obj)
-
-def generate_successful_case_json(test_name: str, test_data: dict, result: list) -> dict:
-    """Generate a JSON object for a successful test case instead of saving it to a file."""
-    
-    submission_data = {
-        "test_name": test_name,
-        "submission_date": datetime.now().isoformat(),
-        "test_data": test_data,
-        "service_response": [{"ErrorCode": rv.ErrorCode, "Message": rv.Message} for rv in result]
-    }
-    
-    return submission_data  # Return JSON instead of writing to a file
-
-
 def process_record(record: dict, record_id: str, previous_submissions: List[dict]):
     """Processes a single record dynamically without file dependencies."""
     service = IIDService()
@@ -42,7 +22,7 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
         submission_json = {
             "record_id": record_id,
             "submission_date": datetime.now().isoformat(),
-            "test_data": record,
+            "response_code": result,
             "service_response": [{"ErrorCode": rv.ErrorCode, "Message": rv.Message} for rv in result]
         }
 
@@ -54,18 +34,3 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
         print(f"\nUnexpected Error: {str(e)}")
 
     return None  # Return None if processing failed
-
-
-
-def process_multiple_records(records: list):
-    """Processes multiple records sequentially"""
-    count = 0
-    for index, record in enumerate(records):
-        print("\n" + "=" * 50)
-        print(f"Processing record {index + 1}")
-        print("-" * 50)
-        
-        process_record(record, index + 1)
-        count += 1
-
-    print(f"\nProcess completed! Processed {count} records.")
