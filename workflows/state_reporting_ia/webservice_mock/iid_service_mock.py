@@ -5,6 +5,7 @@ from enum import IntEnum
 import json
 import os
 
+
 class ErrorCodes(IntEnum):
     SUCCESS = 0
     VALIDATION_ERROR = 1

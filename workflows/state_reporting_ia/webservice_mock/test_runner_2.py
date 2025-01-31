@@ -1,7 +1,8 @@
 import json
 from datetime import datetime
 from iid_service_mock_2 import IIDService, IgnitionInterlockDeviceServiceLog
-import os
+from typing import List
+
 
 class DateTimeEncoder(json.JSONEncoder):
     """Custom JSON encoder to handle datetime objects"""
