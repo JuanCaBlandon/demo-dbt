@@ -89,7 +89,7 @@ def main():
         print(f"\nError in main processing: {str(e)}")
         raise
 
-    print(submissions)
+    print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
 
 if __name__ == "__main__":
     main()

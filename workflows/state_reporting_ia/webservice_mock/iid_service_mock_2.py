@@ -32,9 +32,9 @@ class IgnitionInterlockDeviceServiceLog:
             raise ValueError("Invalid first name")
         if self.middleName and len(self.middleName) > 80:
             raise ValueError("Invalid middle name")
-        if not self.VIN or len(self.VIN) > 17:
+        if not self.VIN or len(self.VIN) > 16:
             raise ValueError("Invalid VIN")
-        if self.newVIN and len(self.newVIN) > 17:
+        if self.newVIN and len(self.newVIN) > 16:
             raise ValueError("Invalid new VIN")
 
 @dataclass
