@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession, Row
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
 import pandas as pd
 import json
 from datetime import datetime
@@ -59,7 +59,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
         StructField("record_id", StringType(), False),
         StructField("error_code", IntegerType(), False),  # Ensure it's an integer
         StructField("error_message", StringType(), False),
-        StructField("submission_date", StringType(), False)
+        StructField("submission_date", TimestampType(), False)
     ])
 
     for record in submissions:
