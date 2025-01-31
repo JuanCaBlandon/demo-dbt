@@ -74,7 +74,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
     processed_submissions = processed_submissions.withColumn(
         "submission_date", processed_submissions["submission_date"].cast("timestamp")
         ).withColumn(
-            "ErrorCode", processed_submissions["ErrorCode"].cast("integer")
+            "error_code", processed_submissions["error_code"].cast("integer")
         )
     processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.proccessed_sumbissions_ia")
 
