@@ -52,11 +52,13 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
     return submission_json
 
 def save_responses(spark, submissions: list):  # Pass spark explicitly
+    print('Starting to save')
     rows = []
     for record in submissions:
         record_id = record['record_id']
         submission_date = record['submission_date']
         responses = record['service_response']
+        print('Adding record', record_id)
         for response in responses:
             rows.append(Row(record_id=record_id, error_code=response['ErrorCode'], error_message=response['Message'], submission_date=submission_date))
     
@@ -101,7 +103,7 @@ def main():
         print(f"\nError in main processing: {str(e)}")
         raise
 
-    print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
+    # print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
     save_responses(spark, submissions)
 
 if __name__ == "__main__":
