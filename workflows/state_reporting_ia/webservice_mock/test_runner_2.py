@@ -71,7 +71,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
     
     print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
     processed_submissions = spark.createDataFrame(rows)
-    # processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.proccessed_sumbissions_ia")
+    processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.proccessed_sumbissions_ia")
 
 def main():
     # Initialize Spark session
