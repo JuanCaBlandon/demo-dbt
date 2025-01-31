@@ -68,9 +68,9 @@ def process_record(record: dict, record_id: int, previous_submissions: List[dict
 
 def process_multiple_records(records: list):
     """Processes multiple records sequentially and tracks both successful & failed submissions."""
-    previous_submissions = []  # Store previously processed records
-    successful_submissions = []  # ✅ Store only successful records
-    failed_submissions = []  # ❌ Store only failed records
+    previous_submissions = []
+    successful_submissions = []
+    failed_submissions = []
 
     count = 0
 
