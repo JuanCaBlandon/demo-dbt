@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from iid_service_mock import IIDService, IgnitionInterlockDeviceServiceLog
+from iid_service_mock_2 import IIDService, IgnitionInterlockDeviceServiceLog
 import os
 
 class DateTimeEncoder(json.JSONEncoder):
