@@ -1,4 +1,4 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, Row
 import pandas as pd
 import json
 from datetime import datetime
@@ -51,6 +51,18 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
 
     return submission_json
 
+def save_responses(submissions:list):
+    rows = []
+    for record in submissions:
+        record_id = record['record_id']
+        submission_date = record['submission_date']
+        responses = record['service_response']
+        for response in responses:
+            rows.append(Row(record_id=record_id, error_code=response['ErrorCode'], error_message=response['Message'], submission_date=submission_date))
+    processed_submissions = spark.createDataFrame(rows)
+
+    processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.error_responses")
+
 def main():
     # Initialize Spark session
     spark = SparkSession.builder \
@@ -90,6 +102,7 @@ def main():
         raise
 
     print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
+    save_responses(submissions)
 
 if __name__ == "__main__":
     main()
