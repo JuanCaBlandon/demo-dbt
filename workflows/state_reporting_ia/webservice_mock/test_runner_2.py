@@ -85,35 +85,11 @@ def main():
             response_json = process_record(record.to_dict(), customer_state_dw_id, submissions)
             submissions.append(response_json)
 
-        # Convert submissions to DataFrame and save
-        print("\nConverting submissions to Spark DataFrame...")
-        submissions_json = json.dumps(submissions, cls=DateTimeEncoder)
-        submissions_df = spark.read.json(
-            spark.sparkContext.parallelize([submissions_json])
-        )
-
-        # Write to target table
-        target_table = "state_reporting_dev.gold.processed_submissions"
-        print(f"\nWriting to target table: {target_table}")
-        submissions_df.write.mode("append").saveAsTable(target_table)
-        
-        print("\nProcessing completed successfully!")
-        
-        # Print summary
-        print("\nProcessing Summary:")
-        print(f"Total records processed: {total_records}")
-        success_count = sum(1 for s in submissions 
-                          if any(r["ErrorCode"] == 0 for r in s["service_response"]))
-        error_count = total_records - success_count
-        print(f"Successful submissions: {success_count}")
-        print(f"Failed submissions: {error_count}")
-
     except Exception as e:
         print(f"\nError in main processing: {str(e)}")
         raise
-    finally:
-        # Stop Spark session
-        spark.stop()
+
+    print(submissions)
 
 if __name__ == "__main__":
     main()
