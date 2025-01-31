@@ -16,6 +16,7 @@ for index, record in records_pd.iterrows():
     if response_json:
         submissions.append(response_json)  # Store in-memory instead of JSON file
 
+print(submissions)
 # Convert to Spark DataFrame and save
-spark_df = spark.createDataFrame(pd.DataFrame(submissions))
-spark_df.write.mode("append").saveAsTable("state_reporting_dev.gold.processed_submissions")
+# spark_df = spark.createDataFrame(pd.DataFrame(submissions))
+# spark_df.write.mode("append").saveAsTable("state_reporting_dev.gold.processed_submissions")
