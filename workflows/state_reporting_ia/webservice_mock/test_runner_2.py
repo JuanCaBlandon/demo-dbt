@@ -69,7 +69,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
                 )
             )
     
-    print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
+    print(json.dumps(rows, indent=2, cls=DateTimeEncoder))
     processed_submissions = spark.createDataFrame(rows)
     processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.proccessed_sumbissions_ia")
 
@@ -106,13 +106,13 @@ def main():
             # Convert record to dict and process
             response_json = process_record(record.to_dict(), customer_state_dw_id, submissions)
             submissions.append(response_json)
-
+        
+        print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
+        save_responses(spark, submissions)
     except Exception as e:
         print(f"\nError in main processing: {str(e)}")
         raise
 
-    # print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
-    save_responses(spark, submissions)
 
 if __name__ == "__main__":
     main()
