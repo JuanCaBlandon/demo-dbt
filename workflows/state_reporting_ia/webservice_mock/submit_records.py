@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 import pandas as pd
-from test_runner import process_record
+from test_runner_2 import process_record
 
 spark = SparkSession.builder.appName("Databricks Webservice Integration").getOrCreate()
 
