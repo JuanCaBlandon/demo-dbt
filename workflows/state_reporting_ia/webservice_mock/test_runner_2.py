@@ -24,7 +24,7 @@ def generate_successful_case_json(test_name: str, test_data: dict, result: list)
     return submission_data  # Return JSON instead of writing to a file
 
 
-def process_record(record: dict, record_id: int, previous_submissions: List[dict]):
+def process_record(record: dict, record_id: str, previous_submissions: List[dict]):
     """Processes a single record dynamically without file dependencies."""
     service = IIDService()
 
@@ -40,7 +40,7 @@ def process_record(record: dict, record_id: int, previous_submissions: List[dict
 
         # Convert result to JSON format
         submission_json = {
-            "test_name": f"Record_{record_id}",
+            "record_id": f"customer_state_dw_id",
             "submission_date": datetime.now().isoformat(),
             "test_data": record,
             "service_response": [{"ErrorCode": rv.ErrorCode, "Message": rv.Message} for rv in result]

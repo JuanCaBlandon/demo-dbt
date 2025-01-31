@@ -12,7 +12,9 @@ records_pd = df.toPandas()
 submissions = []  # Track previous submissions dynamically
 
 for index, record in records_pd.iterrows():
-    response_json = process_record(record.to_dict(), index + 1, submissions)
+    customer_state_dw_id = record['customer_state_dw_id']
+    record.drop('customer_state_dw_id', inplace=True)
+    response_json = process_record(record.to_dict(), customer_state_dw_id, submissions, )
     if response_json:
         submissions.append(response_json)  # Store in-memory instead of JSON file
 
