@@ -60,7 +60,14 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
         responses = record['service_response']
         print('Adding record', record_id)
         for response in responses:
-            rows.append(Row(record_id=record_id, error_code=response['ErrorCode'], error_message=response['Message'], submission_date=submission_date))
+            rows.append(
+                Row(
+                    record_id=record_id,
+                    error_code=int(response['ErrorCode']),
+                    error_message=response['Message'],
+                    submission_date=submission_date
+                )
+            )
     
     print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
     processed_submissions = spark.createDataFrame(rows)
