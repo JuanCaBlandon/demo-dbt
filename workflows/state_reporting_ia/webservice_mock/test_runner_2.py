@@ -67,7 +67,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
             else: failed_records.append(record_id)
             rows.append(
                 Row(
-                    record_id=record_id,
+                    customer_state_dw_id=record_id,
                     error_code=int(response['ErrorCode']),
                     error_message=response['Message'],
                     submission_date=submission_date
@@ -91,14 +91,14 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
         spark.sql(f"""
             UPDATE state_reporting_dev.gold.customer_state_reported
             SET status = 1
-            WHERE record_id = '{record_id}'
+            WHERE customer_state_dw_id = '{record_id}'
         """)
 
     for record_id in failed_records:
         spark.sql(f"""
             UPDATE state_reporting_dev.gold.customer_state_reported
             SET status = 0
-            WHERE record_id = '{record_id}'
+            WHERE customer_state_dw_id = '{record_id}'
         """)
 
 def main():
