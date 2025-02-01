@@ -4,7 +4,7 @@ from typing import List, Optional
 from enum import IntEnum
 
 class ErrorCodes(IntEnum):
-    SUCCESS = 0
+    SUCCESS = 12
     VALIDATION_ERROR = 1
     BUSINESS_RULE_VIOLATION = 2
 

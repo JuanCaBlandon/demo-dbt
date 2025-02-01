@@ -53,13 +53,18 @@ def process_record(record: dict, record_id: str, previous_submissions: List[dict
 def save_responses(spark, submissions: list):  # Pass spark explicitly
     print('Starting to save')
     rows = []
+    successfull_records = []
+    failed_records = []
 
     for record in submissions:
         record_id = record['record_id']
         submission_date = record['submission_date']
         responses = record['service_response']
-        print('Adding record', record_id)
+        print('Adding record', record_id)    
         for response in responses:
+            if response['ErrorCode'] == 12:
+                successfull_records.append(record_id)
+            else: failed_records.append(record_id)
             rows.append(
                 Row(
                     record_id=record_id,
@@ -69,7 +74,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
                 )
             )
     
-    print(json.dumps(rows, indent=2, cls=DateTimeEncoder))
+    # print(json.dumps(rows, indent=2, cls=DateTimeEncoder))
     processed_submissions = spark.createDataFrame(rows)
     processed_submissions = processed_submissions.withColumn(
         "submission_date", processed_submissions["submission_date"].cast("timestamp")
@@ -77,6 +82,24 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
             "error_code", processed_submissions["error_code"].cast("integer")
         )
     processed_submissions.write.format("delta").mode("append").saveAsTable("state_reporting_dev.gold.proccessed_sumbissions_ia")
+
+    failed_records = list(set(failed_records))
+
+    print("starting to update tables")
+    for record_id in successfull_records:
+        print(record)
+        spark.sql(f"""
+            UPDATE state_reporting_dev.gold.customer_state_reported
+            SET status = 1
+            WHERE record_id = '{record_id}'
+        """)
+
+    for record_id in failed_records:
+        spark.sql(f"""
+            UPDATE state_reporting_dev.gold.customer_state_reported
+            SET status = 0
+            WHERE record_id = '{record_id}'
+        """)
 
 def main():
     # Initialize Spark session
@@ -112,7 +135,7 @@ def main():
             response_json = process_record(record.to_dict(), customer_state_dw_id, submissions)
             submissions.append(response_json)
         
-        print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
+        # print(json.dumps(submissions, indent=2, cls=DateTimeEncoder))
         save_responses(spark, submissions)
     except Exception as e:
         print(f"\nError in main processing: {str(e)}")
