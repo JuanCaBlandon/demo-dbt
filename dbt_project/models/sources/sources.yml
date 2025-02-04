@@ -6,7 +6,6 @@ sources:
     database: "State_Reporting_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
     schema: bronze
     tables:
-      - name: state_reported_customer
+      - name: customer_raw
       - name: state_batch_customer_data_ia
-      - name: violation_transaction #TODO: Really needed?
       - name: customer_events

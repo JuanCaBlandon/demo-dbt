@@ -6,19 +6,20 @@ args = parser.parse_args()
 
 # Access parameters
 env = args.environment
+start_date = args.start_date
+end_date = args.end_date
 
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-database_host = "172.16.1.161\dev"  # Note the escaped backslash
-database_port = "1433"
+
+database_host = dbutils.secrets.get(scope = "state_reporting", key = f"sql_server_host_{env}")
+username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{env}")
+password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
 database_name = "statereporting"
-username = dbutils.secrets.get(scope="state_reporting", key="sql_server_user")
-password = dbutils.secrets.get(scope="state_reporting", key="sql_server_pass")
 
 url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
 
-sql_where = "'2025-01-01'" if env == "prod" else "'2024-01-01'"
 query = f"""
-SELECT * FROM databricks.CustomerEvents WHERE EventDate >= {sql_where}
+SELECT * FROM databricks.CustomerEvents WHERE EventDate BETWEEN '{start_date}' AND '{end_date}'
 """
 
 result_df = (spark.read
@@ -29,6 +30,8 @@ result_df = (spark.read
     .option("user", username)
     .option("password", password)
     .load())
+
+print(f"DF count {result_df.count()}-2")
 
 result_df.createOrReplaceTempView("CustomerEvents")
 
