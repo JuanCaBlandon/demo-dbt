@@ -16,7 +16,7 @@ database_host = dbutils.secrets.get(scope = "state_reporting", key = f"sql_serve
 username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{env}")
 password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
 
-url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
+url = f"jdbc:sqlserver://{database_host};instanceName={env};databaseName={database_name};encrypt=true;trustServerCertificate=true"
 
 query = f"""
 SELECT * FROM {database_name}.databricks.TmpStateReportedCustomer
