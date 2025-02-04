@@ -28,7 +28,8 @@ url = (f"jdbc:sqlserver://{database_host}:{database_port};instanceName={instance
          "trustServerCertificate=true;"
          f"user={username};"
          f"password={password}")  
-
+         
+print(url)
 # Table details
 table_name = "databricks.FTPCustomerData"
 
