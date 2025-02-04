@@ -69,21 +69,3 @@ try:
 except Exception as e:
     print(f"Error inserting DataFrame: {str(e)}")
     raise
-
-databricks secrets put-secret --json '{
-  "scope": "state_reporting",
-  "key": "sql_server_host_prd",
-  "string_value": "172.16.1.165"
-}'
-
-databricks secrets put-secret --json '{
-  "scope": "state_reporting",
-  "key": "sql_server_user_prd",
-  "string_value": "sourcemeridian"
-}'
-
-databricks secrets put-secret --json '{
-  "scope": "state_reporting",
-  "key": "sql_server_pass_prd",
-  "string_value": "iNt0xaL0cK_2025%!*&"
-}'
