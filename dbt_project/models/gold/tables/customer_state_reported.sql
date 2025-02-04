@@ -44,7 +44,7 @@ SELECT
     record_type_dw_id,
     datetime_id,
     status,
-    current_timestamp() AS current_timestamp
+    NULL AS submitted_at
 FROM bc
 {% if is_incremental() %}
      WHERE datetime_id > (select MAX(datetime_id) from {{ this }})
