@@ -63,7 +63,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
         print('Adding record', record_id)    
         for response in responses:
             if response['ErrorCode'] == 13:
-                successfull_records.append(record_id)
+                successfull_records.append({"record_id": record_id, "submission_date": submission_date})
             else: failed_records.append(record_id)
             rows.append(
                 Row(
@@ -86,12 +86,12 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
     failed_records = list(set(failed_records))
 
     print("starting to update tables")
-    for record_id in successfull_records:
-        print(record_id)
+    for record in successfull_records:
         spark.sql(f"""
             UPDATE state_reporting_dev.gold.customer_state_reported
-            SET status = 1
-            WHERE customer_state_dw_id = '{record_id}'
+            SET status = 1,
+                submission_date = '{record['submission_date']}'
+            WHERE customer_state_dw_id = '{record['record_id']}'
         """)
 
     for record_id in failed_records:

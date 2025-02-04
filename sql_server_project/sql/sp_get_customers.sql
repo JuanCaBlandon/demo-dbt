@@ -16,7 +16,7 @@ AS
 
 -- Get the customers for SQL and Databricks implementation
 
-TRUNCATE TABLE StateReporting.databricks.TmpStateReportedCustomer;
+DELETE FROM StateReporting.databricks.TmpStateReportedCustomer;
 
 INSERT INTO StateReporting.databricks.TmpStateReportedCustomer(
 	CustomerReportingStateID ,
