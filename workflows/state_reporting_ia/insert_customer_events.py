@@ -16,7 +16,7 @@ username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{e
 password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
 database_name = "statereporting"
 
-url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
+url = f"jdbc:sqlserver://{database_host};instanceName={env};databaseName={database_name};encrypt=true;trustServerCertificate=true"
 
 query = f"""
 SELECT * FROM databricks.CustomerEvents WHERE EventDate BETWEEN '{start_date}' AND '{end_date}'
