@@ -33,7 +33,7 @@ table_name = "databricks.FTPCustomerData"
 
 
 try:
-    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where(f"CAST(created_at AS DATE) = '{execution_date}'")
+    result_df = spark.read.table(f"state_reporting_{env}.bronze.state_batch_customer_data_ia").where(f"CAST(created_at AS DATE) = '{execution_date}'")
 
     batch_data = result_df.select(
         col("vendor_name").alias("VendorName"),
@@ -69,3 +69,21 @@ try:
 except Exception as e:
     print(f"Error inserting DataFrame: {str(e)}")
     raise
+
+databricks secrets put-secret --json '{
+  "scope": "state_reporting",
+  "key": "sql_server_host_prd",
+  "string_value": "172.16.1.165"
+}'
+
+databricks secrets put-secret --json '{
+  "scope": "state_reporting",
+  "key": "sql_server_user_prd",
+  "string_value": "sourcemeridian"
+}'
+
+databricks secrets put-secret --json '{
+  "scope": "state_reporting",
+  "key": "sql_server_pass_prd",
+  "string_value": "iNt0xaL0cK_2025%!*&"
+}'

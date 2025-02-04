@@ -35,8 +35,8 @@ print(f"DF count {result_df.count()}-2")
 
 result_df.createOrReplaceTempView("CustomerEvents")
 
-spark.sql(""" 
-    MERGE INTO state_reporting_dev.bronze.customer_events AS CED
+spark.sql(f""" 
+    MERGE INTO state_reporting_{env}.bronze.customer_events AS CED
     USING CustomerEvents AS CESQL
     ON COALESCE(CED.DeviceUsageViolationID,CED.DeviceUsageEventViolationID,CED.CustomerTransactionID) = COALESCE(CESQL.DeviceUsageViolationID,CESQL.DeviceUsageEventViolationID,CESQL.CustomerTransactionID)
     WHEN MATCHED AND CESQL.ModificationDate = current_date() THEN
