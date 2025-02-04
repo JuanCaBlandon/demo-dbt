@@ -87,7 +87,7 @@ def save_responses(spark, submissions: list):  # Pass spark explicitly
 
     print("starting to update tables")
     for record_id in successfull_records:
-        print(record)
+        print(record_id)
         spark.sql(f"""
             UPDATE state_reporting_dev.gold.customer_state_reported
             SET status = 1
@@ -112,7 +112,7 @@ def main():
         source_table = "state_reporting_dev.gold.vw_webservice_delivery_ia"
         print(f"\nReading from source table: {source_table}")
         df = spark.read.table(source_table)
-        
+        # TODO: Cast what happens when the dataset is empty, there're not rows to send
         # Convert to pandas for easier processing
         print("Converting to pandas dataframe...")
         records_pd = df.toPandas()

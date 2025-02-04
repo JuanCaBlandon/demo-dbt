@@ -13,15 +13,16 @@ execution_date = args.execution_date
 
 # SQL Server Connection Parameters
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-database_host = "172.16.1.161"
 instanceName = env
 database_name = "StateReporting"
+database_host = dbutils.secrets.get(scope = "state_reporting", key = f"sql_server_host_{env}")
+database_port = dbutils.secrets.get(scope = "state_reporting", key = f"sql_server_port_{env}")
 username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{env}")
 password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
 
 
 # Build connection URL with SSL parameters
-url = (f"jdbc:sqlserver://{database_host};instanceName={instanceName};"
+url = (f"jdbc:sqlserver://{database_host}:{database_port};instanceName={instanceName};"
          f"database={database_name};"
          "encrypt=true;"
          "trustServerCertificate=true;"

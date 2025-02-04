@@ -10,13 +10,14 @@ start_date = args.start_date
 end_date = args.end_date
 
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-database_host = "172.16.1.161\dev"  # Note the escaped backslash
-database_port = "1433"
-database_name = "statereporting"
+
+database_host = dbutils.secrets.get(scope = "state_reporting", key = f"sql_server_host_{env}")
+database_port = dbutils.secrets.get(scope = "state_reporting", key = f"sql_server_port_{env}")
 username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{env}")
 password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
+database_name = "statereporting"
 
-url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
+url = f"jdbc:sqlserver://{database_host}:{database_port};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
 
 query = f"""
 SELECT * FROM databricks.CustomerEvents WHERE EventDate BETWEEN '{start_date}' AND '{end_date}'

@@ -30,5 +30,5 @@ INNER JOIN {{ref('batch_customer')}} bc
     AND bc.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer') }})
 INNER JOIN {{ref('record_type')}} rt
     ON csr.record_type_dw_id = rt.record_type_dw_id
-WHERE csr.status IS NULL
+WHERE csr.status IS NULL OR csr.status = 2;
      

@@ -1,7 +1,7 @@
 USE StateReporting
 GO
 
-CREATE OR ALTER PROCEDURE databricks.GetCustomersEventsIA
+CREATE OR ALTER PROCEDURE databricks.GetCustomerEventsIA
     @START_DATE DATE,
     @END_DATE DATE
 
