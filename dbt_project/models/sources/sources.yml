@@ -3,8 +3,9 @@ version: 2
 sources:
   - name: BRONZE
     description: state reporting sql tables
-    database: "INT_SR_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
+    database: "State_Reporting_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
     schema: bronze
     tables:
-      - name: state_reported_customer
+      - name: customer_raw
       - name: state_batch_customer_data_ia
+      - name: customer_events

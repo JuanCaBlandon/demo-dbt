@@ -36,5 +36,5 @@ WITH error_codes AS (
 SELECT 
     code,
     error_message,
-    CURRENT_TIMESTAMP() as created_at
+    current_timestamp() as created_at
 FROM error_codes;
