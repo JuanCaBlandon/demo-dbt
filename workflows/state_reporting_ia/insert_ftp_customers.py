@@ -16,7 +16,6 @@ driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 instanceName = env
 database_name = "StateReporting"
 database_host = dbutils.secrets.get(scope = "state_reporting", key = f"sql_server_host_{env}")
-# database_port = dbutils.secrets.get(scope = "state_reporting", key = f"sql_server_port_{env}")
 username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{env}")
 password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
 
@@ -29,7 +28,6 @@ url = (f"jdbc:sqlserver://{database_host};instanceName={instanceName};"
          f"user={username};"
          f"password={password}")  
          
-print(url) 
 # Table details
 table_name = "databricks.FTPCustomerData"
 
