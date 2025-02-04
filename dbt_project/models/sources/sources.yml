@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: BRONZE
     description: state reporting sql tables
-    database: "State_Reporting_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
+    database: "dbx-state-reporting-{{ var('DEPLOYMENT_ENVIRONMENT') }}-use1"
     schema: bronze
     tables:
       - name: customer_raw
