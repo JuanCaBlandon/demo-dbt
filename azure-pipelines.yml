@@ -26,15 +26,13 @@ stages:
             cat > ~/.databrickscfg << EOF
             [DEFAULT]
             host = $(DATABRICKS_HOST_URL)
-            azure_tenant_id = $(DATABRICKS_ACCOUNT_ID)
-            azure_client_id = $(DATABRICKS_CLIENT_ID)
-            azure_client_secret = $(DATABRICKS_CLIENT_SECRET)
-            auth_type = azure-client-secret
+            client_id = $(DATABRICKS_CLIENT_ID)
+            client_secret = $(DATABRICKS_CLIENT_SECRET)
             EOF
             
             # Debug: Check config file (with secrets redacted)
             echo "Checking databricks config:"
-            sed -e 's/\(azure_client_secret = \).*/\1[REDACTED]/' ~/.databrickscfg
+            sed -e 's/\(client_secret = \).*/\1[REDACTED]/' ~/.databrickscfg
             
             # Install Databricks CLI
             pip install databricks-cli --upgrade
@@ -42,10 +40,6 @@ stages:
             # Create a temporary directory for the folders we want to copy
             mkdir -p temp_deploy
             cp -r $(Build.SourcesDirectory)/DatabricksArtifacts temp_deploy/
-            
-            # Debug: List temp directory contents
-            echo "Temp directory contents:"
-            ls -la temp_deploy
             
             # Test Databricks connection
             echo "Testing Databricks connection:"
@@ -69,4 +63,3 @@ stages:
         DATABRICKS_HOST_URL: $(DATABRICKS_HOST_URL)
         DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
         DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
-        DATABRICKS_ACCOUNT_ID: $(DATABRICKS_ACCOUNT_ID)
