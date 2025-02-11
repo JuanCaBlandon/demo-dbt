@@ -84,13 +84,20 @@ steps:
 
 - script: |
     echo "Creating Databricks config file..."
-    mkdir -p ~/.databrickscfg
+    # Remove directory if it exists
+    rm -rf ~/.databrickscfg
+    
+    # Create the config file
+    touch ~/.databrickscfg
     
     # Create OAuth configuration profile
     echo "[oauth_profile]" > ~/.databrickscfg
     echo "host = $(DATABRICKS_HOST)" >> ~/.databrickscfg
     echo "client_id = $(DATABRICKS_CLIENT_ID)" >> ~/.databrickscfg
     echo "client_secret = $(DATABRICKS_CLIENT_SECRET)" >> ~/.databrickscfg
+
+    # Set proper permissions
+    chmod 600 ~/.databrickscfg
   displayName: 'Configure Databricks CLI with OAuth'
 
 - script: |
