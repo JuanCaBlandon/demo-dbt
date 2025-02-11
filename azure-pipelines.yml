@@ -1,3 +1,75 @@
+# trigger:
+#   branches:
+#     include:
+#       - main
+#       - feature/ci-cd-pipeline
+
+# variables:
+#   - name: RUNTIME_ENV
+#     value: $(System.StageName)
+#   - group: databricks-credentials-latest
+
+# pool:
+#   vmImage: 'ubuntu-latest'
+
+# stages:
+# - stage: Deploy
+#   jobs:
+#   - job: DeployToDatabricks
+#     steps:
+#     - task: Bash@3
+#       inputs:
+#         targetType: 'inline'
+#         script: |
+#             # Create Databricks config file
+#             mkdir -p ~/.databricks
+#             cat > ~/.databrickscfg << EOF
+#             [DEFAULT]
+#             host = $(DATABRICKS_HOST_URL)
+#             azure_tenant_id = $(DATABRICKS_ACCOUNT_ID)
+#             azure_client_id = $(DATABRICKS_CLIENT_ID)
+#             azure_client_secret = $(DATABRICKS_CLIENT_SECRET)
+#             auth_type = azure-client-secret
+#             EOF
+            
+#             # Debug: Check config file (with secrets redacted)
+#             echo "Checking databricks config:"
+#             sed -e 's/\(azure_client_secret = \).*/\1[REDACTED]/' ~/.databrickscfg
+            
+#             # Install Databricks CLI
+#             pip install databricks-cli --upgrade
+            
+#             # Create a temporary directory for the folders we want to copy
+#             mkdir -p temp_deploy
+#             cp -r $(Build.SourcesDirectory)/DatabricksArtifacts temp_deploy/
+            
+#             # Debug: List temp directory contents
+#             echo "Temp directory contents:"
+#             ls -la temp_deploy
+            
+#             # Test Databricks connection
+#             echo "Testing Databricks connection:"
+#             databricks fs ls dbfs:/
+            
+#             # Remove existing content if any
+#             echo "Removing existing content:"
+#             databricks fs rm -r dbfs:/repositories/$(Build.Repository.Name) || true
+            
+#             # Copy the folders
+#             echo "Copying files to DBFS:"
+#             databricks fs cp -r temp_deploy/* dbfs:/repositories/$(Build.Repository.Name)
+            
+#             # Verify the copy
+#             echo "Verifying copied files:"
+#             databricks fs ls dbfs:/repositories/$(Build.Repository.Name)
+            
+#             # Clean up
+#             rm -rf temp_deploy
+#       env:
+#         DATABRICKS_HOST_URL: $(DATABRICKS_HOST_URL)
+#         DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+#         DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+#         DATABRICKS_ACCOUNT_ID: $(DATABRICKS_ACCOUNT_ID)
 trigger:
   branches:
     include:
@@ -21,23 +93,22 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-            # Create Databricks config file
-            mkdir -p ~/.databricks
-            cat > ~/.databrickscfg << EOF
-            [DEFAULT]
-            host = $(DATABRICKS_HOST_URL)
-            azure_tenant_id = $(DATABRICKS_ACCOUNT_ID)
-            azure_client_id = $(DATABRICKS_CLIENT_ID)
-            azure_client_secret = $(DATABRICKS_CLIENT_SECRET)
-            auth_type = azure-client-secret
-            EOF
-            
-            # Debug: Check config file (with secrets redacted)
-            echo "Checking databricks config:"
-            sed -e 's/\(azure_client_secret = \).*/\1[REDACTED]/' ~/.databrickscfg
-            
             # Install Databricks CLI
             pip install databricks-cli --upgrade
+            
+            # Set required environment variables for Databricks CLI
+            export DATABRICKS_HOST="$(DATABRICKS_HOST_URL)"
+            export AZURE_TENANT_ID="$(DATABRICKS_ACCOUNT_ID)"
+            export AZURE_CLIENT_ID="$(DATABRICKS_CLIENT_ID)"
+            export AZURE_CLIENT_SECRET="$(DATABRICKS_CLIENT_SECRET)"
+            export DATABRICKS_AUTH_TYPE="azure-client-secret"
+            
+            # Debug: Show environment (hiding secrets)
+            echo "Environment configuration:"
+            echo "DATABRICKS_HOST=$DATABRICKS_HOST"
+            echo "AZURE_TENANT_ID=$AZURE_TENANT_ID"
+            echo "AZURE_CLIENT_ID=$AZURE_CLIENT_ID"
+            echo "DATABRICKS_AUTH_TYPE=$DATABRICKS_AUTH_TYPE"
             
             # Create a temporary directory for the folders we want to copy
             mkdir -p temp_deploy
