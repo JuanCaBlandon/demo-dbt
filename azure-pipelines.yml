@@ -54,7 +54,7 @@ steps:
   displayName: 'Configure and Test Databricks CLI'
 
 - script: |
-    echo "Starting file copy process..."
+    echo "Starting deployment process..."
     
     # Move to source directory
     cd $(Build.SourcesDirectory)
@@ -64,8 +64,16 @@ steps:
     echo "Directory contents:"
     ls -la
     
-    # Create repositories directory in DBFS
-    echo "Creating repositories directory in DBFS..."
+    # Clean up entire repositories directory
+    echo "Cleaning up existing repositories directory..."
+    databricks fs rm -r "dbfs:/repositories" || true
+    
+    # Create fresh repositories directory
+    echo "Creating fresh repositories directory..."
+    databricks fs mkdirs "dbfs:/repositories"
+    
+    # Create repository-specific directory
+    echo "Creating repository directory..."
     databricks fs mkdirs "dbfs:/repositories/$(Build.Repository.Name)"
     
     # Array of folders to copy
@@ -75,9 +83,6 @@ steps:
     for folder in "${FOLDERS[@]}"; do
         if [ -d "$folder" ]; then
             echo "Found $folder folder, copying to DBFS..."
-            # Remove existing content if any
-            databricks fs rm -r "dbfs:/repositories/$(Build.Repository.Name)/$folder" || true
-            # Copy folder
             databricks fs cp -r "$folder" "dbfs:/repositories/$(Build.Repository.Name)/$folder"
             
             # Verify the copy
@@ -90,5 +95,8 @@ steps:
     
     # Show final structure
     echo "Final repository structure in DBFS:"
+    echo "Root level:"
+    databricks fs ls "dbfs:/repositories"
+    echo "Repository level:"
     databricks fs ls "dbfs:/repositories/$(Build.Repository.Name)"
-  displayName: 'Copy Files to DBFS'
+  displayName: 'Clean and Copy Files to DBFS'
