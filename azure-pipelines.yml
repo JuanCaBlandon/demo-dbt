@@ -26,9 +26,9 @@ stages:
             cat > ~/.databrickscfg << EOF
             [DEFAULT]
             host = "$(DATABRICKS_HOST_URL)"
-            azure_tenant_id = "$(DATABRICKS_ACCOUNT_ID)"
-            azure_client_id = "$(DATABRICKS_CLIENT_ID)"
-            azure_client_secret = "$(DATABRICKS_CLIENT_SECRET)"
+            account_id = "$(DATABRICKS_ACCOUNT_ID)"
+            client_id  = "$(DATABRICKS_CLIENT_ID)"
+            client_secret = "$(DATABRICKS_CLIENT_SECRET)"
             EOF
             
             # Debug: Check config file
