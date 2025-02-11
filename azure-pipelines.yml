@@ -1,67 +1,117 @@
-trigger:
-  branches:
-    include:
-      - main
-      - feature/ci-cd-pipeline
+# trigger:
+#   branches:
+#     include:
+#       - main
+#       - feature/ci-cd-pipeline
 
-variables:
-  - name: RUNTIME_ENV
-    value: $(System.StageName)
-  - group: databricks-credentials-latest
+# variables:
+#   - name: RUNTIME_ENV
+#     value: $(System.StageName)
+#   - group: databricks-credentials-latest
+
+# pool:
+#   vmImage: 'ubuntu-latest'
+
+# stages:
+# - stage: Deploy
+#   jobs:
+#   - job: DeployToDatabricks
+#     steps:
+#     - task: Bash@3
+#       inputs:
+#         targetType: 'inline'
+#         script: |
+#             # Create Databricks config file
+#             mkdir -p ~/.databricks
+#             cat > ~/.databrickscfg << EOF
+#             [DEFAULT]
+#             host = $(DATABRICKS_HOST)
+#             azure_client_id = $(DATABRICKS_CLIENT_ID)
+#             azure_client_secret = $(DATABRICKS_CLIENT_SECRET)
+#             azure_tenant_id = 9c643eac-4572-41a3-8844-e4a079aa6409
+#             EOF
+            
+#             # Debug: Check config file (with secrets redacted)
+#             echo "Checking databricks config:"
+#             sed -e 's/\(client_secret = \).*/\1[REDACTED]/' ~/.databrickscfg
+            
+#             # Install Databricks CLI
+#             pip install databricks-cli --upgrade
+            
+#             # Create a temporary directory for the folders we want to copy
+#             mkdir -p temp_deploy
+#             cp -r $(Build.SourcesDirectory)/DatabricksArtifacts temp_deploy/
+            
+#             # Test Databricks connection
+#             echo "Testing Databricks connection:"
+#             databricks clusters list -p DEFAULT
+            
+#             # Remove existing content if any
+#             echo "Removing existing content:"
+#             databricks fs rm -r dbfs:/repositories/$(Build.Repository.Name) || true
+            
+#             # Copy the folders
+#             echo "Copying files to DBFS:"
+#             databricks fs cp -r temp_deploy/* dbfs:/repositories/$(Build.Repository.Name)
+            
+#             # Verify the copy
+#             echo "Verifying copied files:"
+#             databricks fs ls dbfs:/repositories/$(Build.Repository.Name)
+            
+#             # Clean up
+#             rm -rf temp_deploy
+#       env:
+#         DATABRICKS_HOST: $(DATABRICKS_HOST)
+#         DATABRICKS_ACCOUNT_ID: $(DATABRICKS_ACCOUNT_ID)
+#         DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+#         DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+trigger:
+  - main
 
 pool:
   vmImage: 'ubuntu-latest'
 
-stages:
-- stage: Deploy
-  jobs:
-  - job: DeployToDatabricks
-    steps:
-    - task: Bash@3
-      inputs:
-        targetType: 'inline'
-        script: |
-            # Create Databricks config file
-            mkdir -p ~/.databricks
-            cat > ~/.databrickscfg << EOF
-            [DEFAULT]
-            host = $(DATABRICKS_HOST)
-            azure_client_id = $(DATABRICKS_CLIENT_ID)
-            azure_client_secret = $(DATABRICKS_CLIENT_SECRET)
-            azure_tenant_id = 9c643eac-4572-41a3-8844-e4a079aa6409
-            EOF
-            
-            # Debug: Check config file (with secrets redacted)
-            echo "Checking databricks config:"
-            sed -e 's/\(client_secret = \).*/\1[REDACTED]/' ~/.databrickscfg
-            
-            # Install Databricks CLI
-            pip install databricks-cli --upgrade
-            
-            # Create a temporary directory for the folders we want to copy
-            mkdir -p temp_deploy
-            cp -r $(Build.SourcesDirectory)/DatabricksArtifacts temp_deploy/
-            
-            # Test Databricks connection
-            echo "Testing Databricks connection:"
-            databricks clusters list -p DEFAULT
-            
-            # Remove existing content if any
-            echo "Removing existing content:"
-            databricks fs rm -r dbfs:/repositories/$(Build.Repository.Name) || true
-            
-            # Copy the folders
-            echo "Copying files to DBFS:"
-            databricks fs cp -r temp_deploy/* dbfs:/repositories/$(Build.Repository.Name)
-            
-            # Verify the copy
-            echo "Verifying copied files:"
-            databricks fs ls dbfs:/repositories/$(Build.Repository.Name)
-            
-            # Clean up
-            rm -rf temp_deploy
-      env:
-        DATABRICKS_HOST: $(DATABRICKS_HOST)
-        DATABRICKS_ACCOUNT_ID: $(DATABRICKS_ACCOUNT_ID)
-        DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
-        DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+variables:
+  - group: databricks-credentials-latest  # Should contain CLIENT_ID and CLIENT_SECRET
+
+steps:
+- script: |
+    pip install databricks-cli
+  displayName: 'Install Databricks CLI'
+
+- script: |
+    echo "Creating Databricks config file..."
+    mkdir -p ~/.databrickscfg
+    
+    # Create OAuth configuration profile
+    echo "[oauth_profile]" > ~/.databrickscfg
+    echo "host = $(DATABRICKS_HOST)" >> ~/.databrickscfg
+    echo "client_id = $(CLIENT_ID)" >> ~/.databrickscfg
+    echo "client_secret = $(CLIENT_SECRET)" >> ~/.databrickscfg
+  displayName: 'Configure Databricks CLI with OAuth'
+
+- script: |
+    # List of folders to copy (customize as needed)
+    FOLDERS_TO_COPY=(
+      "workflows"
+      "dbt_project"
+    )
+    
+    # Base path in DBFS where files will be copied
+    DBFS_BASE_PATH="/dbfs/FileStore/my_project"
+    
+    # Create base directory if it doesn't exist
+    databricks fs mkdirs ${DBFS_BASE_PATH} -p oauth_profile
+    
+    # Copy each folder using the OAuth profile
+    for folder in "${FOLDERS_TO_COPY[@]}"
+    do
+      echo "Copying $folder to DBFS..."
+      databricks fs cp -r $folder ${DBFS_BASE_PATH}/$(basename $folder) -p oauth_profile
+    done
+  displayName: 'Copy Files to DBFS'
+
+- script: |
+    # Verify files were copied successfully
+    databricks fs ls /FileStore/my_project -p oauth_profile
+  displayName: 'Verify DBFS Upload'
