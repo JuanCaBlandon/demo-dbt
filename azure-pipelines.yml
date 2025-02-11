@@ -79,7 +79,7 @@ variables:
 
 steps:
 - script: |
-    pip install databricks-cli
+    pip install --upgrade databricks-cli
   displayName: 'Install Databricks CLI'
 
 - script: |
@@ -101,6 +101,9 @@ steps:
   displayName: 'Configure Databricks CLI with OAuth'
 
 - script: |
+    # Set the profile to use
+    export DATABRICKS_CONFIG_PROFILE=oauth_profile
+
     # List of folders to copy (customize as needed)
     FOLDERS_TO_COPY=(
       "workflows"
@@ -111,17 +114,20 @@ steps:
     DBFS_BASE_PATH="/dbfs/FileStore/my_project"
     
     # Create base directory if it doesn't exist
-    databricks fs mkdirs ${DBFS_BASE_PATH} -p oauth_profile
+    databricks fs mkdirs ${DBFS_BASE_PATH}
     
-    # Copy each folder using the OAuth profile
+    # Copy each folder
     for folder in "${FOLDERS_TO_COPY[@]}"
     do
       echo "Copying $folder to DBFS..."
-      databricks fs cp -r $folder ${DBFS_BASE_PATH}/$(basename $folder) -p oauth_profile
+      databricks fs cp -r $folder ${DBFS_BASE_PATH}/$(basename $folder)
     done
   displayName: 'Copy Files to DBFS'
 
 - script: |
+    # Set the profile to use
+    export DATABRICKS_CONFIG_PROFILE=oauth_profile
+
     # Verify files were copied successfully
-    databricks fs ls /FileStore/my_project -p oauth_profile
+    databricks fs ls /FileStore/my_project
   displayName: 'Verify DBFS Upload'
