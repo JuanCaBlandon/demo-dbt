@@ -91,19 +91,19 @@ steps:
     touch ~/.databrickscfg
     
     # Create OAuth configuration profile
-    echo "[oauth_profile]" > ~/.databrickscfg
+    echo "[DEFAULT]" > ~/.databrickscfg
     echo "host = $(DATABRICKS_HOST)" >> ~/.databrickscfg
     echo "client_id = $(DATABRICKS_CLIENT_ID)" >> ~/.databrickscfg
     echo "client_secret = $(DATABRICKS_CLIENT_SECRET)" >> ~/.databrickscfg
 
-    # Set proper permissions
+     # Set proper permissions
     chmod 600 ~/.databrickscfg
+
+    # Verify configuration
+    cat ~/.databrickscfg
   displayName: 'Configure Databricks CLI with OAuth'
 
 - script: |
-    # Set the profile to use
-    export DATABRICKS_CONFIG_PROFILE=oauth_profile
-
     # List of folders to copy (customize as needed)
     FOLDERS_TO_COPY=(
       "workflows"
@@ -111,23 +111,27 @@ steps:
     )
     
     # Base path in DBFS where files will be copied
-    DBFS_BASE_PATH="/dbfs/FileStore/my_project"
+    DBFS_BASE_PATH="dbfs:/FileStore/my_project"
     
     # Create base directory if it doesn't exist
-    databricks fs mkdirs ${DBFS_BASE_PATH}
+    echo "Creating directory ${DBFS_BASE_PATH}..."
+    databricks fs mkdirs "${DBFS_BASE_PATH}"
     
     # Copy each folder
     for folder in "${FOLDERS_TO_COPY[@]}"
     do
       echo "Copying $folder to DBFS..."
-      databricks fs cp -r $folder ${DBFS_BASE_PATH}/$(basename $folder)
+      # Ensure source folder exists
+      if [ -d "$folder" ]; then
+        databricks fs cp -r "$folder" "${DBFS_BASE_PATH}/$folder"
+      else
+        echo "Warning: Source folder $folder not found"
+      fi
     done
   displayName: 'Copy Files to DBFS'
 
 - script: |
-    # Set the profile to use
-    export DATABRICKS_CONFIG_PROFILE=oauth_profile
-
     # Verify files were copied successfully
-    databricks fs ls /FileStore/my_project
+    echo "Listing contents of DBFS directory:"
+    databricks fs ls "dbfs:/FileStore/my_project"
   displayName: 'Verify DBFS Upload'
