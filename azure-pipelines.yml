@@ -56,7 +56,7 @@ steps:
 - script: |
     # Create DBFS directory and copy files
     echo "Creating DBFS directory..."
-    databricks fs mkdirs "dbfs:/FileStore/deployment"
+    databricks fs mkdirs "dbfs:/FileStore/deploymentt"
     
     # Add your file copy commands here
     # Example:
