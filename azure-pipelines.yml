@@ -58,7 +58,22 @@ steps:
     echo "Creating DBFS directory..."
     databricks fs mkdirs "dbfs:/repositories"
     
-    # Add your file copy commands here
-    # Example:
-    # databricks fs cp -r dbt_project dbfs:/repositories
+     # Show current directory and contents
+    echo "Current directory: $(pwd)"
+    echo "Directory contents:"
+    ls -la
+    
+    # Check if dbt_project folder exists
+    if [ -d "dbt_project" ]; then
+        echo "Found dbt_project folder, copying to DBFS..."
+        databricks fs cp -r dbt_project "dbfs:/FileStore/deployment/"
+        
+        # Verify the copy
+        echo "Verifying copied files:"
+        databricks fs ls "dbfs:/FileStore/deployment/dbt_project"
+    else
+        echo "Error: dbt_project folder not found in $(pwd)"
+        echo "Full directory listing:"
+        ls -R
+    fi
   displayName: 'Copy Files to DBFS'
