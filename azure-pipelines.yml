@@ -102,13 +102,13 @@ steps:
     
     # Create config with Azure AD SP authentication
     cat > "$CONFIG_FILE" << EOF
-[DEFAULT]
-host = $(DATABRICKS_HOST)
-azure_workspace_resource_id = $(DATABRICKS_WORKSPACE_RESOURCE_ID)
-azure_client_id = $(DATABRICKS_CLIENT_ID)
-azure_client_secret = $(DATABRICKS_CLIENT_SECRET)
-azure_tenant_id = $(DATABRICKS_TENANT_ID)
-EOF
+    [DEFAULT]
+    host = $(DATABRICKS_HOST)
+    azure_workspace_resource_id = $(DATABRICKS_WORKSPACE_RESOURCE_ID)
+    azure_client_id = $(DATABRICKS_CLIENT_ID)
+    azure_client_secret = $(DATABRICKS_CLIENT_SECRET)
+    azure_tenant_id = $(DATABRICKS_TENANT_ID)
+    EOF
     
     # Set permissions
     chmod 600 "$CONFIG_FILE"
