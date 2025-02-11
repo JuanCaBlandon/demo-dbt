@@ -7,7 +7,7 @@ trigger:
 variables:
   - name: RUNTIME_ENV
     value: $(System.StageName) # or however you define your environment
-  - group: databricks-credentials
+  - group: databricks-credentials-latest
 
 pool:
   vmImage: 'ubuntu-latest'
