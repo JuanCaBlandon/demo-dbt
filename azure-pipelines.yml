@@ -75,68 +75,86 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  - group: databricks-credentials-latest  # Should contain CLIENT_ID and CLIENT_SECRET
+  - group: databricks-credentials-latest
 
 steps:
 - script: |
-    pip install --upgrade databricks-cli
-  displayName: 'Install Databricks CLI'
+    python -m pip install --upgrade pip
+    pip install --upgrade databricks-cli requests
+    
+    # Show installed versions
+    pip list | grep -E "databricks-cli|requests|urllib3"
+  displayName: 'Install Dependencies'
 
 - script: |
-    echo "Creating Databricks config file..."
-    CONFIG_FILE="$HOME/.databrickscfg"
+    # Debug: Show environment
+    echo "Home directory: $HOME"
+    echo "Current user: $(whoami)"
+    echo "Current directory: $(pwd)"
     
-    # Remove if exists and create new config file
-    rm -rf "$CONFIG_FILE"
+    # Ensure .databrickscfg directory exists
+    echo "Creating config directory..."
+    mkdir -p $HOME/.databrickscfg
     
-    # Create the config file
-    echo "[DEFAULT]" > "$CONFIG_FILE"
-    echo "host = $(DATABRICKS_HOST)" >> "$CONFIG_FILE"
-    echo "client_id = $(DATABRICKS_CLIENT_ID)" >> "$CONFIG_FILE"
-    echo "client_secret = $(DATABRICKS_CLIENT_SECRET)" >> "$CONFIG_FILE"
-    echo "tenant_id = 9c643eac-4572-41a3-8844-e4a079aa6409" >> "$CONFIG_FILE"
+    # Create config file
+    CONFIG_FILE="$HOME/.databrickscfg/config"
+    echo "Creating config file at: $CONFIG_FILE"
     
-    # Set proper permissions
+    # Create config with Azure AD SP authentication
+    cat > "$CONFIG_FILE" << EOF
+[DEFAULT]
+host = $(DATABRICKS_HOST)
+azure_workspace_resource_id = $(DATABRICKS_WORKSPACE_RESOURCE_ID)
+azure_client_id = $(DATABRICKS_CLIENT_ID)
+azure_client_secret = $(DATABRICKS_CLIENT_SECRET)
+azure_tenant_id = $(DATABRICKS_TENANT_ID)
+EOF
+    
+    # Set permissions
     chmod 600 "$CONFIG_FILE"
-
-    # Debug: Show config file exists and its contents (without secrets)
-    echo "Config file location: $CONFIG_FILE"
+    
+    # Debug: Show config file location and contents
     echo "Config file exists: $(test -f "$CONFIG_FILE" && echo "Yes" || echo "No")"
-    echo "Config file contents (redacted):"
-    sed 's/client_secret = .*/client_secret = [REDACTED]/' "$CONFIG_FILE"
+    echo "Config file permissions: $(ls -l "$CONFIG_FILE")"
+    echo "Config contents (redacted):"
+    sed 's/azure_client_secret = .*/azure_client_secret = [REDACTED]/' "$CONFIG_FILE"
+    
+    # Export config file location
+    export DATABRICKS_CONFIG_FILE="$CONFIG_FILE"
   displayName: 'Configure Databricks CLI'
   env:
-    HOME: $(Pipeline.Workspace)
+    DATABRICKS_CONFIG_FILE: $(HOME)/.databrickscfg/config
 
 - script: |
-    export DATABRICKS_CONFIG_FILE="$(Pipeline.Workspace)/.databrickscfg"
+    # Export config file location again for this step
+    export DATABRICKS_CONFIG_FILE="$HOME/.databrickscfg/config"
     
-    # Test connection first
+    # Debug: Show environment variables
+    echo "DATABRICKS_CONFIG_FILE: $DATABRICKS_CONFIG_FILE"
+    echo "Config file exists: $(test -f "$DATABRICKS_CONFIG_FILE" && echo "Yes" || echo "No")"
+    
+    # Test connection with verbose output
     echo "Testing Databricks connection..."
-    databricks workspace list
+    databricks workspace list --debug
     
-    # Create base directory
+    # If successful, proceed with file operations
     echo "Creating DBFS directory..."
     databricks fs mkdirs "dbfs:/FileStore/my_project"
     
-    # Copy folders if they exist
+    # List directories
+    echo "Source directory contents:"
+    ls -la $(Build.SourcesDirectory)
+    
+    # Copy folders
+    cd $(Build.SourcesDirectory)
     for folder in "workflows" "dbt_project"; do
       if [ -d "$folder" ]; then
         echo "Copying $folder to DBFS..."
         databricks fs cp -r "$folder" "dbfs:/FileStore/my_project/$folder"
       else
-        echo "Warning: Source folder $folder not found in $(pwd)"
-        echo "Directory contents:"
-        ls -la
+        echo "Warning: Source folder $folder not found"
       fi
     done
-    
-    # List final contents
-    echo "Final DBFS contents:"
-    databricks fs ls "dbfs:/FileStore/my_project"
   displayName: 'Copy Files to DBFS'
   env:
-    DATABRICKS_HOST: $(DATABRICKS_HOST)
-    DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
-    DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
-    DATABRICKS_CONFIG_FILE: $(Pipeline.Workspace)/.databrickscfg
+    DATABRICKS_CONFIG_FILE: $(HOME)/.databrickscfg/config
