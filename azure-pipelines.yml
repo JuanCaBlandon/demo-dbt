@@ -84,54 +84,59 @@ steps:
 
 - script: |
     echo "Creating Databricks config file..."
-    # Remove directory if it exists
-    rm -rf ~/.databrickscfg
+    CONFIG_FILE="$HOME/.databrickscfg"
+    
+    # Remove if exists and create new config file
+    rm -rf "$CONFIG_FILE"
     
     # Create the config file
-    touch ~/.databrickscfg
+    echo "[DEFAULT]" > "$CONFIG_FILE"
+    echo "host = $(DATABRICKS_HOST)" >> "$CONFIG_FILE"
+    echo "client_id = $(DATABRICKS_CLIENT_ID)" >> "$CONFIG_FILE"
+    echo "client_secret = $(DATABRICKS_CLIENT_SECRET)" >> "$CONFIG_FILE"
+    echo "tenant_id = 9c643eac-4572-41a3-8844-e4a079aa6409" >> "$CONFIG_FILE"
     
-    # Create OAuth configuration profile
-    echo "[DEFAULT]" > ~/.databrickscfg
-    echo "host = $(DATABRICKS_HOST)" >> ~/.databrickscfg
-    echo "client_id = $(DATABRICKS_CLIENT_ID)" >> ~/.databrickscfg
-    echo "client_secret = $(DATABRICKS_CLIENT_SECRET)" >> ~/.databrickscfg
+    # Set proper permissions
+    chmod 600 "$CONFIG_FILE"
 
-     # Set proper permissions
-    chmod 600 ~/.databrickscfg
-
-    # Verify configuration
-    cat ~/.databrickscfg
-  displayName: 'Configure Databricks CLI with OAuth'
+    # Debug: Show config file exists and its contents (without secrets)
+    echo "Config file location: $CONFIG_FILE"
+    echo "Config file exists: $(test -f "$CONFIG_FILE" && echo "Yes" || echo "No")"
+    echo "Config file contents (redacted):"
+    sed 's/client_secret = .*/client_secret = [REDACTED]/' "$CONFIG_FILE"
+  displayName: 'Configure Databricks CLI'
+  env:
+    HOME: $(Pipeline.Workspace)
 
 - script: |
-    # List of folders to copy (customize as needed)
-    FOLDERS_TO_COPY=(
-      "workflows"
-      "dbt_project"
-    )
+    export DATABRICKS_CONFIG_FILE="$(Pipeline.Workspace)/.databrickscfg"
     
-    # Base path in DBFS where files will be copied
-    DBFS_BASE_PATH="dbfs:/FileStore/my_project"
+    # Test connection first
+    echo "Testing Databricks connection..."
+    databricks workspace list
     
-    # Create base directory if it doesn't exist
-    echo "Creating directory ${DBFS_BASE_PATH}..."
-    databricks fs mkdirs "${DBFS_BASE_PATH}"
+    # Create base directory
+    echo "Creating DBFS directory..."
+    databricks fs mkdirs "dbfs:/FileStore/my_project"
     
-    # Copy each folder
-    for folder in "${FOLDERS_TO_COPY[@]}"
-    do
-      echo "Copying $folder to DBFS..."
-      # Ensure source folder exists
+    # Copy folders if they exist
+    for folder in "workflows" "dbt_project"; do
       if [ -d "$folder" ]; then
-        databricks fs cp -r "$folder" "${DBFS_BASE_PATH}/$folder"
+        echo "Copying $folder to DBFS..."
+        databricks fs cp -r "$folder" "dbfs:/FileStore/my_project/$folder"
       else
-        echo "Warning: Source folder $folder not found"
+        echo "Warning: Source folder $folder not found in $(pwd)"
+        echo "Directory contents:"
+        ls -la
       fi
     done
-  displayName: 'Copy Files to DBFS'
-
-- script: |
-    # Verify files were copied successfully
-    echo "Listing contents of DBFS directory:"
+    
+    # List final contents
+    echo "Final DBFS contents:"
     databricks fs ls "dbfs:/FileStore/my_project"
-  displayName: 'Verify DBFS Upload'
+  displayName: 'Copy Files to DBFS'
+  env:
+    DATABRICKS_HOST: $(DATABRICKS_HOST)
+    DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+    DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+    DATABRICKS_CONFIG_FILE: $(Pipeline.Workspace)/.databrickscfg
