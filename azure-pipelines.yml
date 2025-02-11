@@ -25,9 +25,10 @@ stages:
             mkdir -p ~/.databricks
             cat > ~/.databrickscfg << EOF
             [DEFAULT]
-            host = $(DATABRICKS_HOST_URL)
-            client_id = $(DATABRICKS_CLIENT_ID)
-            client_secret = $(DATABRICKS_CLIENT_SECRET)
+            host = $(DATABRICKS_HOST)
+            account_id = $(DATABRICKS_CLIENT_ID)
+            databricks_client_id = $(DATABRICKS_CLIENT_ID)
+            databricks_client_secret = $(DATABRICKS_CLIENT_SECRET)
             EOF
             
             # Debug: Check config file (with secrets redacted)
@@ -60,6 +61,7 @@ stages:
             # Clean up
             rm -rf temp_deploy
       env:
-        DATABRICKS_HOST_URL: $(DATABRICKS_HOST_URL)
+        DATABRICKS_HOST: "https://accounts.cloud.databricks.com."
+        DATABRICKS_ACCOUNT_ID: $(DATABRICKS_ACCOUNT_ID)
         DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
         DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
