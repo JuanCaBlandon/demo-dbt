@@ -89,8 +89,8 @@ steps:
     # Create OAuth configuration profile
     echo "[oauth_profile]" > ~/.databrickscfg
     echo "host = $(DATABRICKS_HOST)" >> ~/.databrickscfg
-    echo "client_id = $(CLIENT_ID)" >> ~/.databrickscfg
-    echo "client_secret = $(CLIENT_SECRET)" >> ~/.databrickscfg
+    echo "client_id = $(DATABRICKS_CLIENT_ID)" >> ~/.databrickscfg
+    echo "client_secret = $(DATABRICKS_CLIENT_SECRET)" >> ~/.databrickscfg
   displayName: 'Configure Databricks CLI with OAuth'
 
 - script: |
