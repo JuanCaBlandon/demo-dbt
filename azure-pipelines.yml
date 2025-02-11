@@ -2,13 +2,12 @@ trigger:
   branches:
     include:
       - main
-      - feature/ci-cd-pipeline
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  - group: databricks-credentials-latest
+  - group: databricks-credentials  # Should contain CLIENT_ID, CLIENT_SECRET, ACCOUNT_ID, and DATABRICKS_HOST
 
 steps:
 - script: |
@@ -19,12 +18,12 @@ steps:
 - script: |
     # Generate OAuth token
     echo "Generating OAuth token..."
-    TOKEN_ENDPOINT="https://accounts.cloud.databricks.com/oidc/accounts/$(DATABRICKS_ACCOUNT_ID)/v1/token"
+    TOKEN_ENDPOINT="https://accounts.cloud.databricks.com/oidc/accounts/$(ACCOUNT_ID)/v1/token"
     
     # Get OAuth token
     RESPONSE=$(curl --silent --request POST \
       --url "$TOKEN_ENDPOINT" \
-      --user "$(DATABRICKS_CLIENT_ID):$(DATABRICKS_CLIENT_SECRET)" \
+      --user "$(CLIENT_ID):$(CLIENT_SECRET)" \
       --data 'grant_type=client_credentials&scope=all-apis')
     
     # Extract access token
@@ -56,9 +55,9 @@ steps:
 - script: |
     # Create DBFS directory and copy files
     echo "Creating DBFS directory..."
-    databricks fs mkdirs "dbfs:/repositories"
+    databricks fs mkdirs "dbfs:/FileStore/deployment"
     
-     # Show current directory and contents
+    # Show current directory and contents
     echo "Current directory: $(pwd)"
     echo "Directory contents:"
     ls -la
