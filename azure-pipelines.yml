@@ -67,7 +67,7 @@ stages:
             # Clean up
             rm -rf temp_deploy
       env:
-        DATABRICKS_HOST_URL: https://dbc-bea00b2d-f255.cloud.databricks.com/
-        DATABRICKS_CLIENT_ID: b223769d-74d9-4cd1-895a-df8ee740fe30
-        DATABRICKS_CLIENT_SECRET: dosec024ae355cb98f9858c86baed9695aa9
-        AZURE_TENANT_ID: dbc-bea00b2d-f255
+        DATABRICKS_HOST_URL: "$(DATABRICKS_HOST_URL)"
+        DATABRICKS_CLIENT_ID: "$(DATABRICKS_CLIENT_ID)"
+        DATABRICKS_CLIENT_SECRET: "$(DATABRICKS_CLIENT_SECRET)"
+        DATABRICKS_ACCOUNT_ID: "$(DATABRICKS_ACCOUNT_ID)"
