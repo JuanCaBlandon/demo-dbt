@@ -2,12 +2,13 @@ trigger:
   branches:
     include:
       - main
+      - feature/ci-cd-pipeline
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  - group: databricks-credentials  # Should contain CLIENT_ID, CLIENT_SECRET, ACCOUNT_ID, and DATABRICKS_HOST
+  - group: databricks-credentials-latest
 
 steps:
 - script: |
@@ -18,12 +19,12 @@ steps:
 - script: |
     # Generate OAuth token
     echo "Generating OAuth token..."
-    TOKEN_ENDPOINT="https://accounts.cloud.databricks.com/oidc/accounts/$(ACCOUNT_ID)/v1/token"
+    TOKEN_ENDPOINT="https://accounts.cloud.databricks.com/oidc/accounts/$(DATABRICKS_ACCOUNT_ID)/v1/token"
     
     # Get OAuth token
     RESPONSE=$(curl --silent --request POST \
       --url "$TOKEN_ENDPOINT" \
-      --user "$(CLIENT_ID):$(CLIENT_SECRET)" \
+      --user "$(DATABRICKS_CLIENT_ID):$(DATABRICKS_CLIENT_SECRET)" \
       --data 'grant_type=client_credentials&scope=all-apis')
     
     # Extract access token
@@ -53,26 +54,41 @@ steps:
   displayName: 'Configure and Test Databricks CLI'
 
 - script: |
-    # Create DBFS directory and copy files
-    echo "Creating DBFS directory..."
-    databricks fs mkdirs "dbfs:/FileStore/deployment"
+    echo "Starting file copy process..."
     
-    # Show current directory and contents
+    # Move to source directory
+    cd $(Build.SourcesDirectory)
+    
+    # Show current directory and contents for debugging
     echo "Current directory: $(pwd)"
     echo "Directory contents:"
     ls -la
     
-    # Check if dbt_project folder exists
-    if [ -d "dbt_project" ]; then
-        echo "Found dbt_project folder, copying to DBFS..."
-        databricks fs cp -r dbt_project "dbfs:/FileStore/deployment/"
-        
-        # Verify the copy
-        echo "Verifying copied files:"
-        databricks fs ls "dbfs:/FileStore/deployment/dbt_project"
-    else
-        echo "Error: dbt_project folder not found in $(pwd)"
-        echo "Full directory listing:"
-        ls -R
-    fi
+    # Create repositories directory in DBFS
+    echo "Creating repositories directory in DBFS..."
+    databricks fs mkdirs "dbfs:/repositories/$(Build.Repository.Name)"
+    
+    # Array of folders to copy
+    FOLDERS=("dbt_project" "workflows")
+    
+    # Copy each folder
+    for folder in "${FOLDERS[@]}"; do
+        if [ -d "$folder" ]; then
+            echo "Found $folder folder, copying to DBFS..."
+            # Remove existing content if any
+            databricks fs rm -r "dbfs:/repositories/$(Build.Repository.Name)/$folder" || true
+            # Copy folder
+            databricks fs cp -r "$folder" "dbfs:/repositories/$(Build.Repository.Name)/$folder"
+            
+            # Verify the copy
+            echo "Verifying copied files for $folder:"
+            databricks fs ls "dbfs:/repositories/$(Build.Repository.Name)/$folder"
+        else
+            echo "Warning: $folder folder not found in $(pwd)"
+        fi
+    done
+    
+    # Show final structure
+    echo "Final repository structure in DBFS:"
+    databricks fs ls "dbfs:/repositories/$(Build.Repository.Name)"
   displayName: 'Copy Files to DBFS'
