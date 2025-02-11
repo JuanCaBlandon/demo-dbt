@@ -33,16 +33,28 @@ stages:
           # Install Databricks CLI if needed
           pip install databricks-cli
           
+          # Debug: List source directory contents
+          echo "Source directory contents:"
+          ls -la $(Build.SourcesDirectory)
+          
           # Create a temporary directory for the folders we want to copy
           mkdir -p temp_deploy
           cp -r $(Build.SourcesDirectory)/dbt_project temp_deploy/
           cp -r $(Build.SourcesDirectory)/workflows temp_deploy/
+          
+          # Debug: List temp directory contents
+          echo "Temp directory contents:"
+          ls -la temp_deploy
           
           # Remove existing content if any
           databricks fs rm -r dbfs:/repos/$(Build.Repository.Name) || true
           
           # Copy only the selected folders
           databricks fs cp -r temp_deploy dbfs:/repos/$(Build.Repository.Name)
+          
+          # Debug: List DBFS directory after copy
+          echo "DBFS contents after copy:"
+          databricks fs ls dbfs:/repos/$(Build.Repository.Name)
           
           # Clean up temporary directory
           rm -rf temp_deploy
