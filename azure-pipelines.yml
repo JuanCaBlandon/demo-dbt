@@ -44,7 +44,7 @@ stages:
             
             # Test Databricks connection
             echo "Testing Databricks connection:"
-            databricks fs ls dbfs:/
+            databricks clusters list -p DEFAULT
             
             # Remove existing content if any
             echo "Removing existing content:"
