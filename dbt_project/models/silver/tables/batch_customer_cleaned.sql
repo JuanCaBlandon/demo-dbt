@@ -17,13 +17,15 @@ SELECT
   DateOfBirth AS date_of_birth,
   VIN AS vin,
   offense_date,
-  case when repeat_offender = 1 and offense_date >= '2025-01-01' then 1 else 0 end as repeat_offender,
+  case when repeat_offender = 1 and offense_date >= "{{ var("start_date", "2024-01-01") }}" then 1 else 0 end as repeat_offender,
   IID_Start_Date as IID_Start_Date,
   IID_End_Date as IID_End_Date,
-  current_timestamp() as created_at,
-  row_number() over (partition by vendor_name,DriversLicenseNumber ,FirstName,LastName,MiddleName,DateOfBirth,VIN,offense_date,repeat_offender order by offense_date) as num_duplicates
+  created_at,
+  row_number() over (partition by vendor_name,DriversLicenseNumber ,FirstName, LastName, MiddleName, DateOfBirth, VIN, offense_date, repeat_offender order by offense_date) as num_duplicates
 FROM
   {{ source('BRONZE', 'state_batch_customer_data_ia') }}
+WHERE
+  created_at >= (SELECT MAX(created_at) FROM {{ source('BRONZE', 'state_batch_customer_data_ia') }})
 
 
 ),
