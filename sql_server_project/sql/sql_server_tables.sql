@@ -25,36 +25,36 @@ CREATE TABLE [databricks].[StateReportedCustomer](
 	[ModifyDate] [datetime] NULL,
 	[ModifyUser] [nvarchar](20) NULL,
 	[RepeatOffender] [nvarchar](1) NULL,
-	[OffenseDate] [datetime] NULL,
-	[IIDStartDate] [datetime] NULL,
-	[IIDEndDate] [datetime] NULL,
+	[OffenseDate] [date] NULL,
+	[IIDStartDate] [date] NULL,
+	[IIDEndDate] [date] NULL,
 	[CreationDate] [date] NULL
 ) ON [PRIMARY];
 
 
 CREATE TABLE [databricks].[FtpCustomerData](
 	[VendorName] [nvarchar](30) NULL,
-	[DriversLicenseNumber] [nvarchar](20) NULL,
-	[LastName] [nvarchar](20) NULL,
-	[FirstName] [nvarchar](20) NULL,
-	[MiddleName] [nvarchar](20) NULL,
-	[DateOfBirth] [datetime] NULL,
-	[VIN] [nvarchar](20) NULL,
-	[OffenseDate] [datetime] NULL,
+	[DriversLicenseNumber] [nvarchar](50) NULL,
+	[LastName] [nvarchar](80) NULL,
+	[FirstName] [nvarchar](80) NULL,
+	[MiddleName] [nvarchar](80) NULL,
+	[DateOfBirth] [date] NULL,
+	[VIN] [nvarchar](30) NULL,
+	[OffenseDate] [date] NULL,
 	[RepeatOffender] [nvarchar](1) NULL,
 	[IIDStartDate] [date] NULL,
 	[IIDEndDate] [date] NULL,
 	[CreationDate] [date] NULL
 ) ON [PRIMARY];
 
-CREATE TABLE [databricks].[TmpStateReportedCustomer](
+CREATE TABLE [StateReporting].[databricks].[TmpStateReportedCustomer](
 	[CustomerReportingStateID] [int] NULL,
 	[CustomerID] [int] NULL,
 	[DriversLicenseNumber] [nvarchar](30) NULL,
-	[FirstName] [nvarchar](50) NULL,
-	[LastName] [nvarchar](50) NULL,
-	[MiddleName] [nvarchar](50) NULL,
-	[DateOfBirth] [datetime] NULL,
+	[FirstName] [nvarchar](80) NULL,
+	[LastName] [nvarchar](80) NULL,
+	[MiddleName] [nvarchar](80) NULL,
+	[DateOfBirth] [date] NULL,
 	[VIN] [nvarchar](50) NULL,
 	[InstallDate] [datetime] NULL,
 	[DeInstallDate] [datetime] NULL,
@@ -71,9 +71,9 @@ CREATE TABLE [databricks].[TmpStateReportedCustomer](
 	[ModifyDate] [datetime] NULL,
 	[ModifyUser] [nvarchar](20) NULL,
 	[RepeatOffender] [nvarchar](1) NULL,
-	[OffenseDate] [datetime] NULL,
-	[IIDStartDate] [datetime] NULL,
-	[IIDEndDate] [datetime] NULL,
+	[OffenseDate] [date] NULL,
+	[IIDStartDate] [date] NULL,
+	[IIDEndDate] [date] NULL,
 	[CreationDate] [date] NULL
 ) ON [PRIMARY];
 
