@@ -1,6 +1,6 @@
 import logging
 from args_parser import get_parser
-from pyspark.sql.functions import col, substring, regexp_replace, to_timestamp, to_date, lit
+from pyspark.sql.functions import col, substring, regexp_replace, to_timestamp, to_date, lit, when
 
 
 # Get the parser
