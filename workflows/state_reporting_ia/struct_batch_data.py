@@ -15,7 +15,7 @@ execution_date = args.execution_date
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-source_path = "/FileStore/Intoxalock_20250203.txt"
+source_path = f"/Volumes/ia_batch_files_raw_{env}/default/ia_batch_files_raw_{env}/extracted_files/Intoxalock_{execution_date}.txt"
 destination_path = f"state_reporting_{env}.bronze.state_batch_customer_data_ia_test"
 
 try:
