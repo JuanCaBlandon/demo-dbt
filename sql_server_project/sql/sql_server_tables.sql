@@ -1,9 +1,19 @@
 USE [StateReporting]
 GO
-SET ANSI_NULLS ON
+IF OBJECT_ID('[databricks].[StateReportedCustomer]', 'U') IS NOT NULL
+    DROP TABLE [databricks].[StateReportedCustomer];
 GO
 
-SET QUOTED_IDENTIFIER ON
+IF OBJECT_ID('[databricks].[FtpCustomerData]', 'U') IS NOT NULL
+    DROP TABLE [databricks].[FtpCustomerData];
+GO
+
+IF OBJECT_ID('[StateReporting].[databricks].[TmpStateReportedCustomer]', 'U') IS NOT NULL
+    DROP TABLE [StateReporting].[databricks].[TmpStateReportedCustomer];
+GO
+
+IF OBJECT_ID('[databricks].[CustomerEvents]', 'U') IS NOT NULL
+    DROP TABLE [databricks].[CustomerEvents];
 GO
 
 -- Table into SQL Server
