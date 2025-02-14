@@ -139,7 +139,7 @@ WHERE
     AND DUV.ViolationReportingApprovalCd IN (344, 345) -- Approved,  -- Auto-Approved
     AND CRS.StateCode = 'IA'
     AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime)
-        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), )
+        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), @EXECUTION_DATE)
 		AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) BETWEEN @START_DATE AND @END_DATE
 		
 
@@ -403,3 +403,4 @@ WHEN NOT MATCHED THEN
 		CAST(@EXECUTION_DATE AS DATE)
 	)
 ;
+SELECT count(*) FROM databricks.CustomerEvents'
