@@ -3,7 +3,8 @@ GO
 
 CREATE OR ALTER PROCEDURE databricks.GetCustomersIA
     @START_DATE DATE,
-    @END_DATE DATE
+    @END_DATE DATE,
+    @EXECUTION_DATE DATE
 AS
 
 /*
@@ -16,7 +17,7 @@ AS
 
 -- Get the customers for SQL and Databricks implementation
 
-TRUNCATE TABLE StateReporting.databricks.TmpStateReportedCustomer;
+DELETE FROM StateReporting.databricks.TmpStateReportedCustomer;
 
 INSERT INTO StateReporting.databricks.TmpStateReportedCustomer(
 	CustomerReportingStateID ,
@@ -63,7 +64,7 @@ SELECT
     1 AS ActiveStatus,
     'Active-NoReported' AS ReportStatusCD,
     cus.[StatusCd] AS CustomerStatus,
-    GETDATE() AS ActiveStatusStartDate,
+    @EXECUTION_DATE AS ActiveStatusStartDate,
     custst.[EffectiveStartDate],
     custst.[EffectiveEndDate],
     custst.[DeviceLogRptgClassCd],
@@ -75,7 +76,7 @@ SELECT
     ftp.OffenseDate,
 	ftp.IIDStartDate,
 	ftp.IIDEndDate,
-    CAST(GETDATE() AS DATE) AS CreationDate
+    CAST(@EXECUTION_DATE AS DATE) AS CreationDate
 FROM [CustSrv].[dbo].[Customer] cus WITH (NOLOCK)
 INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst  WITH (NOLOCK)
     ON cus.CustomerID = custst.CustomerID
@@ -87,13 +88,13 @@ INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst  WITH (NOLOCK)
 LEFT JOIN StateReporting.databricks.FtpCustomerData ftp
 	ON cus.DriversLicenseNumber = ftp.DriversLicenseNumber
 	AND cus.VIN = ftp.VIN
-	AND ftp.CreationDate = CAST(GETDATE() AS DATE)
+	AND ftp.CreationDate = CAST(@EXECUTION_DATE AS DATE)
 WHERE
 	(custst.[EffectiveEndDate] IS NULL AND cus.[DeInstallDateConfirmed] IS NULL)
-	OR (custst.[EffectiveEndDate] IS NULL AND CAST(cus.[DeInstallDateConfirmed] AS DATE) > CAST(GETDATE() AS DATE))
+	OR (custst.[EffectiveEndDate] IS NULL AND CAST(cus.[DeInstallDateConfirmed] AS DATE) > CAST(@EXECUTION_DATE AS DATE))
 	OR (
-        custst.[EffectiveEndDate] > CAST(GETDATE() AS DATE)
-        AND (cus.[DeInstallDateConfirmed] IS NULL OR CAST(cus.[DeInstallDateConfirmed] AS DATE) > CAST(GETDATE() AS DATE))
+        custst.[EffectiveEndDate] > CAST(@EXECUTION_DATE AS DATE)
+        AND (cus.[DeInstallDateConfirmed] IS NULL OR CAST(cus.[DeInstallDateConfirmed] AS DATE) > CAST(@EXECUTION_DATE AS DATE))
     );
 -- TODO: Start Compliance Workflow when not matched
 
@@ -211,7 +212,7 @@ WHERE NOT EXISTS (SELECT CustomerID FROM StateReporting.databricks.StateReported
 
 -- Put date to inactive customers, ActiveStatus = 0
 UPDATE ST
-SET ST.ActiveStatusEndDate = GETDATE()
+SET ST.ActiveStatusEndDate = @EXECUTION_DATE
 FROM StateReporting.databricks.TmpStateReportedCustomer CU
     INNER JOIN StateReporting.databricks.StateReportedCustomer ST ON CU.CustomerID = ST.CustomerID
 WHERE CU.ActiveStatus = 0

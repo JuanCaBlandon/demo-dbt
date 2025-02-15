@@ -16,7 +16,7 @@ database_host = dbutils.secrets.get(scope = "state_reporting", key = f"sql_serve
 username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{env}")
 password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
 
-url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
+url = f"jdbc:sqlserver://{database_host};instanceName={env};databaseName={database_name};encrypt=true;trustServerCertificate=true"
 
 query = f"""
 SELECT * FROM {database_name}.databricks.TmpStateReportedCustomer
@@ -40,8 +40,8 @@ result_df = result_df.select(
 
 result_df.createOrReplaceTempView("CustomersIA")
 
-spark.sql(""" 
-    MERGE INTO state_reporting_dev.bronze.customer_raw AS ST
+spark.sql(f""" 
+    MERGE INTO state_reporting_{env}.bronze.customer_raw AS ST
     USING CustomersIA AS CU ON ST.CustomerID = CU.CustomerID
     WHEN MATCHED AND CU.ActiveStatus = 0 THEN
         UPDATE SET ST.ActiveStatusEndDate = current_date()

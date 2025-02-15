@@ -9,29 +9,31 @@
 
 with Tmp as(
 SELECT
-  vendor_name,
+  VendorName AS vendor_name,
   DriversLicenseNumber AS drivers_license_number,
   FirstName AS first_name,
   LastName AS last_name,
   MiddleName AS middle_name,
   DateOfBirth AS date_of_birth,
   VIN AS vin,
-  offense_date,
-  case when repeat_offender = 1 and offense_date >= '2025-01-01' then 1 else 0 end as repeat_offender,
-  IID_Start_Date as IID_Start_Date,
-  IID_End_Date as IID_End_Date,
-  current_timestamp() as created_at,
-  row_number() over (partition by vendor_name,DriversLicenseNumber ,FirstName,LastName,MiddleName,DateOfBirth,VIN,offense_date,repeat_offender order by offense_date) as num_duplicates
+  OffenseDate AS offense_date,
+  CASE WHEN RepeatOffender = 1 AND OffenseDate >= "{{ var("start_date", "2024-01-01") }}" THEN 1 ELSE 0 END AS repeat_offender,
+  IIDStartDate AS IID_Start_Date,
+  IIDEndDate AS IID_End_Date,
+  CreatedAt AS created_at,
+  row_number() OVER (PARTITION BY VendorName,DriversLicenseNumber ,FirstName, LastName, MiddleName, DateOfBirth, VIN, OffenseDate, RepeatOffender ORDER BY offense_date) AS num_duplicates
 FROM
   {{ source('BRONZE', 'state_batch_customer_data_ia') }}
+WHERE
+  created_at >= (SELECT MAX(created_at) FROM {{ source('BRONZE', 'state_batch_customer_data_ia') }})
 
 
 ),
 cleaned_data AS(
 
 SELECT
-  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} as batch_customer_dw_id, 
-  'N/A' as customer_dw_id,
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} AS batch_customer_dw_id, 
+  'N/A' AS customer_dw_id,
   vendor_name,
   drivers_license_number,
   first_name,
@@ -44,8 +46,8 @@ SELECT
   IID_Start_Date,
   IID_End_Date,
   created_at,
-  1 as is_inconsistent,
-  'duplicates' as type_inconsistent,
+  1 AS is_inconsistent,
+  'duplicates' AS type_inconsistent,
   num_duplicates
 FROM Tmp
 WHERE num_duplicates > 1
@@ -53,8 +55,8 @@ WHERE num_duplicates > 1
 UNION ALL
 
 SELECT
-  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} as batch_customer_dw_id,
-  'N/A' as customer_dw_id,
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} AS batch_customer_dw_id,
+  'N/A' AS customer_dw_id,
   vendor_name,
   drivers_license_number,
   first_name,
@@ -67,8 +69,8 @@ SELECT
   IID_Start_Date,
   IID_End_Date,
   created_at,
-  1 as is_inconsistent,
-  'NULL values' as type_inconsistent,
+  1 AS is_inconsistent,
+  'NULL values' AS type_inconsistent,
   num_duplicates
 FROM Tmp
 WHERE num_duplicates = 1 AND 
@@ -77,8 +79,8 @@ WHERE num_duplicates = 1 AND
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['vendor_name','Tmp.drivers_license_number','Tmp.first_name','Tmp.last_name','Tmp.middle_name','Tmp.date_of_birth', 'Tmp.vin', 'Tmp.offense_date']) }} as batch_customer_dw_id,
-    'N/A' as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['vendor_name','Tmp.drivers_license_number','Tmp.first_name','Tmp.last_name','Tmp.middle_name','Tmp.date_of_birth', 'Tmp.vin', 'Tmp.offense_date']) }} AS batch_customer_dw_id,
+    'N/A' AS customer_dw_id,
     vendor_name,
     Tmp.drivers_license_number,
     Tmp.first_name,
@@ -91,11 +93,11 @@ SELECT
     Tmp.IID_Start_Date,
     Tmp.IID_End_Date,
     Tmp.created_at,
-    1 as is_inconsistent,
-    'Without reference entity' as type_inconsistent,
+    1 AS is_inconsistent,
+    'Without reference entity' AS type_inconsistent,
     Tmp.num_duplicates
 FROM Tmp
-LEFT JOIN {{ ref('customer_cleaned') }} as c
+LEFT JOIN {{ ref('customer_cleaned') }} AS c
 ON  Tmp.drivers_license_number = c.drivers_license_number AND
     Tmp.first_name= c.first_name AND
     Tmp.last_name =c.last_name AND
@@ -109,7 +111,7 @@ WHERE Tmp.num_duplicates = 1 AND Tmp.drivers_license_number IS NOT NULL AND Tmp.
 UNION ALL
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['vendor_name','Tmp.drivers_license_number','Tmp.first_name','Tmp.last_name','Tmp.middle_name','Tmp.date_of_birth', 'Tmp.vin', 'Tmp.offense_date']) }} as batch_customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['vendor_name','Tmp.drivers_license_number','Tmp.first_name','Tmp.last_name','Tmp.middle_name','Tmp.date_of_birth', 'Tmp.vin', 'Tmp.offense_date']) }} AS batch_customer_dw_id,
     c.customer_dw_id,
     vendor_name,
     Tmp.drivers_license_number,
@@ -123,11 +125,11 @@ SELECT
     Tmp.IID_Start_Date,
     Tmp.IID_End_Date,
     Tmp.created_at,
-    0 as is_inconsistent,
-    'N/A' as type_inconsistent,
+    0 AS is_inconsistent,
+    'N/A' AS type_inconsistent,
     Tmp.num_duplicates
 FROM Tmp
-INNER JOIN {{ ref('customer_cleaned') }} as c
+INNER JOIN {{ ref('customer_cleaned') }} AS c
 ON  Tmp.drivers_license_number = c.drivers_license_number AND
     Tmp.first_name= c.first_name AND
     Tmp.last_name =c.last_name AND

@@ -33,21 +33,21 @@ table_name = "databricks.FTPCustomerData"
 
 
 try:
-    result_df = spark.read.table("state_reporting_dev.bronze.state_batch_customer_data_ia").where(f"CAST(created_at AS DATE) = '{execution_date}'")
+    result_df = spark.read.table(f"state_reporting_{env}.bronze.state_batch_customer_data_ia").where(f"CAST(CreatedAt AS DATE) = '{execution_date}'")
 
     batch_data = result_df.select(
-        col("vendor_name").alias("VendorName"),
+        col("VendorName").alias("VendorName"),
         col("DriversLicenseNumber"),
         col("LastName"),
         col("FirstName"),
         col("MiddleName"),
-        col("DateOfBirth").cast("timestamp").alias("DateOfBirth"),
+        col("DateOfBirth").alias("DateOfBirth"),
         col("VIN"),
-        col("offense_date").alias("OffenseDate"),
-        col("repeat_offender").alias("RepeatOffender"),
-        col("IID_Start_Date").alias("IIDStartDate"),
-        col("IID_End_Date").alias("IIDEndDate"),
-        col("created_at").cast("date").alias("CreationDate")
+        col("OffenseDate").alias("OffenseDate"),
+        col("RepeatOffender").alias("RepeatOffender"),
+        col("IIDStartDate").alias("IIDStartDate"),
+        col("IIDEndDate").alias("IIDEndDate"),
+        col("CreatedAt").alias("CreationDate")
     )
     
     if batch_data.count() == 0:

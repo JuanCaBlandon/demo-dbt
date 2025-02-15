@@ -3,7 +3,8 @@ GO
 
 CREATE OR ALTER PROCEDURE databricks.GetCustomerEventsIA
     @START_DATE DATE,
-    @END_DATE DATE
+    @END_DATE DATE,
+	@EXECUTION_DATE DATE
 
 AS
 
@@ -12,8 +13,11 @@ AS
 	Company: SourceMeridian
 	Short description: SP to get customers violations for IOWA State
 	Creation date: 2025-01-12
-	Modification date: 2025-01-27
+	Modification date: 2025-02-11
+	Modified by: Sebastian Osorno
 */
+
+
 IF OBJECT_ID('tempdb..#TmpCustomerEvents') IS NOT NULL
         DROP TABLE #TmpCustomerEvents;
 
@@ -36,6 +40,16 @@ CREATE TABLE #TmpCustomerEvents(
 	[NewVIN] [nvarchar](50) NULL,
 	[CreationDate] [date] NULL,
 	[ModificationDate] [date] NULL
+);
+
+WITH MAX_US AS (
+	SELECT
+		CustomerID, -- Handle multiple vehicles, use driver license
+		MAX(LastUsageDate) LastUsageDate
+	FROM CustSrv.dbo.DeviceUsage WITH (NOLOCK)
+	GROUP BY customerID
+	-- Handle multiple vehicles, use driver license,
+	-- Only if max usage date for both vehicles is past IID end date...
 )
 INSERT INTO #TmpCustomerEvents
 
@@ -57,7 +71,7 @@ SELECT
 	CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) EventDate,
 	NULL VIN,
 	NULL NewVIN,
-	GETDATE() CreationDate,
+	@EXECUTION_DATE CreationDate,
 	NULL ModificationDate
 FROM CustSrv.dbo.DeviceUsageViolation DUV WITH (NOLOCK)
 INNER JOIN CustSrv.dbo.DeviceUsage DU WITH (NOLOCK)
@@ -79,15 +93,16 @@ WHERE
 		)
     AND CRS.StateCode = 'IA'
     AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime)
-        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), GETDATE())
+        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), @EXECUTION_DATE)
 		AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) BETWEEN @START_DATE AND @END_DATE
 -- TODO: add repeatoffender filter
 
-UNION ALL
+
 -- Record Type 3
 -- Manual Event Violations to trigger Record
 -- (Power Interruption - 30 min)  ID (2)
 -- Lockout - Power Off After Car Start (ID 66)
+UNION ALL
 SELECT
 	'TYPE 3' EventType,
 	DU.CustomerId,
@@ -105,7 +120,7 @@ SELECT
 	CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) Eventdate,
 	NULL VIN,
 	NULL NewVIN,
-	GETDATE() CreationDate,
+	@EXECUTION_DATE CreationDate,
 	NULL ModificationDate
 FROM CustSrv.dbo.DeviceUsageViolation DUV WITH (NOLOCK)
 INNER JOIN CustSrv.dbo.DeviceUsage DU WITH (NOLOCK)
@@ -124,7 +139,7 @@ WHERE
     AND DUV.ViolationReportingApprovalCd IN (344, 345) -- Approved,  -- Auto-Approved
     AND CRS.StateCode = 'IA'
     AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime)
-        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), GETDATE())
+        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), @EXECUTION_DATE)
 		AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) BETWEEN @START_DATE AND @END_DATE
 		
 
@@ -147,7 +162,7 @@ SELECT
 	DUEV.ViolationDate EventDate,
 	NULL VIN,
 	NULL NewVIN,
-	GETDATE() CreationDate,
+	@EXECUTION_DATE CreationDate,
 	NULL ModificationDate
 FROM CustSrv.dbo.DeviceUsageEventViolation DUEV WITH (NOLOCK)
 INNER JOIN CustSrv.dbo.DeviceUsage DU WITH (NOLOCK) ON DU.DeviceUsageId  = DUEV.DeviceUsageId
@@ -160,12 +175,12 @@ WHERE
 	AND DUEV.EventViolationCd = 965 -- Tamper
 	AND CRS.StateCode = 'IA'
 	AND DUEV.ViolationDate 
-        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), GETDATE())
+        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), @EXECUTION_DATE)
 	AND DUEV.ViolationDate BETWEEN @START_DATE AND @END_DATE
 
 
-UNION ALL
 -- Record Type 4 – Uninstall Violation 
+UNION ALL
 SELECT
 	'TYPE 4' EventType,
 	C.CustomerID,
@@ -183,7 +198,7 @@ SELECT
 	CT.TrnParm3 EventDate,
 	NULL VIN,
 	NULL NewVIN,
-	GETDATE() CreationDate,
+	@EXECUTION_DATE CreationDate,
 	NULL ModificationDate
 FROM CustSrv.dbo.Customer C WITH (NOLOCK)
 INNER JOIN CustSrv.dbo.CustomerReportingStates CRS WITH (NOLOCK)
@@ -203,14 +218,15 @@ LEFT JOIN StateReporting.databricks.CustomerEvents CE WITH (NOLOCK)
 WHERE
 	CE.CustomerTransactionID IS NULL
     AND CRS.StateCode = 'IA' 
-    AND C.DeInstallDateConfirmed BETWEEN '2024-01-01' AND CONVERT(DATE, GETDATE()) 
+    AND C.DeInstallDateConfirmed BETWEEN @START_DATE AND CONVERT(DATE, @EXECUTION_DATE) 
     AND DACD.AccountClosureDispositionId IN (2,3) --Incomplete, --Deceased
 	AND CT.TrnParm3 BETWEEN @START_DATE AND @END_DATE
 -- If ACD 2, and type 7 sent, then start compliance workflow
 -- Check that we haven't sent a type 7 before
 		
-UNION ALL
+
 -- Record type 5 - Authorized Uninstall
+UNION ALL
 SELECT
 	'TYPE 5' EventType,
 	C.CustomerID,
@@ -228,7 +244,7 @@ SELECT
 	CT.TrnParm3 EventDate,
 	NULL VIN,
 	NULL NewVIN,
-	GETDATE() CreationDate,
+	@EXECUTION_DATE CreationDate,
 	NULL ModificationDate
 FROM CustSrv.dbo.Customer C
 INNER JOIN CustSrv.dbo.CustomerReportingStates CRS WITH (NOLOCK)
@@ -248,15 +264,17 @@ LEFT JOIN StateReporting.databricks.CustomerEvents CE WITH (NOLOCK)
 WHERE
 	CE.CustomerTransactionID IS NULL
     AND CRS.StateCode = 'IA' 
-    AND C.DeInstallDateConfirmed BETWEEN '2024-01-01' AND CONVERT(DATE, GETDATE()) 
-    AND DACD.AccountClosureDispositionId = 1  -- Requirement Complete
+    AND C.DeInstallDateConfirmed BETWEEN @EXECUTION_DATE AND CONVERT(DATE, @EXECUTION_DATE) 
+    AND DACD.AccountClosureDispositionId IN (1,4)  -- Requirement Complete, --No Requirement
 	AND CT.TrnParm3 BETWEEN @START_DATE AND @END_DATE
 -- 7 hast to be sent fisrt
 -- if type 7 hasn't been sent, compliance workflow
+-- If I get ACD 4, sent compliance Workflow
+-- ACD 4, no type 7, Customer is Active Reported, 
 		
 
-UNION ALL
 -- Record type 6 - switched_vehicle
+UNION ALL
 SELECT 
     'TYPE 6' EventType,
     C.CustomerID,
@@ -273,8 +291,8 @@ SELECT
     NULL LogEntryTime,
     CAST(CT.TrnParm3 AS DATE) EventDate,
     CT.VIN,
-	NULL NewVIN,
-	GETDATE() CreationDate,
+	CT.NewVIN,
+	@EXECUTION_DATE CreationDate,
 	NULL ModificationDate
 FROM CustSrv.dbo.Customer c
 INNER JOIN CustSrv.dbo.CustomerTransaction CT
@@ -289,7 +307,55 @@ WHERE
 	CE.CustomerTransactionID IS NULL
 	AND CT.TrnParm3 IS NOT NULL
 	AND CRS.StateCode = 'IA'
-	AND CAST(CT.TrnParm3 AS DATE) BETWEEN @START_DATE AND @END_DATE;
+	AND CAST(CT.TrnParm3 AS DATE) BETWEEN @START_DATE AND @END_DATE
+	
+
+-- Record type 7 - Final Compliance
+UNION ALL
+SELECT
+	'TYPE 7' EventType,
+	C.CustomerID,
+	NULL DeviceUsageViolationID,
+	NULL DeviceUsageEventViolationID,
+	DU.CustomerTransactionID,
+	NULL DeviceUsageID,
+	NULL ViolationReportingApprovalCd,
+	NULL ViolationReportingApprovalUser,
+	NULL CreateDate,
+	NULL CreateUser,
+	NULL ModifyDate,
+	NULL ModifyUser,
+	NULL LogEntryTime,
+	MAX_US.LastUsageDate EventDate,
+	NULL VIN,
+	NULL NewVIN,
+	@EXECUTION_DATE CreationDate,
+	NULL ModificationDate
+FROM [CustSrv].[dbo].[Customer] C WITH (NOLOCK)
+INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] CRS  WITH (NOLOCK)
+ ON C.CustomerID = CRS.CustomerID
+    AND Installdateconfirmed IS NOT NULL
+    AND C.RelayTypeCd != 924 -- Home Monitor
+    AND CRS.StateCode = 'IA'
+	AND  CRS.DeviceLogRptgClassCd NOT IN  (1333, 356) --Teen Voluntary, -- Voluntary
+	AND C.StatusCd NOT IN (506, 849, 507) --Demo, --Webdemo, --repair_center
+INNER JOIN MAX_US
+	ON C.CustomerID = max_us.CustomerID
+INNER JOIN CustSrv.dbo.DeviceUsage  DU
+	ON MAX_US.CustomerID = DU.CustomerID
+	AND MAX_US.LastUsageDate = DU.LastUsageDate
+INNER JOIN StateReporting.databricks.FtpCustomerData ftp
+	ON C.DriversLicenseNumber = ftp.DriversLicenseNumber
+	AND C.VIN = ftp.VIN
+	AND ftp.CreationDate = CAST(@EXECUTION_DATE AS DATE)
+LEFT JOIN StateReporting.databricks.CustomerEvents CE
+	ON  DU.CustomerTransactionID = CE.CustomerTransactionID
+	AND CE.EventType = 'TYPE 7'
+WHERE
+	CE.CustomerTransactionID IS NULL
+	AND ftp.IIDEndDate BETWEEN @START_DATE AND @END_DATE
+	AND max_us.LastUsageDate > ftp.IIDEndDate
+;
 
 
 MERGE databricks.CustomerEvents  AS TA
@@ -334,10 +400,7 @@ WHEN NOT MATCHED THEN
 		Eventdate,
 		VIN,
 		NewVIN,
-		CAST(GETDATE() AS DATE)
+		CAST(@EXECUTION_DATE AS DATE)
 	)
 ;
-
-SELECT
-	count(*)
-FROM #TmpCustomerEvents;
+SELECT count(*) FROM databricks.CustomerEvents'

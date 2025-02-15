@@ -16,7 +16,7 @@ username = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_user_{e
 password = dbutils.secrets.get(scope="state_reporting", key=f"sql_server_pass_{env}")
 database_name = "statereporting"
 
-url = f"jdbc:sqlserver://{database_host};instanceName=dev;databaseName={database_name};encrypt=true;trustServerCertificate=true"
+url = f"jdbc:sqlserver://{database_host};instanceName={env};databaseName={database_name};encrypt=true;trustServerCertificate=true"
 
 query = f"""
 SELECT * FROM databricks.CustomerEvents WHERE EventDate BETWEEN '{start_date}' AND '{end_date}'
@@ -35,8 +35,8 @@ print(f"DF count {result_df.count()}-2")
 
 result_df.createOrReplaceTempView("CustomerEvents")
 
-spark.sql(""" 
-    MERGE INTO state_reporting_dev.bronze.customer_events AS CED
+spark.sql(f""" 
+    MERGE INTO state_reporting_{env}.bronze.customer_events AS CED
     USING CustomerEvents AS CESQL
     ON COALESCE(CED.DeviceUsageViolationID,CED.DeviceUsageEventViolationID,CED.CustomerTransactionID) = COALESCE(CESQL.DeviceUsageViolationID,CESQL.DeviceUsageEventViolationID,CESQL.CustomerTransactionID)
     WHEN MATCHED AND CESQL.ModificationDate = current_date() THEN
