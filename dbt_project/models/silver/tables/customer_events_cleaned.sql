@@ -29,7 +29,7 @@ SELECT
     ModificationDate AS modification_date,
     row_number() OVER (PARTITION BY CustomerId,EventType,EventDate ORDER BY EventDate) AS num_duplicates
 FROM
-  {{ ref('customer_events') }}
+  {{ source('BRONZE', 'customer_events') }}
 
 
 ),
