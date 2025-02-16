@@ -23,9 +23,9 @@ SELECT
   CreatedAt AS created_at,
   row_number() OVER (PARTITION BY VendorName,DriversLicenseNumber ,FirstName, LastName, MiddleName, DateOfBirth, VIN, OffenseDate, RepeatOffender ORDER BY offense_date) AS num_duplicates
 FROM
-  {{ source('BRONZE', 'state_batch_customer_data_ia') }}
+  {{ ref('state_batch_customer_data_ia') }}
 WHERE
-  created_at >= (SELECT MAX(created_at) FROM {{ source('BRONZE', 'state_batch_customer_data_ia') }})
+  created_at >= (SELECT MAX(created_at) FROM {{ ref('state_batch_customer_data_ia') }})
 
 
 ),
