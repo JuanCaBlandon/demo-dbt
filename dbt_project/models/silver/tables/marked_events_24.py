@@ -3,7 +3,7 @@ from pyspark.sql.functions import col, lit,  md5, concat_ws
 
 # Initialize Spark session
 def model(dbt, session):
-    dbt.config(materialized="incremental")
+    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
 
     customer_events_cleaned = dbt.ref("customer_events_cleaned")
     customer_cleaned = dbt.ref("customer_cleaned")
