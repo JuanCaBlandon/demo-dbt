@@ -86,10 +86,10 @@ def model(dbt, session):
         ))
 
         for row in events24.itertuples(index=False):
-            # Get the last event date, defaulting to 2024-01-01 if not found
+            # Get the last event date, defaulting to 2025-01-01 if not found
             last_event_date = last_events_dict.get(
                 row.drivers_license_number, 
-                pd.Timestamp("{{ var('start_date', '2024-01-01') }}")
+                pd.Timestamp(dbt.config.get("start_date", "2025-01-01"))
             )
             
             # Convert dates to pandas Timestamp objects

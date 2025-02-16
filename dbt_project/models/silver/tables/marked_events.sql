@@ -24,7 +24,7 @@ WITH base_data AS (
     WHERE cec.is_inconsistent = 0
      {% if is_incremental() %}
         AND event_date > (
-            SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2024-01-01') }}") FROM {{ this }}
+            SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
             WHERE 
                 customer_id = cec.customer_id
                 AND CONCAT('TYPE ', record_type) = cec.event_type
@@ -48,7 +48,7 @@ SELECT
 FROM {{ ref('marked_events_24') }} me24
 {% if is_incremental() %}
     WHERE event_date > (
-        SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2024-01-01') }}") FROM {{ this }}
+        SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
         WHERE 
             drivers_license_number = me24.drivers_license_number
             AND record_type = 1
@@ -71,7 +71,7 @@ SELECT
 FROM {{ ref('marked_events_30') }} me30
 {% if is_incremental() %}
     WHERE event_date > (
-        SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2024-01-01') }}") FROM {{ this }}
+        SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
         WHERE 
             customer_id = me30.customer_id
             AND record_type = 2

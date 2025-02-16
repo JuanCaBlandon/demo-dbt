@@ -17,7 +17,7 @@ SELECT
   DateOfBirth AS date_of_birth,
   VIN AS vin,
   OffenseDate AS offense_date,
-  CASE WHEN RepeatOffender = 1 AND OffenseDate >= "{{ var("start_date", "2024-01-01") }}" THEN 1 ELSE 0 END AS repeat_offender,
+  CASE WHEN RepeatOffender = 1 AND OffenseDate >= "{{ var("start_date", "2025-01-01") }}" THEN 1 ELSE 0 END AS repeat_offender,
   IIDStartDate AS IID_Start_Date,
   IIDEndDate AS IID_End_Date,
   CreatedAt AS created_at,
