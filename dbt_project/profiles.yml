@@ -3,6 +3,7 @@ dbt_project:
     tgt:
       catalog: "{{ env_var('DBT_DB_CATALOG') }}"
       host: "{{ env_var('DBT_DB_HOST') }}"
+      cluster_id: "{{ env_var('DBT_CLUSTER_ID') }}"
       http_path: "{{ env_var('DBT_DB_PATH') }}"
       schema: "{{ env_var('DBT_DB_SCHEMA', '') }}"
       threads: 8
