@@ -24,7 +24,7 @@ WITH fill_rates AS (
     WHERE created_at = (SELECT MAX(created_at) FROM {{ table }})
     AND '{{ table.name }}' like '%cleaned'
     {% if is_incremental() %}
-        AND execution_date > (SELECT MAX(execution_date) FROM {{ this }})
+        AND current_date > (SELECT MAX(execution_date) FROM {{ this }})
     {% endif %}
     {% if not loop.last %} UNION ALL {% endif %}
     {% endfor %}

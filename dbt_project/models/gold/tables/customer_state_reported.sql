@@ -107,57 +107,57 @@ INNER JOIN {{ ref('record_type')}} AS rt
     ON bc.record_type_dw_id = rt.record_type_dw_id
 WHERE rt.id IN (1,2,3,6)
 {% if is_incremental() %}
-     AND customer_state_dw_id NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
+    AND NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
  {% endif %}
 
 --TYPE 7 VALIDATION
 UNION ALL
 SELECT
-    customer_state_dw_id,
-    batch_customer_dw_id,
-    customer_dw_id,
-    record_dw_id,
-    record_type_dw_id,
-    datetime_id,
-    status,
+    bc.customer_state_dw_id,
+    bc.batch_customer_dw_id,
+    bc.customer_dw_id,
+    bc.record_dw_id,
+    bc.record_type_dw_id,
+    bc.datetime_id,
+    bc.status,
     CAST(NULL AS TIMESTAMP) AS submitted_at
 FROM bc
 INNER JOIN t7_events USING(record_dw_id)
 {% if is_incremental() %}
-     WHERE customer_state_dw_id NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
+    WHERE NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
  {% endif %}
 
 --TYPE 4 VALIDATION
 UNION ALL
 SELECT
-    customer_state_dw_id,
-    batch_customer_dw_id,
-    customer_dw_id,
-    record_dw_id,
-    record_type_dw_id,
-    datetime_id,
-    status,
+    bc.customer_state_dw_id,
+    bc.batch_customer_dw_id,
+    bc.customer_dw_id,
+    bc.record_dw_id,
+    bc.record_type_dw_id,
+    bc.datetime_id,
+    bc.status,
     CAST(NULL AS TIMESTAMP) AS submitted_at
 FROM bc
 INNER JOIN t4_events USING(record_dw_id)
 {% if is_incremental() %}
-     WHERE customer_state_dw_id NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
+    WHERE NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
  {% endif %}
 
 
 --TYPE 5 VALIDATION
 UNION ALL
 SELECT
-    customer_state_dw_id,
-    batch_customer_dw_id,
-    customer_dw_id,
-    record_dw_id,
-    record_type_dw_id,
-    datetime_id,
-    status,
+    bc.customer_state_dw_id,
+    bc.batch_customer_dw_id,
+    bc.customer_dw_id,
+    bc.record_dw_id,
+    bc.record_type_dw_id,
+    bc.datetime_id,
+    bc.status,
     CAST(NULL AS TIMESTAMP) AS submitted_at
 FROM bc
 INNER JOIN t5_events USING(record_dw_id)
 {% if is_incremental() %}
-     WHERE customer_state_dw_id NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
- {% endif %};
+    WHERE NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
+ {% endif %}
