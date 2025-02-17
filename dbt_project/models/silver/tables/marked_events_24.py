@@ -1,4 +1,5 @@
 import pandas as pd
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
 
 # Initialize Spark session
 def model(dbt, session):
@@ -66,20 +67,23 @@ def model(dbt, session):
     # Convert to Pandas for processing
     events24 = base_df.toPandas()
 
-    result_schema = {
-        "event_dw_id": str,
-        "drivers_license_number": str,
-        "customer_id": int,
-        "event_id_type": str,
-        "event_id": int,
-        "event_date": "datetime64[ns]",
-        "record_type": int,
-        "record_description": str
-    }
+    result_schema = StructType([
+        StructField("event_dw_id", StringType(), True),
+        StructField("drivers_license_number", StringType(), True),
+        StructField("customer_id", IntegerType(), True),
+        StructField("event_id_type", StringType(), True),
+        StructField("event_id", IntegerType(), True),
+        StructField("event_date", TimestampType(), True),
+        StructField("record_type", IntegerType(), True),
+        StructField("record_description", StringType(), True)
+    ])
 
-    marked_violations24 = pd.DataFrame(columns=result_schema.keys()).astype(result_schema)
 
     if not events24.empty:
+        marked_violations24 = pd.DataFrame(columns=[
+            "record_dw_id", "event_dw_id", "drivers_license_number", "customer_id",
+            "event_id_type", "event_id", "event_date", "record_type", "record_description"
+        ])
         # Create a dictionary for faster lookups
         last_events_dict = dict(zip(
             previous_events_df['drivers_license_number'],
@@ -114,5 +118,7 @@ def model(dbt, session):
                 
                 # Update the last event date in our dictionary
                 last_events_dict[row.drivers_license_number] = current_event_date
-    
+    else:
+        marked_violations24 = session.createDataFrame(marked_violations24, schema=result_schema)
+
     return marked_violations24

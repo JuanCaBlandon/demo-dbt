@@ -1,4 +1,5 @@
 import pandas as pd
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
 
 # Initialize Spark session
 def model(dbt, session):
@@ -18,7 +19,7 @@ def model(dbt, session):
                 drivers_license_number, 
                 CAST(MAX(event_date) AS TIMESTAMP) AS event_date
             FROM {dbt.this}
-            WHERE record_type = 2
+            WHERE record_type = 1
             GROUP BY drivers_license_number
         """).toPandas()
  
@@ -37,9 +38,10 @@ def model(dbt, session):
                 cec.device_usage_event_violation_id,
                 cec.customer_transaction_id,
                 cec.event_type,
-                CAST(cec.event_date AS TIMESTAMP) as event_date
-            FROM customer_events_cleaned cec
-            INNER JOIN customer_cleaned cc ON cc.customer_id = cec.customer_id
+                CAST(cec.event_date AS TIMESTAMP) AS event_date
+            FROM state_reporting_prd.silver.customer_events_cleaned cec
+            INNER JOIN state_reporting_prd.silver.customer_cleaned cc 
+                ON cc.customer_id = cec.customer_id
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
         )
@@ -52,7 +54,7 @@ def model(dbt, session):
                 PARTITION BY drivers_license_number
                 ORDER BY event_date
             ) AS TIMESTAMP) AS event_start_date,
-            CAST(event_date AS TIMESTAMP) as event_date
+            CAST(event_date AS TIMESTAMP) AS event_date
         FROM base_data
         QUALIFY COUNT(*) OVER (
             PARTITION BY drivers_license_number
@@ -65,20 +67,23 @@ def model(dbt, session):
     # Convert to Pandas for processing
     events30 = base_df.toPandas()
 
-    result_schema = {
-        "event_dw_id": str,
-        "drivers_license_number": str,
-        "customer_id": int,
-        "event_id_type": str,
-        "event_id": int,
-        "event_date": "datetime64[ns]",
-        "record_type": int,
-        "record_description": str
-    }
+    result_schema = StructType([
+        StructField("event_dw_id", StringType(), True),
+        StructField("drivers_license_number", StringType(), True),
+        StructField("customer_id", IntegerType(), True),
+        StructField("event_id_type", StringType(), True),
+        StructField("event_id", IntegerType(), True),
+        StructField("event_date", TimestampType(), True),
+        StructField("record_type", IntegerType(), True),
+        StructField("record_description", StringType(), True)
+    ])
 
-    marked_violations30 = pd.DataFrame(columns=result_schema.keys()).astype(result_schema)
 
     if not events30.empty:
+        marked_violations30 = pd.DataFrame(columns=[
+            "record_dw_id", "event_dw_id", "drivers_license_number", "customer_id",
+            "event_id_type", "event_id", "event_date", "record_type", "record_description"
+        ])
         # Create a dictionary for faster lookups
         last_events_dict = dict(zip(
             previous_events_df['drivers_license_number'],
@@ -98,13 +103,14 @@ def model(dbt, session):
 
             if current_event_start_date > last_event_date:
                 new_row = {
+                    "record_dw_id": str(row.record_dw_id),
                     "event_dw_id": str(row.event_dw_id),
                     "drivers_license_number": str(row.drivers_license_number),
                     "customer_id": int(row.customer_id),
                     "event_id_type": "device_usage_violation_id",
                     "event_id": int(row.device_usage_violation_id),
                     "event_date": current_event_date,
-                    "record_type": 2,
+                    "record_type": 1,
                     "record_description": "30 days"
                 }
                 
@@ -112,5 +118,7 @@ def model(dbt, session):
                 
                 # Update the last event date in our dictionary
                 last_events_dict[row.drivers_license_number] = current_event_date
+    else:
+        marked_violations30 = session.createDataFrame(marked_violations30, schema=result_schema)
 
     return marked_violations30
