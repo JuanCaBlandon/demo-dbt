@@ -39,8 +39,8 @@ def model(dbt, session):
                 cec.customer_transaction_id,
                 cec.event_type,
                 CAST(cec.event_date AS TIMESTAMP) AS event_date
-            FROM state_reporting_prd.silver.customer_events_cleaned cec
-            INNER JOIN state_reporting_prd.silver.customer_cleaned cc 
+            FROM customer_events_cleaned cec
+            INNER JOIN customer_cleaned cc 
                 ON cc.customer_id = cec.customer_id
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
