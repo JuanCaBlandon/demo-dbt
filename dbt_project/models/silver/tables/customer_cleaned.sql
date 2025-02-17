@@ -37,7 +37,7 @@ WITH Tmp AS(
     IIDStartDate AS iid_start_date,
     IIDEndDate AS iid_end_date,
     CreationDate AS created_at,
-    ROW_NUMBER() OVER (PARTITION BY CustomerID, DriversLicenseNumber, VIN, StateCode, EffectiveStartDate, EffectiveEndDate ORDER BY EffectiveStartDate) as num_duplicates
+    ROW_NUMBER() OVER (PARTITION BY CustomerID, DriversLicenseNumber, VIN, StateCode, EffectiveStartDate, EffectiveEndDate ORDER BY EffectiveStartDate) AS num_duplicates
   FROM {{ source('BRONZE', 'customer_raw') }}
   WHERE
     StateCode = 'IA'
@@ -52,7 +52,7 @@ WITH Tmp AS(
 cleaned_data AS(
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -81,15 +81,15 @@ SELECT
     iid_start_date,
     iid_end_date,
     created_at,
-    1 as is_inconsistent,
-    'duplicates' as type_inconsistent,
+    1 AS is_inconsistent,
+    'duplicates' AS type_inconsistent,
     num_duplicates
 FROM Tmp
 WHERE num_duplicates > 1
 
 UNION ALL
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -118,8 +118,8 @@ SELECT
     iid_start_date,
     iid_end_date,
     created_at,
-    1 as is_inconsistent,
-    'NULL values' as type_inconsistent,
+    1 AS is_inconsistent,
+    'NULL values' AS type_inconsistent,
     num_duplicates
 FROM Tmp
 WHERE num_duplicates = 1 AND 
@@ -127,7 +127,7 @@ WHERE num_duplicates = 1 AND
 
 UNION ALL
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -156,8 +156,8 @@ SELECT
     iid_start_date,
     iid_end_date,
     created_at,
-    1 as is_inconsistent,
-    'Max Character Limit' as type_inconsistent,
+    1 AS is_inconsistent,
+    'Max Character Limit' AS type_inconsistent,
     num_duplicates
 FROM Tmp
 WHERE num_duplicates = 1 AND 
@@ -171,7 +171,7 @@ WHERE num_duplicates = 1 AND
 
 UNION ALL
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -200,8 +200,8 @@ SELECT
     iid_start_date,
     iid_end_date,
     created_at,
-    0 as is_inconsistent,
-    'N/A' as type_inconsistent,
+    0 AS is_inconsistent,
+    'N/A' AS type_inconsistent,
     num_duplicates
 FROM Tmp
 WHERE
@@ -217,7 +217,7 @@ WHERE
 
 UNION ALL
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} as customer_dw_id,
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
     customer_reporting_state_id,
     customer_id,
     drivers_license_number,
@@ -246,8 +246,8 @@ SELECT
     iid_start_date,
     iid_end_date,
     created_at,
-    1 as is_inconsistent,
-    'Batch file info insufficient' as type_inconsistent,
+    1 AS is_inconsistent,
+    'Batch file info insufficient' AS type_inconsistent,
     num_duplicates
 FROM Tmp
 WHERE iid_start_date IS NULL OR repeat_offender IS NULL OR offense_date IS NULL
