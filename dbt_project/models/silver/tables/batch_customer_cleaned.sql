@@ -21,7 +21,7 @@ SELECT
   IIDStartDate AS IID_Start_Date,
   IIDEndDate AS IID_End_Date,
   CreatedAt AS created_at,
-  row_number() OVER (PARTITION BY VendorName,DriversLicenseNumber ,FirstName, LastName, MiddleName, DateOfBirth, VIN, OffenseDate, RepeatOffender ORDER BY offense_date) AS num_duplicates
+  row_number() OVER (PARTITION BY VendorName,DriversLicenseNumber ,FirstName, LastName, MiddleName, DateOfBirth, VIN, OffenseDate, RepeatOffender ORDER BY OffenseDate) AS num_duplicates
 FROM
   {{ source('BRONZE', 'state_batch_customer_data_ia') }}
 WHERE
