@@ -70,7 +70,7 @@ spark.sql(f"""
             ST.OffenseDate = CU.OffenseDate,
             ST.IIDStartDate = CU.IIDStartDate,
             ST.IIDEndDate = CU.IIDEndDate,
-            ST.ModificationDate = {execution_date}
+            ST.ModificationDate = '{execution_date}'
     WHEN NOT MATCHED BY TARGET THEN
         INSERT (
             CustomerReportingStateID,
@@ -134,7 +134,7 @@ spark.sql(f"""
             UPDATE SET
                 ST.ActiveStatus = 0,
                 ST.ReportStatusCD = 'Inactive',
-                ST.ActiveStatusEndDate = {execution_date},
-                ST.ModificationDate  = {execution_date}
+                ST.ActiveStatusEndDate = '{execution_date}',
+                ST.ModificationDate  = '{execution_date}'
 """)
 
