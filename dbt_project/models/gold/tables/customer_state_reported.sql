@@ -103,7 +103,9 @@ SELECT
     status,
     CAST(NULL AS TIMESTAMP) AS submitted_at
 FROM bc
-WHERE record_type IN (1,2,3,6)
+INNER JOIN {{ ref('record_type')}} AS rt
+    ON bc.record_type_dw_id = rt.record_type_dw_id
+WHERE rt.id IN (1,2,3,6)
 {% if is_incremental() %}
      AND customer_state_dw_id NOT EXISTS (SELECT 1 FROM {{ this }} prev WHERE prev.customer_state_dw_id = bc.customer_state_dw_id)
  {% endif %}
