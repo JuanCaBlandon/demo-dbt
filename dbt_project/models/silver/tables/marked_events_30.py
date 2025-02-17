@@ -63,7 +63,7 @@ def model(dbt, session):
 
 
     # Convert to Pandas for processing
-    events24 = base_df.toPandas()
+    events30 = base_df.toPandas()
 
     result_schema = {
         "event_dw_id": str,
@@ -76,16 +76,16 @@ def model(dbt, session):
         "record_description": str
     }
 
-    marked_violations24 = pd.DataFrame(columns=result_schema.keys())
+    marked_violations30 = pd.DataFrame(columns=result_schema.keys()).astype(result_schema)
 
-    if not events24.empty:
+    if not events30.empty:
         # Create a dictionary for faster lookups
         last_events_dict = dict(zip(
             previous_events_df['drivers_license_number'],
             previous_events_df['event_date'].apply(pd.Timestamp)
         ))
 
-        for row in events24.itertuples(index=False):
+        for row in events30.itertuples(index=False):
             # Get the last event date, defaulting to 2025-01-01 if not found
             last_event_date = last_events_dict.get(
                 row.drivers_license_number, 
@@ -108,9 +108,9 @@ def model(dbt, session):
                     "record_description": "30 days"
                 }
                 
-                marked_violations24 = pd.concat([marked_violations24, pd.DataFrame([new_row])], ignore_index=True)
+                marked_violations30 = pd.concat([marked_violations30, pd.DataFrame([new_row])], ignore_index=True)
                 
                 # Update the last event date in our dictionary
                 last_events_dict[row.drivers_license_number] = current_event_date
 
-    return marked_violations24
+    return marked_violations30

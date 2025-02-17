@@ -1,5 +1,4 @@
 import pandas as pd
-from pyspark.sql.functions import col, lit,  md5, concat_ws
 
 # Initialize Spark session
 def model(dbt, session):
@@ -38,9 +37,10 @@ def model(dbt, session):
                 cec.device_usage_event_violation_id,
                 cec.customer_transaction_id,
                 cec.event_type,
-                CAST(cec.event_date AS TIMESTAMP) as event_date
-            FROM customer_events_cleaned cec
-            INNER JOIN customer_cleaned cc ON cc.customer_id = cec.customer_id
+                CAST(cec.event_date AS TIMESTAMP) AS event_date
+            FROM state_reporting_prd.silver.customer_events_cleaned cec
+            INNER JOIN state_reporting_prd.silver.customer_cleaned cc 
+                ON cc.customer_id = cec.customer_id
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
         )
@@ -53,7 +53,7 @@ def model(dbt, session):
                 PARTITION BY drivers_license_number
                 ORDER BY event_date
             ) AS TIMESTAMP) AS event_start_date,
-            CAST(event_date AS TIMESTAMP) as event_date
+            CAST(event_date AS TIMESTAMP) AS event_date
         FROM base_data
         QUALIFY COUNT(*) OVER (
             PARTITION BY drivers_license_number
@@ -62,16 +62,11 @@ def model(dbt, session):
         ) >= 5
     """)
 
-    base_df = base_df.withColumn(
-        "record_dw_id",
-        md5(concat_ws("_", col("event_dw_id"), lit("1"))).cast("string")
-    )
 
     # Convert to Pandas for processing
     events24 = base_df.toPandas()
 
     result_schema = {
-        "record_dw_id": str,
         "event_dw_id": str,
         "drivers_license_number": str,
         "customer_id": int,
@@ -82,7 +77,7 @@ def model(dbt, session):
         "record_description": str
     }
 
-    marked_violations24 = pd.DataFrame(columns=result_schema.keys())
+    marked_violations24 = pd.DataFrame(columns=result_schema.keys()).astype(result_schema)
 
     if not events24.empty:
         # Create a dictionary for faster lookups
@@ -119,5 +114,5 @@ def model(dbt, session):
                 
                 # Update the last event date in our dictionary
                 last_events_dict[row.drivers_license_number] = current_event_date
-
+    
     return marked_violations24
