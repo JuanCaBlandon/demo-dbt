@@ -25,7 +25,7 @@ SELECT
 FROM
   {{ source('BRONZE', 'state_batch_customer_data_ia') }}
 WHERE
-  created_at >= (SELECT MAX(created_at) FROM {{ source('BRONZE', 'state_batch_customer_data_ia') }})
+  CreatedAt >= (SELECT MAX(CreatedAt) FROM {{ source('BRONZE', 'state_batch_customer_data_ia') }})
 
 
 ),
