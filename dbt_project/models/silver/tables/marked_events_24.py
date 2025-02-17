@@ -78,12 +78,11 @@ def model(dbt, session):
         StructField("record_description", StringType(), True)
     ])
 
-
+    marked_violations24 = pd.DataFrame(columns=[
+        "record_dw_id", "event_dw_id", "drivers_license_number", "customer_id",
+        "event_id_type", "event_id", "event_date", "record_type", "record_description"
+    ])
     if not events24.empty:
-        marked_violations24 = pd.DataFrame(columns=[
-            "record_dw_id", "event_dw_id", "drivers_license_number", "customer_id",
-            "event_id_type", "event_id", "event_date", "record_type", "record_description"
-        ])
         # Create a dictionary for faster lookups
         last_events_dict = dict(zip(
             previous_events_df['drivers_license_number'],
