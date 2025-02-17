@@ -8,6 +8,7 @@ args = parser.parse_args()
 
 # Access parameters
 env = args.environment
+execution_date = args.execution_date
 
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 database_name = "statereporting"
@@ -43,9 +44,34 @@ result_df.createOrReplaceTempView("CustomersIA")
 spark.sql(f""" 
     MERGE INTO state_reporting_{env}.bronze.customer_raw AS ST
     USING CustomersIA AS CU ON ST.CustomerID = CU.CustomerID
-    WHEN MATCHED AND CU.ActiveStatus = 0 THEN
-        UPDATE SET ST.ActiveStatusEndDate = current_date()
-    WHEN NOT MATCHED THEN
+    WHEN MATCHED
+        UPDATE SET
+            ST.CustomerReportingStateID = CU.CustomerReportingStateID,
+            ST.DriversLicenseNumber = CU.DriversLicenseNumber,
+            ST.FirstName = CU.FirstName,
+            ST.LastName = CU.LastName,
+            ST.MiddleName = CU.MiddleName,
+            ST.DateOfBirth = CU.DateOfBirth,
+            ST.VIN = CU.VIN,
+            ST.InstallDate = CU.InstallDate,
+            ST.DeInstallDate = CU.DeInstallDate,
+            ST.StateCode = CU.StateCode,
+            ST.ActiveStatus = CU.ActiveStatus,
+            ST.ReportStatusCD = CU.ReportStatusCD,
+            ST.CustomerStatus = CU.CustomerStatus,
+            ST.EffectiveStartDate = CU.EffectiveStartDate,
+            ST.EffectiveEndDate = CU.EffectiveEndDate,
+            ST.DeviceLogRptgClassCd = CU.DeviceLogRptgClassCd,
+            ST.CreateDate = CU.CreateDate,
+            ST.CreateUser = CU.CreateUser,
+            ST.ModifyDate = CU.ModifyDate,
+            ST.ModifyUser = CU.ModifyUser,
+            ST.RepeatOffender = CU.RepeatOffender,
+            ST.OffenseDate = CU.OffenseDate,
+            ST.IIDStartDate = CU.IIDStartDate,
+            ST.IIDEndDate = CU.IIDEndDate,
+            ST.ModifyDate = {execution_date}
+    WHEN NOT MATCHED BY TARGET THEN
         INSERT (
             CustomerReportingStateID,
             CustomerID,
@@ -104,5 +130,11 @@ spark.sql(f"""
             CU.IIDEndDate,
             try_cast(CU.CreationDate AS TIMESTAMP)
         )
+        WHEN NOT MATCHED BY SOURCE THEN
+            UPDATE SET
+                ST.ActiveStatus = 0,
+                ST.ReportStatusCD = 'Inactive',
+                ST.ActiveStatusEndDate = {execution_date},
+                ST.ModifyDate = {execution_date}
 """)
 
