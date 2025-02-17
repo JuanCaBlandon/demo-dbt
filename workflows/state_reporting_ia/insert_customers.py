@@ -44,7 +44,7 @@ result_df.createOrReplaceTempView("CustomersIA")
 spark.sql(f""" 
     MERGE INTO state_reporting_{env}.bronze.customer_raw AS ST
     USING CustomersIA AS CU ON ST.CustomerID = CU.CustomerID
-    WHEN MATCHED
+    WHEN MATCHED THEN
         UPDATE SET
             ST.CustomerReportingStateID = CU.CustomerReportingStateID,
             ST.DriversLicenseNumber = CU.DriversLicenseNumber,
