@@ -31,7 +31,7 @@ WITH source AS (
         'customer_events_cleaned' AS source_table_name,
         is_inconsistent,
         type_inconsistent,
-        creation_date
+        created_at
     FROM {{ ref('customer_events_cleaned') }}
     WHERE is_inconsistent = 1
 ),
