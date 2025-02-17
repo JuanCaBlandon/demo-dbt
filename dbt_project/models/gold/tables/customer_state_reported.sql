@@ -94,13 +94,13 @@ t5_events AS (
     )
 )
 SELECT
-    customer_state_dw_id,
-    batch_customer_dw_id,
-    customer_dw_id,
-    record_dw_id,
-    record_type_dw_id,
-    datetime_id,
-    status,
+    bc.customer_state_dw_id,
+    bc.batch_customer_dw_id,
+    bc.customer_dw_id,
+    bc.record_dw_id,
+    bc.record_type_dw_id,
+    bc.datetime_id,
+    bc.status,
     CAST(NULL AS TIMESTAMP) AS submitted_at
 FROM bc
 INNER JOIN {{ ref('record_type')}} AS rt
