@@ -79,7 +79,7 @@ def model(dbt, session):
     ])
 
     marked_violations30 = pd.DataFrame(columns=[
-        "record_dw_id", "event_dw_id", "drivers_license_number", "customer_id",
+        "event_dw_id", "drivers_license_number", "customer_id",
         "event_id_type", "event_id", "event_date", "record_type", "record_description"
     ])
     if not events30.empty:
@@ -102,7 +102,6 @@ def model(dbt, session):
 
             if current_event_start_date > last_event_date:
                 new_row = {
-                    "record_dw_id": str(row.record_dw_id),
                     "event_dw_id": str(row.event_dw_id),
                     "drivers_license_number": str(row.drivers_license_number),
                     "customer_id": int(row.customer_id),

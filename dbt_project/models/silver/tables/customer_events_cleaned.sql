@@ -30,8 +30,6 @@ SELECT
     row_number() OVER (PARTITION BY CustomerId,EventType,EventDate ORDER BY EventDate) AS num_duplicates
 FROM
   {{ source('BRONZE', 'customer_events') }}
-
-
 ),
 cleaned_data AS(
 
