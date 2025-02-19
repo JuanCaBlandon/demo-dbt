@@ -30,10 +30,10 @@ INSERT INTO StateReporting.databricks.TmpStateReportedCustomer(
     VIN,
     InstallDate,
     DeInstallDate,
-	StateCode ,
-    ActiveStatus ,
+	StateCode,
+    ActiveStatus,
 	ReportStatusCD,
-	CustomerStatus ,
+	CustomerStatus,
     ActiveStatusStartDate ,
 	EffectiveStartDate,
 	EffectiveEndDate,
@@ -43,9 +43,9 @@ INSERT INTO StateReporting.databricks.TmpStateReportedCustomer(
 	ModifyDate,
 	ModifyUser,
 	RepeatOffender,
-	OffenseDate ,
+	OffenseDate,
 	IIDStartDate,
-	IIDEndDate ,
+	IIDEndDate,
 	CreationDate
 )
 
@@ -105,24 +105,24 @@ WHERE
 --For SQL implementation
 INSERT INTO StateReporting.databricks.StateReportedCustomer 
 	(
-    CustomerReportingStateID,
-	CustomerID,
-	StateCode,
-    CustomerStatus,
-    ActiveStatus,
-    ReportStatusCD,
-    ActiveStatusStartDate,
-    InstallDate, 
-    DeInstallDate,
-	CreateDate,
-	CreateUser,
-	ModifyDate,
-	ModifyUser,
-    OffenseDate,
-    IIDStartDate,
-    IIDEndDate,
-    RepeatOffender,
-	CreationDate -- Indicate when this record is inserted 
+        CustomerReportingStateID,
+        CustomerID,
+        StateCode,
+        CustomerStatus,
+        ActiveStatus,
+        ReportStatusCD,
+        ActiveStatusStartDate,
+        InstallDate, 
+        DeInstallDate,
+        CreateDate,
+        CreateUser,
+        ModifyDate,
+        ModifyUser,
+        OffenseDate,
+        IIDStartDate,
+        IIDEndDate,
+        RepeatOffender,
+        CreationDate -- Indicate when this record is inserted 
 	) 
 
 SELECT
@@ -226,6 +226,6 @@ WHERE
 ;
 
 -- This top one is only for databricks because spark needs something to return when the SP is running 
-SELECT TOP 1 * 
+SELECT TOP 1 *
 FROM StateReporting.databricks.TmpStateReportedCustomer
 ;
