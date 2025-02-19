@@ -1,7 +1,7 @@
 {{ config(
 		materialized='incremental',
     unique_key='customer_dw_id',
-    incremental_strategy='merge'
+    incremental_strategy='merge',
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY customer_id ;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
