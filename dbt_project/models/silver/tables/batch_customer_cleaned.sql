@@ -75,6 +75,53 @@ SELECT
 FROM Tmp
 WHERE num_duplicates = 1 AND 
   (drivers_license_number IS NULL OR first_name IS NULL OR last_name IS NULL  OR date_of_birth IS NULL OR vin IS NULL)
+UNION ALL
+
+SELECT
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} AS batch_customer_dw_id,
+  'N/A' AS customer_dw_id,
+  vendor_name,
+  drivers_license_number,
+  first_name,
+  last_name,
+  middle_name,
+  date_of_birth,
+  vin,
+  offense_date,
+  repeat_offender,
+  IID_Start_Date,
+  IID_End_Date,
+  created_at,
+  1 AS is_inconsistent,
+  'repeat offender without dates' AS type_inconsistent,
+  num_duplicates
+FROM Tmp
+WHERE num_duplicates = 1 AND 
+RepeatOffender = 1 AND  (IID_Start_Date IS NULL OR IID_End_Date IS NULL )
+
+UNION ALL
+
+SELECT
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date']) }} AS batch_customer_dw_id,
+  'N/A' AS customer_dw_id,
+  vendor_name,
+  drivers_license_number,
+  first_name,
+  last_name,
+  middle_name,
+  date_of_birth,
+  vin,
+  offense_date,
+  repeat_offender,
+  IID_Start_Date,
+  IID_End_Date,
+  created_at,
+  1 AS is_inconsistent,
+  'no repeat offender with dates' AS type_inconsistent,
+  num_duplicates
+FROM Tmp
+WHERE num_duplicates = 1 AND 
+RepeatOffender = 0 AND  (IID_Start_Date IS NOT NULL OR IID_End_Date IS NOT NULL )
 
 UNION ALL
 
@@ -139,6 +186,29 @@ WHERE Tmp.num_duplicates = 1 AND Tmp.drivers_license_number IS NOT NULL AND Tmp.
   AND Tmp.last_name IS NOT NULL  AND Tmp.date_of_birth IS NOT NULL AND Tmp.vin IS NOT NULL
   AND c.is_inconsistent = 0 and c.active_status = true
 
+),
+cleaned_data2 as (
+
+SELECT
+    batch_customer_dw_id,
+    customer_dw_id,
+    vendor_name,
+    drivers_license_number,
+    first_name,
+    last_name,
+    middle_name,
+    date_of_birth,
+    vin,
+    offense_date,
+    repeat_offender,
+    IID_Start_Date,
+    IID_End_Date,
+    created_at,
+    is_inconsistent,
+    type_inconsistent,
+    num_duplicates,
+    CASE WHEN  RepeatOffender = 1 AND  (IID_Start_Date IS  NULL OR IID_End_Date IS  NULL ) then 1 else 0  end as ro_without_dates
+  FROM cleaned_data
 )
 
 SELECT
@@ -159,7 +229,8 @@ SELECT
     is_inconsistent,
     type_inconsistent,
     num_duplicates
-  FROM cleaned_data
+  FROM cleaned_data2
+  WHERE ro_without_dates = 0
   {% if is_incremental() %}
-    where batch_customer_dw_id not in (select batch_customer_dw_id from {{ this }})
+    AND batch_customer_dw_id not in (select batch_customer_dw_id from {{ this }})
 {% endif %}

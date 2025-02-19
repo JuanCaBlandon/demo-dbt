@@ -252,6 +252,43 @@ SELECT
 FROM Tmp
 WHERE iid_start_date IS NULL OR repeat_offender IS NULL OR offense_date IS NULL
 
+UNION ALL
+SELECT
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
+    customer_reporting_state_id,
+    customer_id,
+    drivers_license_number,
+    first_name,
+    last_name,
+    middle_name,
+    date_of_birth,
+    vin,
+    install_date,
+    deinstall_date,
+    state_code,
+    active_status,
+    report_status_cd,
+    customer_status,
+    active_status_start_date,
+    active_status_end_date,
+    effective_start_date,
+    effective_end_date,
+    device_log_rptg_class_cd,
+    create_date,
+    create_user,
+    modify_date,
+    modify_user,
+    repeat_offender,
+    offense_date,
+    iid_start_date,
+    iid_end_date,
+    created_at,
+    1 AS is_inconsistent,
+    'dont Match with batch file' AS type_inconsistent,
+    num_duplicates
+FROM Tmp
+WHERE repeat_offender IS NULL
+
 
 )
 
