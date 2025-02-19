@@ -19,7 +19,7 @@ def model(dbt, session):
                 drivers_license_number, 
                 CAST(MAX(event_date) AS TIMESTAMP) AS event_date
             FROM {dbt.this}
-            WHERE record_type = 1
+            WHERE record_type = 2
             GROUP BY drivers_license_number
         """).toPandas()
  
@@ -108,7 +108,7 @@ def model(dbt, session):
                     "event_id_type": "device_usage_violation_id",
                     "event_id": int(row.device_usage_violation_id),
                     "event_date": current_event_date,
-                    "record_type": 1,
+                    "record_type": 2,
                     "record_description": "30 days"
                 }
                 

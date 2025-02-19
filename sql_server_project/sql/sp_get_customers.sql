@@ -62,7 +62,10 @@ SELECT
     cus.[DeInstallDateConfirmed] AS DeInstallDate,
     custst.[StateCode],
     1 AS ActiveStatus,
-    'Active-NotReported' AS ReportStatusCD,
+    CASE
+        WHEN ftp.RepeatOffender = 1 AND OffenseDate >= @START_DATE THEN 'Active-Reported'
+        ELSE 'Active-NotReported' 
+    END AS ReportStatusCD,
     cus.[StatusCd] AS CustomerStatus,
     @EXECUTION_DATE AS ActiveStatusStartDate,
     custst.[EffectiveStartDate],
@@ -86,8 +89,8 @@ INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst  WITH (NOLOCK)
 	AND  custst.DeviceLogRptgClassCd NOT IN  (1333, 356) --Teen Voluntary, -- Voluntary
 	AND cus.StatusCd NOT IN (506, 849, 507) --Demo, --Webdemo
 LEFT JOIN StateReporting.databricks.FtpCustomerData ftp
-	ON cus.DriversLicenseNumber = ftp.DriversLicenseNumber
-	AND RIGHT(cus.VIN,6) = RIGHT(ftp.VIN,6)
+	ON UPPER(cus.DriversLicenseNumber) = UPPER(ftp.DriversLicenseNumber)
+	AND UPPER(RIGHT(cus.VIN,6)) = UPPER(RIGHT(ftp.VIN,6))
 	AND ftp.CreationDate = CAST(@EXECUTION_DATE AS DATE)
 WHERE
 	(custst.[EffectiveEndDate] IS NULL AND cus.[DeInstallDateConfirmed] IS NULL)
