@@ -1,6 +1,7 @@
 {{ config(
 		materialized='incremental',
     unique_key='customer_dw_id',
+    incremental_strategy='merge',
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY customer_id ;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
@@ -294,41 +295,10 @@ WHERE repeat_offender IS NULL
 
 
 SELECT
-    customer_dw_id,
-    customer_reporting_state_id,
-    customer_id,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    install_date,
-    deinstall_date,
-    state_code,
-    active_status,
-    report_status_cd,
-    customer_status,
-    active_status_start_date,
-    active_status_end_date,
-    effective_start_date,
-    effective_end_date,
-    device_log_rptg_class_cd,
-    create_date,
-    create_user,
-    modify_date,
-    modify_user,
-    repeat_offender,
-    offense_date,
-    iid_start_date,
-    iid_end_date,
-    created_at,
-    is_inconsistent,
-    type_inconsistent,
-    num_duplicates
-  FROM cleaned_data
-  {% if is_incremental() %}
-    WHERE customer_dw_id NOT IN (SELECT c.customer_dw_id FROM {{ this }} c)
+  *
+FROM cleaned_data
+{% if is_incremental() %}
+  WHERE customer_dw_id NOT IN (SELECT c.customer_dw_id FROM {{ this }} c)
 {% endif %}
 
 

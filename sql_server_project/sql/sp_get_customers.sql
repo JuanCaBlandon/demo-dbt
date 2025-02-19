@@ -30,10 +30,10 @@ INSERT INTO StateReporting.databricks.TmpStateReportedCustomer(
     VIN,
     InstallDate,
     DeInstallDate,
-	StateCode ,
-    ActiveStatus ,
+	StateCode,
+    ActiveStatus,
 	ReportStatusCD,
-	CustomerStatus ,
+	CustomerStatus,
     ActiveStatusStartDate ,
 	EffectiveStartDate,
 	EffectiveEndDate,
@@ -43,9 +43,9 @@ INSERT INTO StateReporting.databricks.TmpStateReportedCustomer(
 	ModifyDate,
 	ModifyUser,
 	RepeatOffender,
-	OffenseDate ,
+	OffenseDate,
 	IIDStartDate,
-	IIDEndDate ,
+	IIDEndDate,
 	CreationDate
 )
 
@@ -62,7 +62,10 @@ SELECT
     cus.[DeInstallDateConfirmed] AS DeInstallDate,
     custst.[StateCode],
     1 AS ActiveStatus,
-    'Active-NoReported' AS ReportStatusCD,
+    CASE
+        WHEN ftp.RepeatOffender = 1 AND OffenseDate >= @START_DATE THEN 'Active-Reported'
+        ELSE 'Active-NotReported' 
+    END AS ReportStatusCD,
     cus.[StatusCd] AS CustomerStatus,
     @EXECUTION_DATE AS ActiveStatusStartDate,
     custst.[EffectiveStartDate],
@@ -86,8 +89,8 @@ INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst  WITH (NOLOCK)
 	AND  custst.DeviceLogRptgClassCd NOT IN  (1333, 356) --Teen Voluntary, -- Voluntary
 	AND cus.StatusCd NOT IN (506, 849, 507) --Demo, --Webdemo
 LEFT JOIN StateReporting.databricks.FtpCustomerData ftp
-	ON cus.DriversLicenseNumber = ftp.DriversLicenseNumber
-	AND cus.VIN = ftp.VIN
+	ON UPPER(cus.DriversLicenseNumber) = UPPER(ftp.DriversLicenseNumber)
+	AND UPPER(RIGHT(cus.VIN,6)) = UPPER(RIGHT(ftp.VIN,6))
 	AND ftp.CreationDate = CAST(@EXECUTION_DATE AS DATE)
 WHERE
 	(custst.[EffectiveEndDate] IS NULL AND cus.[DeInstallDateConfirmed] IS NULL)
@@ -102,24 +105,24 @@ WHERE
 --For SQL implementation
 INSERT INTO StateReporting.databricks.StateReportedCustomer 
 	(
-    CustomerReportingStateID,
-	CustomerID,
-	StateCode,
-    CustomerStatus,
-    ActiveStatus,
-    ReportStatusCD,
-    ActiveStatusStartDate,
-    InstallDate, 
-    DeInstallDate,
-	CreateDate,
-	CreateUser,
-	ModifyDate,
-	ModifyUser,
-    OffenseDate,
-    IIDStartDate,
-    IIDEndDate,
-    RepeatOffender,
-	CreationDate -- Indicate when this record is inserted 
+        CustomerReportingStateID,
+        CustomerID,
+        StateCode,
+        CustomerStatus,
+        ActiveStatus,
+        ReportStatusCD,
+        ActiveStatusStartDate,
+        InstallDate, 
+        DeInstallDate,
+        CreateDate,
+        CreateUser,
+        ModifyDate,
+        ModifyUser,
+        OffenseDate,
+        IIDStartDate,
+        IIDEndDate,
+        RepeatOffender,
+        CreationDate -- Indicate when this record is inserted 
 	) 
 
 SELECT
@@ -129,7 +132,7 @@ SELECT
     CU.CustomerStatus,
     CU.ActiveStatus,
     CASE WHEN CU.RepeatOffender = '1' THEN 'Active-Reported'
-         WHEN CU.RepeatOffender = '0' THEN 'Inactive'
+         WHEN CU.RepeatOffender = '0' THEN 'Active-NotReported'
          ELSE CU.ReportStatusCd 
     END AS ReportStatusCD,
     CU.ActiveStatusStartDate,
@@ -212,14 +215,17 @@ WHERE NOT EXISTS (SELECT CustomerID FROM StateReporting.databricks.StateReported
 
 -- Put date to inactive customers, ActiveStatus = 0
 UPDATE ST
-SET ST.ActiveStatusEndDate = @EXECUTION_DATE
-FROM StateReporting.databricks.TmpStateReportedCustomer CU
-    INNER JOIN StateReporting.databricks.StateReportedCustomer ST ON CU.CustomerID = ST.CustomerID
-WHERE CU.ActiveStatus = 0
-    AND CU.OffenseDate BETWEEN @START_DATE AND @END_DATE
-    ;
+SET ST.ActiveStatusEndDate = @EXECUTION_DATE,
+    ST.ReportStatusCD = 'Inactive',
+    ST.ActiveStatus = 0
+
+FROM StateReporting.databricks.StateReportedCustomer ST
+WHERE 
+    NOT EXISTS (SELECT CustomerID FROM StateReporting.databricks.TmpStateReportedCustomer CU WHERE ST.CustomerID = CU.CustomerID)
+    AND ST.RepeatOffender = 0
+;
 
 -- This top one is only for databricks because spark needs something to return when the SP is running 
-SELECT TOP 1 * 
+SELECT TOP 1 *
 FROM StateReporting.databricks.TmpStateReportedCustomer
 ;

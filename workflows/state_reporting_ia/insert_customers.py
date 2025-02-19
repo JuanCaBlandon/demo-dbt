@@ -130,7 +130,7 @@ spark.sql(f"""
             CU.IIDEndDate,
             try_cast(CU.CreationDate AS TIMESTAMP)
         )
-        WHEN NOT MATCHED BY SOURCE THEN
+        WHEN NOT MATCHED BY SOURCE AND ST.RepeatOffender = 0 THEN
             UPDATE SET
                 ST.ActiveStatus = 0,
                 ST.ReportStatusCD = 'Inactive',

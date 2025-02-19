@@ -264,7 +264,7 @@ LEFT JOIN StateReporting.databricks.CustomerEvents CE WITH (NOLOCK)
 WHERE
 	CE.CustomerTransactionID IS NULL
     AND CRS.StateCode = 'IA' 
-    AND C.DeInstallDateConfirmed BETWEEN @EXECUTION_DATE AND CONVERT(DATE, @EXECUTION_DATE) 
+    AND C.DeInstallDateConfirmed BETWEEN @START_DATE AND CONVERT(DATE, @EXECUTION_DATE) 
     AND DACD.AccountClosureDispositionId IN (1,4)  -- Requirement Complete, --No Requirement
 	AND CT.TrnParm3 BETWEEN @START_DATE AND @END_DATE
 -- 7 hast to be sent fisrt
