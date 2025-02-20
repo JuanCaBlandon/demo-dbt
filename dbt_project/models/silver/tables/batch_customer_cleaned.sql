@@ -30,7 +30,6 @@ with Tmp AS (
 
 ),
 cleaned_data AS (
-
   SELECT
     {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date', 'created_at']) }} AS batch_customer_dw_id, 
     'N/A' AS customer_dw_id,

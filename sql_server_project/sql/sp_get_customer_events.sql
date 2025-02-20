@@ -13,7 +13,7 @@ AS
 	Company: SourceMeridian
 	Short description: SP to get customers violations for IOWA State
 	Creation date: 2025-01-12
-	Modification date: 2025-02-11
+	Modification date: 2025-02-20
 	Modified by: Sebastian Osorno
 */
 
@@ -195,7 +195,7 @@ SELECT
 	CT.ModifyDate,
 	CT.ModifyUser,
 	NULL LogEntryTime,
-	CT.TrnParm3 EventDate,
+	CAST(CT.TrnParm3 AS DATE) EventDate,
 	NULL VIN,
 	NULL NewVIN,
 	@EXECUTION_DATE CreationDate,
@@ -220,7 +220,7 @@ WHERE
     AND CRS.StateCode = 'IA' 
     AND C.DeInstallDateConfirmed BETWEEN @START_DATE AND CONVERT(DATE, @EXECUTION_DATE) 
     AND DACD.AccountClosureDispositionId IN (2,3) --Incomplete, --Deceased
-	AND CT.TrnParm3 BETWEEN @START_DATE AND @END_DATE
+	AND CAST(CT.TrnParm3 AS DATE) BETWEEN @START_DATE AND @END_DATE
 -- If ACD 2, and type 7 sent, then start compliance workflow
 -- Check that we haven't sent a type 7 before
 		
@@ -241,7 +241,7 @@ SELECT
 	CT.ModifyDate,
 	CT.ModifyUser,
 	NULL LogEntryTime,
-	CT.TrnParm3 EventDate,
+	CAST(CT.TrnParm3 AS DATE) EventDate,
 	NULL VIN,
 	NULL NewVIN,
 	@EXECUTION_DATE CreationDate,
@@ -266,7 +266,7 @@ WHERE
     AND CRS.StateCode = 'IA' 
     AND C.DeInstallDateConfirmed BETWEEN @START_DATE AND CONVERT(DATE, @EXECUTION_DATE) 
     AND DACD.AccountClosureDispositionId IN (1,4)  -- Requirement Complete, --No Requirement
-	AND CT.TrnParm3 BETWEEN @START_DATE AND @END_DATE
+	AND CAST(CT.TrnParm3 AS DATE)  BETWEEN @START_DATE AND @END_DATE
 -- 7 hast to be sent fisrt
 -- if type 7 hasn't been sent, compliance workflow
 -- If I get ACD 4, sent compliance Workflow
