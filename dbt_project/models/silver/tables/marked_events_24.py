@@ -3,7 +3,8 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 # Initialize Spark session
 def model(dbt, session):
-    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
+    # dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
+    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0207-164823-v64axqqh")
 
     customer_events_cleaned = dbt.ref("customer_events_cleaned")
     customer_cleaned = dbt.ref("customer_cleaned")
