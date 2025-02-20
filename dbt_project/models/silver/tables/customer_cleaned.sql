@@ -144,14 +144,14 @@ SELECT
     'Max Character Limit' AS type_inconsistent,
     num_duplicates
 FROM Tmp
-WHERE num_duplicates = 1 AND 
- (
-    LENGTH(drivers_license_number) > 50 OR 
-    LENGTH(first_name) > 80 OR 
-    LENGTH(last_name) > 80 OR 
-    LENGTH(date_of_birth) > 10 OR 
-    LENGTH(vin) > 30
+WHERE num_duplicates = 1 AND (
+    drivers_license_number IS NOT NULL  AND LENGTH(drivers_license_number) > 50 OR 
+    first_name IS NOT NULL AND LENGTH(first_name) > 80 OR 
+    last_name IS NOT NULL AND LENGTH(last_name) > 80 OR 
+    date_of_birth IS NOT NULL AND LENGTH(date_of_birth) > 10 OR 
+    vin IS NOT NULL AND LENGTH(vin) > 30
   )
+
 
 UNION ALL
 SELECT
@@ -180,12 +180,11 @@ SELECT
     modify_date,
     modify_user,
     created_at,
-    0 AS is_inconsistent,
-    'N/A' AS type_inconsistent,
+    1 AS is_inconsistent,
+    'dont Match with batch file' AS type_inconsistent,
     num_duplicates
 FROM Tmp
-WHERE
-  num_duplicates = 1
+WHERE num_duplicates = 1
   AND drivers_license_number IS NOT NULL
   AND first_name IS NOT NULL 
   AND last_name IS NOT NULL 

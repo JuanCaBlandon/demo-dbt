@@ -52,35 +52,77 @@ cleaned_data AS (
   WHERE num_duplicates > 1
 
 
-  UNION ALL
-  SELECT
-    {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date', 'created_at']) }} AS batch_customer_dw_id,
-    'N/A' AS customer_dw_id,
-    vendor_name,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    offense_date,
-    repeat_offender,
-    IID_Start_Date,
-    IID_End_Date,
-    created_at,
-    1 AS is_inconsistent,
-    'NULL values' AS type_inconsistent,
-    num_duplicates
-  FROM Tmp
-  WHERE num_duplicates = 1 AND 
-    (
-      drivers_license_number IS NULL
-      OR first_name IS NULL
-      OR last_name IS NULL
-      OR date_of_birth IS NULL
-      OR vin IS NULL
-    )
+UNION ALL
 
+SELECT
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date', 'created_at']) }} AS batch_customer_dw_id,
+  'N/A' AS customer_dw_id,
+  vendor_name,
+  drivers_license_number,
+  first_name,
+  last_name,
+  middle_name,
+  date_of_birth,
+  vin,
+  offense_date,
+  repeat_offender,
+  IID_Start_Date,
+  IID_End_Date,
+  created_at,
+  1 AS is_inconsistent,
+  'NULL values' AS type_inconsistent,
+  num_duplicates
+FROM Tmp
+WHERE num_duplicates = 1 AND 
+  (drivers_license_number IS NULL OR first_name IS NULL OR last_name IS NULL  OR date_of_birth IS NULL OR vin IS NULL)
+
+UNION ALL
+
+SELECT
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date', 'created_at']) }} AS batch_customer_dw_id,
+  'N/A' AS customer_dw_id,
+  vendor_name,
+  drivers_license_number,
+  first_name,
+  last_name,
+  middle_name,
+  date_of_birth,
+  vin,
+  offense_date,
+  repeat_offender,
+  IID_Start_Date,
+  IID_End_Date,
+  created_at,
+  1 AS is_inconsistent,
+  'repeat offender without dates' AS type_inconsistent,
+  num_duplicates
+FROM Tmp
+WHERE num_duplicates = 1 AND 
+repeat_offender = 1 AND  (IID_Start_Date IS NULL OR IID_End_Date IS NULL )
+
+UNION ALL
+
+SELECT
+  {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date', 'created_at']) }} AS batch_customer_dw_id,
+  'N/A' AS customer_dw_id,
+  vendor_name,
+  drivers_license_number,
+  first_name,
+  last_name,
+  middle_name,
+  date_of_birth,
+  vin,
+  offense_date,
+  repeat_offender,
+  IID_Start_Date,
+  IID_End_Date,
+  created_at,
+  1 AS is_inconsistent,
+  'no repeat offender with dates' AS type_inconsistent,
+  num_duplicates
+FROM Tmp
+WHERE num_duplicates = 1 AND 
+repeat_offender = 0 AND  (IID_Start_Date IS NOT NULL OR IID_End_Date IS NOT NULL )
 
   UNION ALL
   SELECT
@@ -149,11 +191,51 @@ cleaned_data AS (
     AND c.is_inconsistent = 0
     AND c.active_status = true
 
+),
+cleaned_data2 as (
+
+SELECT
+    batch_customer_dw_id,
+    customer_dw_id,
+    vendor_name,
+    drivers_license_number,
+    first_name,
+    last_name,
+    middle_name,
+    date_of_birth,
+    vin,
+    offense_date,
+    repeat_offender,
+    IID_Start_Date,
+    IID_End_Date,
+    created_at,
+    is_inconsistent,
+    type_inconsistent,
+    num_duplicates,
+    CASE WHEN  repeat_offender = 1 AND  (IID_Start_Date IS  NULL OR IID_End_Date IS  NULL ) then 1 else 0  end as ro_without_dates
+  FROM cleaned_data
 )
 
 SELECT
-  *
-FROM cleaned_data
-{% if is_incremental() %}
-  WHERE batch_customer_dw_id NOT IN (SELECT batch_customer_dw_id FROM {{ this }})
+    batch_customer_dw_id,
+    customer_dw_id,
+    vendor_name,
+    drivers_license_number,
+    first_name,
+    last_name,
+    middle_name,
+    date_of_birth,
+    vin,
+    offense_date,
+    repeat_offender,
+    IID_Start_Date,
+    IID_End_Date,
+    created_at,
+    is_inconsistent,
+    type_inconsistent,
+    num_duplicates
+  FROM cleaned_data2
+  WHERE ro_without_dates = 0
+  {% if is_incremental() %}
+    where batch_customer_dw_id not in (select batch_customer_dw_id from {{ this }})
 {% endif %}
