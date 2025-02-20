@@ -8,6 +8,7 @@ args = parser.parse_args()
 env = args.environment
 start_date = args.start_date
 end_date = args.end_date
+execution_date = args.execution_date
 
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 
@@ -39,7 +40,7 @@ spark.sql(f"""
     MERGE INTO state_reporting_{env}.bronze.customer_events AS CED
     USING CustomerEvents AS CESQL
     ON COALESCE(CED.DeviceUsageViolationID,CED.DeviceUsageEventViolationID,CED.CustomerTransactionID) = COALESCE(CESQL.DeviceUsageViolationID,CESQL.DeviceUsageEventViolationID,CESQL.CustomerTransactionID)
-    WHEN MATCHED AND CESQL.ModificationDate = current_date() THEN
+    WHEN MATCHED AND CESQL.ModificationDate = '{execution_date}' THEN
         UPDATE SET
           	CED.CustomerID = CESQL.CustomerID,
             CED.DeviceUsageID = CESQL.DeviceUsageID,

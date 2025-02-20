@@ -21,10 +21,12 @@ WITH base_data AS (
         cec.new_vin
     FROM {{ ref('customer_events_cleaned') }}  AS cec
     INNER JOIN {{ ref('customer_cleaned') }}  cc ON cc.customer_id = cec.customer_id
-    WHERE cec.is_inconsistent = 0
+    WHERE 
+        cec.is_inconsistent = 0
+        AND cec.event_type <> 'TYPE 1-2'
      {% if is_incremental() %}
         AND event_date > (
-            SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2024-01-01') }}") FROM {{ this }}
+            SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
             WHERE 
                 customer_id = cec.customer_id
                 AND CONCAT('TYPE ', record_type) = cec.event_type
@@ -48,7 +50,7 @@ SELECT
 FROM {{ ref('marked_events_24') }} me24
 {% if is_incremental() %}
     WHERE event_date > (
-        SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2024-01-01') }}") FROM {{ this }}
+        SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
         WHERE 
             drivers_license_number = me24.drivers_license_number
             AND record_type = 1
@@ -71,7 +73,7 @@ SELECT
 FROM {{ ref('marked_events_30') }} me30
 {% if is_incremental() %}
     WHERE event_date > (
-        SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2024-01-01') }}") FROM {{ this }}
+        SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
         WHERE 
             customer_id = me30.customer_id
             AND record_type = 2
@@ -149,7 +151,7 @@ WHERE event_type = 'TYPE 6'
 -- Final Compliance
 UNION ALL
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'6'"]) }} AS record_dw_id, 
+    {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'7'"]) }} AS record_dw_id, 
     event_dw_id,
     drivers_license_number,
     customer_id,

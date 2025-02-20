@@ -139,7 +139,7 @@ WHERE
     AND DUV.ViolationReportingApprovalCd IN (344, 345) -- Approved,  -- Auto-Approved
     AND CRS.StateCode = 'IA'
     AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime)
-        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), )
+        BETWEEN CRS.EffectiveStartDate AND COALESCE(DATEADD(DAY, 1, CRS.EffectiveEndDate), @EXECUTION_DATE)
 		AND CAST(DLE.LogEntryTime AT TIME ZONE 'UTC' AT TIME ZONE 'Central Standard Time' AS datetime) BETWEEN @START_DATE AND @END_DATE
 		
 
@@ -264,7 +264,7 @@ LEFT JOIN StateReporting.databricks.CustomerEvents CE WITH (NOLOCK)
 WHERE
 	CE.CustomerTransactionID IS NULL
     AND CRS.StateCode = 'IA' 
-    AND C.DeInstallDateConfirmed BETWEEN '2024-01-01' AND CONVERT(DATE, @EXECUTION_DATE) 
+    AND C.DeInstallDateConfirmed BETWEEN @START_DATE AND CONVERT(DATE, @EXECUTION_DATE) 
     AND DACD.AccountClosureDispositionId IN (1,4)  -- Requirement Complete, --No Requirement
 	AND CT.TrnParm3 BETWEEN @START_DATE AND @END_DATE
 -- 7 hast to be sent fisrt
@@ -403,3 +403,4 @@ WHEN NOT MATCHED THEN
 		CAST(@EXECUTION_DATE AS DATE)
 	)
 ;
+SELECT count(*) FROM databricks.CustomerEvents'

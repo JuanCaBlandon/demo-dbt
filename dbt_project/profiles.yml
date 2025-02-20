@@ -3,7 +3,7 @@ dbt_project:
     tgt:
       catalog: "{{ env_var('DBT_DB_CATALOG') }}"
       host: "{{ env_var('DBT_DB_HOST') }}"
-      http_path: "{{ env_var('DBT_DB_PATH') }}"
+      http_path: "sql/protocolv1/o/2530303956664473/0204-173204-ojxrab09"
       schema: "{{ env_var('DBT_DB_SCHEMA', '') }}"
       threads: 8
       type: databricks

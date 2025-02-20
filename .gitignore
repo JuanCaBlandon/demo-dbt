@@ -3,3 +3,5 @@ target/
 dbt_packages/
 logs/
 env/
+dbt_project/.DS_Store
+.DS_Store

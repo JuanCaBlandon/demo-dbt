@@ -1,9 +1,9 @@
 import pandas as pd
-from pyspark.sql.functions import col, lit,  md5, concat_ws
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
 
 # Initialize Spark session
 def model(dbt, session):
-    dbt.config(materialized="incremental")
+    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
 
     customer_events_cleaned = dbt.ref("customer_events_cleaned")
     customer_cleaned = dbt.ref("customer_cleaned")
@@ -38,9 +38,10 @@ def model(dbt, session):
                 cec.device_usage_event_violation_id,
                 cec.customer_transaction_id,
                 cec.event_type,
-                CAST(cec.event_date AS TIMESTAMP) as event_date
+                CAST(cec.event_date AS TIMESTAMP) AS event_date
             FROM customer_events_cleaned cec
-            INNER JOIN customer_cleaned cc ON cc.customer_id = cec.customer_id
+            INNER JOIN customer_cleaned cc 
+                ON cc.customer_id = cec.customer_id
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
         )
@@ -53,7 +54,7 @@ def model(dbt, session):
                 PARTITION BY drivers_license_number
                 ORDER BY event_date
             ) AS TIMESTAMP) AS event_start_date,
-            CAST(event_date AS TIMESTAMP) as event_date
+            CAST(event_date AS TIMESTAMP) AS event_date
         FROM base_data
         QUALIFY COUNT(*) OVER (
             PARTITION BY drivers_license_number
@@ -62,28 +63,25 @@ def model(dbt, session):
         ) >= 5
     """)
 
-    base_df = base_df.withColumn(
-        "record_dw_id",
-        md5(concat_ws("_", col("event_dw_id"), lit("1"))).cast("string")
-    )
 
     # Convert to Pandas for processing
     events24 = base_df.toPandas()
 
-    result_schema = {
-        "record_dw_id": str,
-        "event_dw_id": str,
-        "drivers_license_number": str,
-        "customer_id": int,
-        "event_id_type": str,
-        "event_id": int,
-        "event_date": "datetime64[ns]",
-        "record_type": int,
-        "record_description": str
-    }
+    result_schema = StructType([
+        StructField("event_dw_id", StringType(), True),
+        StructField("drivers_license_number", StringType(), True),
+        StructField("customer_id", IntegerType(), True),
+        StructField("event_id_type", StringType(), True),
+        StructField("event_id", IntegerType(), True),
+        StructField("event_date", TimestampType(), True),
+        StructField("record_type", IntegerType(), True),
+        StructField("record_description", StringType(), True)
+    ])
 
-    marked_violations24 = pd.DataFrame(columns=result_schema.keys())
-
+    marked_violations24 = pd.DataFrame(columns=[
+        "event_dw_id", "drivers_license_number", "customer_id",
+        "event_id_type", "event_id", "event_date", "record_type", "record_description"
+    ])
     if not events24.empty:
         # Create a dictionary for faster lookups
         last_events_dict = dict(zip(
@@ -92,10 +90,10 @@ def model(dbt, session):
         ))
 
         for row in events24.itertuples(index=False):
-            # Get the last event date, defaulting to 2024-01-01 if not found
+            # Get the last event date, defaulting to 2025-01-01 if not found
             last_event_date = last_events_dict.get(
                 row.drivers_license_number, 
-                pd.Timestamp("{{ var('start_date', '2024-01-01') }}")
+                pd.Timestamp(dbt.config.get("start_date", "2025-01-01"))
             )
             
             # Convert dates to pandas Timestamp objects
@@ -104,7 +102,6 @@ def model(dbt, session):
 
             if current_event_start_date > last_event_date:
                 new_row = {
-                    "record_dw_id": str(row.record_dw_id),
                     "event_dw_id": str(row.event_dw_id),
                     "drivers_license_number": str(row.drivers_license_number),
                     "customer_id": int(row.customer_id),
@@ -119,5 +116,7 @@ def model(dbt, session):
                 
                 # Update the last event date in our dictionary
                 last_events_dict[row.drivers_license_number] = current_event_date
+    else:
+        marked_violations24 = session.createDataFrame(marked_violations24, schema=result_schema)
 
     return marked_violations24

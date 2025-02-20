@@ -1,5 +1,7 @@
 import logging
 from args_parser import get_parser
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
 from pyspark.sql.functions import col, substring, regexp_replace, to_timestamp, to_date, lit, when
 
 
@@ -46,6 +48,10 @@ date_columns = ["DateOfBirth", "OffenseDate", "IIDStartDate", "IIDEndDate"]
 batch_file = batch_file.select(
     *[to_date(col(c), "yyyy-MM-dd").alias(c) if c in date_columns else col(c) for c in batch_file.columns]
 )
+#Remove duplicates, and get the one with Higher End Date
+batch_file = batch_file.withColumn("VIN_6_digits", F.expr("right(VIN, 6)"))
+window_spec = Window.partitionBy("DriversLicenseNumber", "VIN_6_digits").orderBy(F.desc("IIDEndDate"))
+batch_file = batch_file.withColumn("row_number", F.row_number().over(window_spec)).filter(F.col("row_number") == 1).drop("row_number","VIN_6_digits")
 
 #Created At
 batch_file = batch_file.withColumn("CreatedAt", to_timestamp(lit(execution_date)))
