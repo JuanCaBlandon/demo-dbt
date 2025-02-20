@@ -161,14 +161,101 @@ SELECT
     'Max Character Limit' AS type_inconsistent,
     num_duplicates
 FROM Tmp
-WHERE num_duplicates = 1 AND 
- (
-    LENGTH(drivers_license_number) > 50 OR 
-    LENGTH(first_name) > 80 OR 
-    LENGTH(last_name) > 80 OR 
-    LENGTH(date_of_birth) > 10 OR 
-    LENGTH(vin) > 30
+WHERE num_duplicates = 1 AND (
+    drivers_license_number IS NOT NULL  AND LENGTH(drivers_license_number) > 50 OR 
+    first_name IS NOT NULL AND LENGTH(first_name) > 80 OR 
+    last_name IS NOT NULL AND LENGTH(last_name) > 80 OR 
+    date_of_birth IS NOT NULL AND LENGTH(date_of_birth) > 10 OR 
+    vin IS NOT NULL AND LENGTH(vin) > 30
   )
+
+
+UNION ALL
+SELECT
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
+    customer_reporting_state_id,
+    customer_id,
+    drivers_license_number,
+    first_name,
+    last_name,
+    middle_name,
+    date_of_birth,
+    vin,
+    install_date,
+    deinstall_date,
+    state_code,
+    active_status,
+    report_status_cd,
+    customer_status,
+    active_status_start_date,
+    active_status_end_date,
+    effective_start_date,
+    effective_end_date,
+    device_log_rptg_class_cd,
+    create_date,
+    create_user,
+    modify_date,
+    modify_user,
+    repeat_offender,
+    offense_date,
+    iid_start_date,
+    iid_end_date,
+    created_at,
+    1 AS is_inconsistent,
+    'dont Match with batch file' AS type_inconsistent,
+    num_duplicates
+FROM Tmp
+WHERE num_duplicates = 1
+  AND drivers_license_number IS NOT NULL
+  AND first_name IS NOT NULL 
+  AND last_name IS NOT NULL 
+  AND date_of_birth IS NOT NULL
+  AND vin IS NOT NULL
+  AND  repeat_offender IS NULL
+
+UNION ALL
+SELECT
+    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
+    customer_reporting_state_id,
+    customer_id,
+    drivers_license_number,
+    first_name,
+    last_name,
+    middle_name,
+    date_of_birth,
+    vin,
+    install_date,
+    deinstall_date,
+    state_code,
+    active_status,
+    report_status_cd,
+    customer_status,
+    active_status_start_date,
+    active_status_end_date,
+    effective_start_date,
+    effective_end_date,
+    device_log_rptg_class_cd,
+    create_date,
+    create_user,
+    modify_date,
+    modify_user,
+    repeat_offender,
+    offense_date,
+    iid_start_date,
+    iid_end_date,
+    created_at,
+    1 AS is_inconsistent,
+    'Batch file info insufficient' AS type_inconsistent,
+    num_duplicates
+FROM Tmp
+WHERE num_duplicates = 1 AND drivers_license_number IS NOT NULL
+  AND first_name IS NOT NULL 
+  AND last_name IS NOT NULL 
+  AND date_of_birth IS NOT NULL
+  AND vin IS NOT NULL
+  AND  repeat_offender IS NOT  NULL AND ( offense_date IS NULL AND iid_start_date IS NULL )
+
+
 
 UNION ALL
 SELECT
@@ -216,79 +303,7 @@ WHERE
   AND repeat_offender IS NOT NULL 
   AND offense_date IS NOT NULL
 
-UNION ALL
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-    customer_reporting_state_id,
-    customer_id,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    install_date,
-    deinstall_date,
-    state_code,
-    active_status,
-    report_status_cd,
-    customer_status,
-    active_status_start_date,
-    active_status_end_date,
-    effective_start_date,
-    effective_end_date,
-    device_log_rptg_class_cd,
-    create_date,
-    create_user,
-    modify_date,
-    modify_user,
-    repeat_offender,
-    offense_date,
-    iid_start_date,
-    iid_end_date,
-    created_at,
-    1 AS is_inconsistent,
-    'Batch file info insufficient' AS type_inconsistent,
-    num_duplicates
-FROM Tmp
-WHERE iid_start_date IS NULL OR repeat_offender IS NULL OR offense_date IS NULL
 
-UNION ALL
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-    customer_reporting_state_id,
-    customer_id,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    install_date,
-    deinstall_date,
-    state_code,
-    active_status,
-    report_status_cd,
-    customer_status,
-    active_status_start_date,
-    active_status_end_date,
-    effective_start_date,
-    effective_end_date,
-    device_log_rptg_class_cd,
-    create_date,
-    create_user,
-    modify_date,
-    modify_user,
-    repeat_offender,
-    offense_date,
-    iid_start_date,
-    iid_end_date,
-    created_at,
-    1 AS is_inconsistent,
-    'dont Match with batch file' AS type_inconsistent,
-    num_duplicates
-FROM Tmp
-WHERE repeat_offender IS NULL
 
 
 )
