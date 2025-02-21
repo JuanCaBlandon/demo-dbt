@@ -3,8 +3,8 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 # Initialize Spark session
 def model(dbt, session):
-    # dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
-    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0207-164823-v64axqqh")
+    cluster_id = dbt.config.get("cluster_id")
+    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id=f"{cluster_id}")
 
     start_date = dbt.config.get("start_date")
     execution_date = dbt.config.get("execution_date")
@@ -54,10 +54,10 @@ def model(dbt, session):
             INNER JOIN batch_customer_cleaned AS bcc
                 ON cc.drivers_license_number = bcc.drivers_license_number
                 AND RIGHT(bcc.vin,6) = RIGHT(cc.vin,6)
-                AND bcc.created_at = '2025-02-20'
+                AND bcc.created_at = '{execution_date}'
                 AND bcc.is_inconsistent = 0
                 AND bcc.repeat_offender = 1
-                AND bcc.offense_date >= '2024-01-01'
+                AND bcc.offense_date >= '{start_date}'
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
         )
