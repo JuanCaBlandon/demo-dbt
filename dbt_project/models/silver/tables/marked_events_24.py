@@ -55,7 +55,7 @@ def model(dbt, session):
                 ON cc.drivers_license_number = bcc.drivers_license_number
                 AND RIGHT(bcc.vin,6) = RIGHT(cc.vin,6)
                 AND bcc.created_at = '2025-02-20'
-                AND cc.is_inconsistent = 0
+                AND bcc.is_inconsistent = 0
                 AND bcc.repeat_offender = 1
                 AND bcc.offense_date >= '2024-01-01'
             WHERE cec.is_inconsistent = 0
@@ -99,6 +99,7 @@ def model(dbt, session):
         "event_id_type", "event_id", "event_date", "record_type", "record_description"
     ])
     if not events24.empty:
+        print("Estoy lleno")
         # Create a dictionary for faster lookups
         last_events_dict = dict(zip(
             previous_events_df['drivers_license_number'],
@@ -133,6 +134,7 @@ def model(dbt, session):
                 # Update the last event date in our dictionary
                 last_events_dict[row.drivers_license_number] = current_event_date
     else:
+        print("Estoy vacio")
         marked_violations24 = session.createDataFrame(marked_violations24, schema=result_schema)
 
     return marked_violations24

@@ -43,10 +43,15 @@ def model(dbt, session):
                 CAST(cec.event_date AS TIMESTAMP) AS event_date
             FROM customer_events_cleaned cec
             INNER JOIN customer_cleaned cc 
-                ON cc.customer_id = cec.customer_i
+                ON cc.customer_id = cec.customer_id
                 AND cc.is_inconsistent = 0
-                AND cc.repeat_offender = 1
-                AND cc.offense_date >= '{start_date}'
+            INNER JOIN batch_customer_cleaned AS bcc
+                ON cc.drivers_license_number = bcc.drivers_license_number
+                AND RIGHT(bcc.vin,6) = RIGHT(cc.vin,6)
+                AND bcc.created_at = '2025-02-20'
+                AND bcc.is_inconsistent = 0
+                AND bcc.repeat_offender = 1
+                AND bcc.offense_date >= '2024-01-01'
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
         )

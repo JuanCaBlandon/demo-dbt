@@ -73,6 +73,7 @@ cleaned_data AS (
   WHERE num_duplicates = 1 AND 
     (drivers_license_number IS NULL OR first_name IS NULL OR last_name IS NULL  OR date_of_birth IS NULL OR vin IS NULL)
 
+
   UNION ALL
   SELECT
     {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date', 'created_at']) }} AS batch_customer_dw_id,
@@ -89,14 +90,14 @@ cleaned_data AS (
     iid_end_date,
     created_at,
     1 AS is_inconsistent,
-    'Repeat offender without dates' AS type_inconsistent,
+    'repeat offender without dates' AS type_inconsistent,
     num_duplicates
   FROM Tmp
   WHERE num_duplicates = 1 AND 
-  repeat_offender = 1 AND (iid_start_date IS NULL OR iid_end_date IS NULL OR offense_date IS NULL)
+  repeat_offender = 1 AND (iid_start_date IS NULL IS NULL OR offense_date IS NULL)
+
 
   UNION ALL
-
   SELECT
     {{ dbt_utils.generate_surrogate_key(['vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth', 'vin', 'offense_date', 'created_at']) }} AS batch_customer_dw_id,
     vendor_name,
@@ -112,7 +113,7 @@ cleaned_data AS (
     iid_end_date,
     created_at,
     1 AS is_inconsistent,
-    'No repeat offender with dates' AS type_inconsistent,
+    'no repeat offender with dates' AS type_inconsistent,
     num_duplicates
   FROM Tmp
   WHERE num_duplicates = 1 AND 
@@ -148,7 +149,7 @@ cleaned_data AS (
     AND (
         (repeat_offender = 0 AND iid_start_date IS NULL AND iid_end_date IS NULL AND offense_date IS NULL)
         OR
-        (repeat_offender = 1 AND (iid_start_date IS NOT NULL AND iid_end_date IS NOT NULL AND offense_date IS NOT NULL))
+        (repeat_offender = 1 AND (iid_start_date IS NOT NULL AND offense_date IS NOT NULL))
     )
 )
 

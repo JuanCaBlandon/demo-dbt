@@ -1,5 +1,6 @@
 {{ config(
     materialized='incremental',
+    database='compliance_' ~ var('DEPLOYMENT_ENVIRONMENT'),
     unique_key='audit_inconsistent_dw_id',
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY audit_inconsistent_dw_id;",

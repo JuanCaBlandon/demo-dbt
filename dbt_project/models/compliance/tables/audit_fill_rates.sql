@@ -1,5 +1,6 @@
 {{ config(
     materialized='incremental',
+    database='compliance_' ~ var('DEPLOYMENT_ENVIRONMENT'),
     unique_key=['table_name', 'column_name', 'execution_date'],
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY table_name, column_name;",
