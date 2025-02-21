@@ -20,7 +20,11 @@ WITH base_data AS (
         cec.event_date,
         cec.new_vin
     FROM {{ ref('customer_events_cleaned') }}  AS cec
-    INNER JOIN {{ ref('customer_cleaned') }}  cc ON cc.customer_id = cec.customer_id
+    INNER JOIN {{ ref('customer_cleaned') }}  cc
+        ON cc.customer_id = cec.customer_id
+        AND cc.is_inconsistent = 0
+        AND cc.repeat_offender = 1
+        AND cc.offense_date >= "{{ var('start_date', '2025-01-01') }}"
     WHERE 
         cec.is_inconsistent = 0
         AND cec.event_type <> 'TYPE 1-2'

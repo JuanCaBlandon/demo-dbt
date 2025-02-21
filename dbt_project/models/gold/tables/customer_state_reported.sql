@@ -22,7 +22,7 @@ WITH bc AS (
     INNER JOIN {{ ref('batch_customer') }} AS bc
         ON UPPER(c.drivers_license_number) = UPPER(bc.drivers_license_number)
         AND UPPER(RIGHT(bc.vin,6)) = UPPER(RIGHT(c.vin,6))
-        AND bc.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer') }}) --TODO: Needed? Ask Cami
+        AND bc.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer') }})
     INNER JOIN {{ ref('dim_date_time') }} AS dd 
         ON year(me.event_date) = dd.year
         AND month(me.event_date) = dd.month

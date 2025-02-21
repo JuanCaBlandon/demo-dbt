@@ -3,7 +3,9 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 # Initialize Spark session
 def model(dbt, session):
-    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
+    # dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
+    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0207-164823-v64axqqh")
+    start_date = dbt.config.get("start_date", "2025-01-01")
 
     customer_events_cleaned = dbt.ref("customer_events_cleaned")
     customer_cleaned = dbt.ref("customer_cleaned")
@@ -28,7 +30,7 @@ def model(dbt, session):
         # Initialize an empty DataFrame on first run
         previous_events_df = pd.DataFrame(columns=["drivers_license_number", "event_date"])
 
-    base_df = session.sql("""
+    base_df = session.sql(f"""
         WITH base_data AS (
             SELECT
                 cec.event_dw_id,
@@ -41,7 +43,10 @@ def model(dbt, session):
                 CAST(cec.event_date AS TIMESTAMP) AS event_date
             FROM customer_events_cleaned cec
             INNER JOIN customer_cleaned cc 
-                ON cc.customer_id = cec.customer_id
+                ON cc.customer_id = cec.customer_i
+                AND cc.is_inconsistent = 0
+                AND cc.repeat_offender = 1
+                AND cc.offense_date >= '{start_date}'
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
         )
@@ -93,7 +98,7 @@ def model(dbt, session):
             # Get the last event date, defaulting to 2025-01-01 if not found
             last_event_date = last_events_dict.get(
                 row.drivers_license_number, 
-                pd.Timestamp(dbt.config.get("start_date", "2025-01-01"))
+                pd.Timestamp(start_date)
             )
             
             # Convert dates to pandas Timestamp objects

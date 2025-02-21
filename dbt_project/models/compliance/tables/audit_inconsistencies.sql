@@ -39,19 +39,19 @@ WITH source AS (
     WHERE is_inconsistent = 1
 
     UNION ALL
-SELECT
-    c.customer_dw_id AS source_table_id,
-    'customer_cleaned' AS source_table_name,
-    'ia' as state,
-    1 AS is_inconsistent,
-    'dont Match with batch file' AS type_inconsistent,
-    c.created_at
-FROM {{ ref('customer_cleaned') }} as c
-LEFT JOIN {{ ref('batch_customer_cleaned') }} as bc 
-ON UPPER(c.drivers_license_number) = UPPER(bc.drivers_license_number)
-    AND UPPER(RIGHT(bc.vin,6)) = UPPER(RIGHT(c.vin,6))
-WHERE c.is_inconsistent = 0 AND bc.is_inconsistent = 0
-  AND  bc.batch_customer_dw_id IS NULL
+    SELECT
+        c.customer_dw_id AS source_table_id,
+        'customer_cleaned' AS source_table_name,
+        'ia' as state,
+        1 AS is_inconsistent,
+        'dont Match with batch file' AS type_inconsistent,
+        c.created_at
+    FROM {{ ref('customer_cleaned') }} as c
+    LEFT JOIN {{ ref('batch_customer_cleaned') }} as bc 
+    ON UPPER(c.drivers_license_number) = UPPER(bc.drivers_license_number)
+        AND UPPER(RIGHT(bc.vin,6)) = UPPER(RIGHT(c.vin,6))
+    WHERE c.is_inconsistent = 0 AND bc.is_inconsistent = 0
+    AND  bc.batch_customer_dw_id IS NULL
 
 ),
 source2 AS (

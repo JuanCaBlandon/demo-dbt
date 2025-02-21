@@ -12,12 +12,12 @@ WITH Tmp AS(
   SELECT
     CustomerReportingStateID AS customer_reporting_state_id,
     CustomerID AS customer_id,
-    DriversLicenseNumber AS drivers_license_number,
+    UPPER(DriversLicenseNumber) AS drivers_license_number,
     FirstName AS first_name,
     LastName AS last_name,
     MiddleName AS middle_name,
     DateOfBirth AS date_of_birth,
-    VIN AS vin,
+    UPPER(VIN) AS vin,
     InstallDate AS install_date,
     DeInstallDate AS deinstall_date,
     StateCode AS state_code,
@@ -46,150 +46,150 @@ WITH Tmp AS(
 
 ),
 cleaned_data AS(
+  SELECT
+      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
+      customer_reporting_state_id,
+      customer_id,
+      drivers_license_number,
+      first_name,
+      last_name,
+      middle_name,
+      date_of_birth,
+      vin,
+      install_date,
+      deinstall_date,
+      state_code,
+      active_status,
+      report_status_cd,
+      customer_status,
+      active_status_start_date,
+      active_status_end_date,
+      effective_start_date,
+      effective_end_date,
+      device_log_rptg_class_cd,
+      create_date,
+      create_user,
+      modify_date,
+      modify_user,
+      created_at,
+      1 AS is_inconsistent,
+      'duplicates' AS type_inconsistent,
+      num_duplicates
+  FROM Tmp
+  WHERE num_duplicates > 1
 
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-    customer_reporting_state_id,
-    customer_id,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    install_date,
-    deinstall_date,
-    state_code,
-    active_status,
-    report_status_cd,
-    customer_status,
-    active_status_start_date,
-    active_status_end_date,
-    effective_start_date,
-    effective_end_date,
-    device_log_rptg_class_cd,
-    create_date,
-    create_user,
-    modify_date,
-    modify_user,
-    created_at,
-    1 AS is_inconsistent,
-    'duplicates' AS type_inconsistent,
-    num_duplicates
-FROM Tmp
-WHERE num_duplicates > 1
+  UNION ALL
+  SELECT
+      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
+      customer_reporting_state_id,
+      customer_id,
+      drivers_license_number,
+      first_name,
+      last_name,
+      middle_name,
+      date_of_birth,
+      vin,
+      install_date,
+      deinstall_date,
+      state_code,
+      active_status,
+      report_status_cd,
+      customer_status,
+      active_status_start_date,
+      active_status_end_date,
+      effective_start_date,
+      effective_end_date,
+      device_log_rptg_class_cd,
+      create_date,
+      create_user,
+      modify_date,
+      modify_user,
+      created_at,
+      1 AS is_inconsistent,
+      'NULL values' AS type_inconsistent,
+      num_duplicates
+  FROM Tmp
+  WHERE num_duplicates = 1 AND 
+    (drivers_license_number IS NULL OR first_name IS NULL OR last_name IS NULL  OR date_of_birth IS NULL OR vin IS NULL)
 
-UNION ALL
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-    customer_reporting_state_id,
-    customer_id,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    install_date,
-    deinstall_date,
-    state_code,
-    active_status,
-    report_status_cd,
-    customer_status,
-    active_status_start_date,
-    active_status_end_date,
-    effective_start_date,
-    effective_end_date,
-    device_log_rptg_class_cd,
-    create_date,
-    create_user,
-    modify_date,
-    modify_user,
-    created_at,
-    1 AS is_inconsistent,
-    'NULL values' AS type_inconsistent,
-    num_duplicates
-FROM Tmp
-WHERE num_duplicates = 1 AND 
-  (drivers_license_number IS NULL OR first_name IS NULL OR last_name IS NULL  OR date_of_birth IS NULL OR vin IS NULL)
-
-UNION ALL
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-    customer_reporting_state_id,
-    customer_id,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    install_date,
-    deinstall_date,
-    state_code,
-    active_status,
-    report_status_cd,
-    customer_status,
-    active_status_start_date,
-    active_status_end_date,
-    effective_start_date,
-    effective_end_date,
-    device_log_rptg_class_cd,
-    create_date,
-    create_user,
-    modify_date,
-    modify_user,
-    created_at,
-    1 AS is_inconsistent,
-    'Max Character Limit' AS type_inconsistent,
-    num_duplicates
-FROM Tmp
-WHERE num_duplicates = 1 AND (
-    drivers_license_number IS NOT NULL  AND LENGTH(drivers_license_number) > 50 OR 
-    first_name IS NOT NULL AND LENGTH(first_name) > 80 OR 
-    last_name IS NOT NULL AND LENGTH(last_name) > 80 OR 
-    date_of_birth IS NOT NULL AND LENGTH(date_of_birth) > 10 OR 
-    vin IS NOT NULL AND LENGTH(vin) > 30
-  )
+  UNION ALL
+  SELECT
+      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
+      customer_reporting_state_id,
+      customer_id,
+      drivers_license_number,
+      first_name,
+      last_name,
+      middle_name,
+      date_of_birth,
+      vin,
+      install_date,
+      deinstall_date,
+      state_code,
+      active_status,
+      report_status_cd,
+      customer_status,
+      active_status_start_date,
+      active_status_end_date,
+      effective_start_date,
+      effective_end_date,
+      device_log_rptg_class_cd,
+      create_date,
+      create_user,
+      modify_date,
+      modify_user,
+      created_at,
+      1 AS is_inconsistent,
+      'Max Character Limit' AS type_inconsistent,
+      num_duplicates
+  FROM Tmp
+  WHERE num_duplicates = 1 AND (
+      drivers_license_number IS NOT NULL  AND LENGTH(drivers_license_number) > 50 OR 
+      first_name IS NOT NULL AND LENGTH(first_name) > 80 OR 
+      last_name IS NOT NULL AND LENGTH(last_name) > 80 OR 
+      date_of_birth IS NOT NULL AND LENGTH(date_of_birth) > 10 OR 
+      vin IS NOT NULL AND LENGTH(vin) > 30
+    )
 
 
-UNION ALL
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-    customer_reporting_state_id,
-    customer_id,
-    drivers_license_number,
-    first_name,
-    last_name,
-    middle_name,
-    date_of_birth,
-    vin,
-    install_date,
-    deinstall_date,
-    state_code,
-    active_status,
-    report_status_cd,
-    customer_status,
-    active_status_start_date,
-    active_status_end_date,
-    effective_start_date,
-    effective_end_date,
-    device_log_rptg_class_cd,
-    create_date,
-    create_user,
-    modify_date,
-    modify_user,
-    created_at,
-    1 AS is_inconsistent,
-    'dont Match with batch file' AS type_inconsistent,
-    num_duplicates
-FROM Tmp
-WHERE num_duplicates = 1
-  AND drivers_license_number IS NOT NULL
-  AND first_name IS NOT NULL 
-  AND last_name IS NOT NULL 
-  AND date_of_birth IS NOT NULL
-  AND vin IS NOT NULL
+  UNION ALL
+  SELECT
+      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
+      customer_reporting_state_id,
+      customer_id,
+      drivers_license_number,
+      first_name,
+      last_name,
+      middle_name,
+      date_of_birth,
+      vin,
+      install_date,
+      deinstall_date,
+      state_code,
+      active_status,
+      report_status_cd,
+      customer_status,
+      active_status_start_date,
+      active_status_end_date,
+      effective_start_date,
+      effective_end_date,
+      device_log_rptg_class_cd,
+      create_date,
+      create_user,
+      modify_date,
+      modify_user,
+      created_at,
+      0 AS is_inconsistent,
+      'N/A' AS type_inconsistent,
+      num_duplicates
+  FROM Tmp
+  WHERE
+    num_duplicates = 1
+    AND drivers_license_number IS NOT NULL
+    AND first_name IS NOT NULL 
+    AND last_name IS NOT NULL 
+    AND date_of_birth IS NOT NULL
+    AND vin IS NOT NULL
 )
 
 

@@ -25,9 +25,9 @@ SELECT
     CC.state_code,
     CC.active_status,
     CASE
-        WHEN BCC.RepeatOffender = 1 AND OffenseDate >= "{{ var("start_date", "2025-01-01") }}" THEN 'Active-Reported'
+        WHEN BCC.repeat_offender = 1 AND offense_date >= "{{ var("start_date", "2025-01-01") }}" THEN 'Active-Reported'
         ELSE 'Active-NotReported' 
-    END AS ReportStatusCD,
+    END AS report_status_cd,
     CC.customer_status,
     CC.active_status_start_date,
     CC.active_status_end_date,
@@ -42,13 +42,15 @@ SELECT
     BCC.offense_date,
     BCC.iid_start_date,
     BCC.iid_end_date,
-    created_at
+    CC.created_at
 FROM {{ ref('customer_cleaned') }} CC
 INNER JOIN {{ ref('batch_customer_cleaned') }} BCC
     ON CC.drivers_license_number = BCC.drivers_license_number
     AND RIGHT(CC.vin, 6) = RIGHT(BCC.vin, 6)
     AND BCC.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer_cleaned') }}) 
-WHERE is_inconsistent = 0
+WHERE
+    CC.is_inconsistent = 0
+    AND BCC.is_inconsistent = 0
 {% if is_incremental() %}
-    AND customer_dw_id NOT IN (SELECT customer_dw_id FROM {{ this }})
+    AND CC.customer_dw_id NOT IN (SELECT customer_dw_id FROM {{ this }})
 {% endif %}
