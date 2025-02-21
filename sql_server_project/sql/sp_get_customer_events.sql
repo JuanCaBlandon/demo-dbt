@@ -403,4 +403,4 @@ WHEN NOT MATCHED THEN
 		CAST(@EXECUTION_DATE AS DATE)
 	)
 ;
-SELECT count(*) FROM databricks.CustomerEvents'
+SELECT count(*) FROM databricks.CustomerEvents

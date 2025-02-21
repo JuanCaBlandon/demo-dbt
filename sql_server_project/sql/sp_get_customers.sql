@@ -86,7 +86,7 @@ INNER JOIN [CustSrv].[dbo].[CustomerReportingStates] custst  WITH (NOLOCK)
 	AND  custst.DeviceLogRptgClassCd NOT IN  (1333, 356) --Teen Voluntary, -- Voluntary
 	AND cus.StatusCd NOT IN (506, 849, 507) --Demo, --Webdemo
 WHERE
-    cus.EffectiveStartDate IS NOT NULL AND
+    custst.EffectiveStartDate IS NOT NULL AND
 	((custst.[EffectiveEndDate] IS NULL AND cus.[DeInstallDateConfirmed] IS NULL)
 	OR (custst.[EffectiveEndDate] IS NULL AND CAST(cus.[DeInstallDateConfirmed] AS DATE) > CAST(@EXECUTION_DATE AS DATE))
 	OR (

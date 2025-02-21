@@ -57,7 +57,7 @@ batch_file = batch_file.withColumn("row_number", F.row_number().over(window_spec
 batch_file = batch_file.withColumn("CreatedAt", to_timestamp(lit(execution_date)))
 
 # Ensure the schema of the DataFrame matches the schema of the Delta table
-existing_table_schema = spark.table("state_reporting_dev.bronze.state_batch_customer_data_ia_test").schema
+existing_table_schema = spark.table(f"state_reporting_{env}.bronze.state_batch_customer_data_ia_test").schema
 
 batch_file = batch_file.select([col(field.name).cast(field.dataType) for field in existing_table_schema])
 
