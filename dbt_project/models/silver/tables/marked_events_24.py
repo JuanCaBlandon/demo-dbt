@@ -4,7 +4,8 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 # Initialize Spark session
 def model(dbt, session):
     cluster_id = dbt.config.get("cluster_id")
-    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id=f"{cluster_id}")
+    dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
+    # dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id=f"{cluster_id}")
 
     start_date = dbt.config.get("start_date")
     execution_date = dbt.config.get("execution_date")
