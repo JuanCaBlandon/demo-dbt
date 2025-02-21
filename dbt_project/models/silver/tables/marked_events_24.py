@@ -1,5 +1,5 @@
 import pandas as pd
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType, TimestampType
 
 # Initialize Spark session
 def model(dbt, session):
@@ -86,9 +86,9 @@ def model(dbt, session):
     result_schema = StructType([
         StructField("event_dw_id", StringType(), True),
         StructField("drivers_license_number", StringType(), True),
-        StructField("customer_id", IntegerType(), True),
+        StructField("customer_id", LongType(), True),
         StructField("event_id_type", StringType(), True),
-        StructField("event_id", IntegerType(), True),
+        StructField("event_id", LongType(), True),
         StructField("event_date", TimestampType(), True),
         StructField("record_type", IntegerType(), True),
         StructField("record_description", StringType(), True)
@@ -122,7 +122,7 @@ def model(dbt, session):
                     "event_dw_id": str(row.event_dw_id),
                     "drivers_license_number": str(row.drivers_license_number),
                     "customer_id": int(row.customer_id),
-                    "event_id_type": "device_usage_violation_id",
+                    "event_id_type": str("device_usage_violation_id"),
                     "event_id": int(row.device_usage_violation_id),
                     "event_date": current_event_date,
                     "record_type": 1,
@@ -133,8 +133,10 @@ def model(dbt, session):
                 
                 # Update the last event date in our dictionary
                 last_events_dict[row.drivers_license_number] = current_event_date
+        marked_violations24_spark = session.createDataFrame(marked_violations24, schema=result_schema)
+
     else:
         print("Estoy vacio")
         marked_violations24 = session.createDataFrame(marked_violations24, schema=result_schema)
 
-    return marked_violations24
+    return marked_violations24_spark
