@@ -9,9 +9,12 @@ def model(dbt, session):
 
     customer_events_cleaned = dbt.ref("customer_events_cleaned")
     customer_cleaned = dbt.ref("customer_cleaned")
+    batch_customer_cleaned = dbt.ref("batch_customer_cleaned")
+
     
     customer_events_cleaned.createOrReplaceTempView("customer_events_cleaned")
     customer_cleaned.createOrReplaceTempView("customer_cleaned")
+    batch_customer_cleaned.createOrReplaceTempView("batch_customer_cleaned")
 
     # Handle incremental logic
     if dbt.is_incremental:

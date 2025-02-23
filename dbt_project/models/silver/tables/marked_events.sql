@@ -23,8 +23,13 @@ WITH base_data AS (
     INNER JOIN {{ ref('customer_cleaned') }}  cc
         ON cc.customer_id = cec.customer_id
         AND cc.is_inconsistent = 0
-        AND cc.repeat_offender = 1
-        AND cc.offense_date >= "{{ var('start_date', '2025-01-01') }}"
+    INNER JOIN {{ ref('batch_customer_cleaned') }} AS bcc
+        ON cc.drivers_license_number = bcc.drivers_license_number
+        AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
+        AND bcc.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer_cleaned') }})
+        AND bcc.is_inconsistent = 0
+        AND bcc.repeat_offender = 1
+        AND bcc.offense_date >= "{{ var('start_date', '2025-01-01') }}"
     WHERE 
         cec.is_inconsistent = 0
         AND cec.event_type <> 'TYPE 1-2'
@@ -51,9 +56,11 @@ SELECT
     event_date,
     record_type,
     record_description
-FROM {{ ref('marked_events_24') }} me24
+FROM {{ source('SILVER', 'rt_1_2') }} me24
+WHERE
+    record_type = 1
 {% if is_incremental() %}
-    WHERE event_date > (
+    AND event_date > (
         SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
         WHERE 
             drivers_license_number = me24.drivers_license_number
@@ -74,9 +81,11 @@ SELECT
     event_date,
     record_type,
     record_description
-FROM {{ ref('marked_events_30') }} me30
+FROM {{ source('SILVER', 'rt_1_2') }} me30
+WHERE
+    record_type = 2
 {% if is_incremental() %}
-    WHERE event_date > (
+    AND event_date > (
         SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
         WHERE 
             customer_id = me30.customer_id

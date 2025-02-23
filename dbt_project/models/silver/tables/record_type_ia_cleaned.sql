@@ -1,6 +1,7 @@
 {{ config(
     materialized = 'incremental',
     post_hook=["ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"]
+    tags=["silver_ia_1"]
 ) }}
 
 WITH violations AS (

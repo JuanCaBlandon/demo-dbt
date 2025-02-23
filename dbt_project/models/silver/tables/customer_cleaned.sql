@@ -5,7 +5,8 @@
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY customer_id ;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
-        ]
+        ],
+    tags=["silver_ia_1"]
 ) }}
 
 WITH Tmp AS(
@@ -190,6 +191,13 @@ cleaned_data AS(
     AND last_name IS NOT NULL 
     AND date_of_birth IS NOT NULL
     AND vin IS NOT NULL
+    AND NOT (
+      LENGTH(drivers_license_number) > 50 OR 
+      LENGTH(first_name) > 80 OR 
+      LENGTH(last_name) > 80 OR 
+      LENGTH(date_of_birth) > 10 OR 
+      LENGTH(vin) > 30
+    )
 )
 
 

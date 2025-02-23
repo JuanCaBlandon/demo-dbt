@@ -4,7 +4,8 @@
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY offense_date ;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
-        ]
+        ],
+    tags=["silver_ia_1"]
 ) }}
 
 WITH Tmp AS (
@@ -72,6 +73,10 @@ cleaned_data AS (
   FROM Tmp
   WHERE num_duplicates = 1 AND 
     (drivers_license_number IS NULL OR first_name IS NULL OR last_name IS NULL  OR date_of_birth IS NULL OR vin IS NULL)
+    AND NOT (
+      (repeat_offender = 1 AND (iid_start_date IS NULL OR offense_date IS NULL))
+      OR repeat_offender = 0 AND  (iid_start_date IS NOT NULL OR iid_end_date IS NOT NULL OR offense_date IS NOT NULL)
+    )
 
 
   UNION ALL
@@ -94,7 +99,7 @@ cleaned_data AS (
     num_duplicates
   FROM Tmp
   WHERE num_duplicates = 1 AND 
-  repeat_offender = 1 AND (iid_start_date IS NULL IS NULL OR offense_date IS NULL)
+  repeat_offender = 1 AND (iid_start_date IS NULL OR offense_date IS NULL)
 
 
   UNION ALL
