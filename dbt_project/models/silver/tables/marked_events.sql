@@ -25,7 +25,7 @@ WITH base_data AS (
         AND cc.is_inconsistent = 0
     INNER JOIN {{ ref('batch_customer_cleaned') }} AS bcc
         ON cc.drivers_license_number = bcc.drivers_license_number
-        AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
+        AND RIGHT(bc.vin,6) = RIGHT(cc.vin,6)
         AND bcc.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer_cleaned') }})
         AND bcc.is_inconsistent = 0
         AND bcc.repeat_offender = 1
