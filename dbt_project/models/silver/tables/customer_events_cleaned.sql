@@ -1,6 +1,7 @@
 {{ config(
 		materialized='incremental',
     unique_key='event_dw_id',
+    incremental_strategy='merge',
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY customer_id, event_type, event_date;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
