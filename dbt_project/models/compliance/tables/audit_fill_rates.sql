@@ -8,7 +8,7 @@
     ]
 ) }}
 
-{% set silver_tables = dbt_utils.get_relations_by_prefix(schema='SILVER', prefix='%cleaned') %}
+{% set silver_tables = dbt_utils.get_relations_by_prefix(database='state_reporting_' ~ var('DEPLOYMENT_ENVIRONMENT'), schema='SILVER', prefix='%cleaned') %}
 
 WITH fill_rates AS (
     {% for table in silver_tables %}
