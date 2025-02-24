@@ -1,4 +1,3 @@
--- models/gold/customer_status.sql
 {{ config(
     materialized='incremental',
     unique_key='customer_dw_id',
@@ -36,8 +35,9 @@ new_customers_status AS (
             WHEN BC.repeat_offender = 1 AND BC.offense_date >= '{{ var("start_date", "2025-01-01") }}' THEN 'Active-Reported'
             ELSE 'Active-NotReported'
         END AS new_report_status_cd,
+        CC.customer_status,
         CASE
-            WHEN BC.repeat_offender = 1 AND BC.offense_date >= '{{ var("start_date", "2025-01-01") }}' THEN '{{ var("execution_date_date") }}'
+            WHEN BC.repeat_offender = 1 AND BC.offense_date >= '{{ var("start_date", "2025-01-01") }}' THEN '{{ var("execution_date") }}'
             ELSE CC.active_status_start_date
         END AS new_active_status_start_date,
         CC.active_status_end_date,
@@ -77,8 +77,9 @@ inactive_customers AS (
         CC.state_code,
         0 AS active_status,
         'Inactive' AS report_status_cd,
+        CC.customer_status,
         CC.active_status_start_date,
-        '{{ var("execution_date_date") }}' AS active_status_end_date,
+        '{{ var("execution_date") }}' AS active_status_end_date,
         CC.effective_start_date,
         CC.effective_end_date,
         CC.device_log_rptg_class_cd,
@@ -117,6 +118,7 @@ SELECT
         WHEN CC.report_status_cd = 'Active-Reported' THEN CC.report_status_cd
         ELSE NCS.new_report_status_cd
     END AS report_status_cd,
+    NCS.customer_status,
     CASE
         WHEN CC.active_status_start_date IS NOT NULL THEN CC.active_status_start_date
         ELSE NCS.new_active_status_start_date
