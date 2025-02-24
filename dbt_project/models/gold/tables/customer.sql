@@ -113,7 +113,10 @@ SELECT
     NCS.install_date,
     NCS.deinstall_date,
     NCS.state_code,
-    NCS.active_status,
+    CASE
+        WHEN CAST(CC.active_status AS INT) = 1 THEN CAST(CC.active_status AS INT)
+        ELSE NCS.active_status
+    END AS active_status,
     CASE
         WHEN CC.report_status_cd = 'Active-Reported' THEN CC.report_status_cd
         ELSE NCS.new_report_status_cd
