@@ -248,7 +248,6 @@ def updateCustomerStateReported(results, env, execution_date):
     )
 
     try:
-        df_status.createOrReplaceTempView("temp_status")
         spark.sql(f"""
             MERGE INTO state_reporting_{env}.gold.customer_state_reported as target
             USING temp_status as source
@@ -262,6 +261,42 @@ def updateCustomerStateReported(results, env, execution_date):
     except Exception as e:
         print(f"Error updating customer_state_reported table: {str(e)}")
         raise
+
+def setInactiveCustomers(id_list, execution_date):
+    """
+    Sets customers as inactive based on tracked records.
+    
+    Args:
+        tracked_records (list): List of dictionaries containing tracked submission data
+        execution_date (datetime): The date when the execution occurred
+        env (str): Environment identifier for the database
+    """
+    inactive_customers_df = spark.createDataFrame(
+        [(id, 0, 'Inactive', execution_date) for id in customer_ids],
+        ['customer_state_dw_id', 'active_status', 'report_status_cd', 'updated_at']
+    )
+
+    try:
+        inactive_customers_df.createOrReplaceTempView("inactive_customers_temp")
+
+        spark.sql(f"""
+            MERGE INTO state_reporting_{env}.gold.customer AS target
+            USING inactive_customers_temp AS source
+            ON target.customer_state_dw_id = source.customer_state_dw_id
+            WHEN MATCHED THEN
+                UPDATE SET
+                    target.active_status = source.active_status,
+                    target.report_status_cd = source.report_status_cd,
+                    target.updated_at = source.updated_at
+        """)
+        print(f"Successfully marked {len(customer_ids)} customers as inactive")
+    except Exception as e:
+        print(f"Error updating customer table: {str(e)}")
+        raise
+    finally:
+        # Clean up the temporary view
+        spark.sql("DROP VIEW IF EXISTS inactive_customers_temp")
+
 
 def main():
     print("We shouldn't do anything yet")

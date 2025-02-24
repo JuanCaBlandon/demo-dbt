@@ -1,14 +1,22 @@
 import pandas as pd
 import logging
+from args_parser import get_parser
 from pyspark.sql.functions import col, lit, coalesce, md5, concat_ws
+
+
+# Get the parser
+parser = get_parser()
+args = parser.parse_args()
+
+# Access parameters
+env = args.environment
+start_date = args.start_date
+execution_date = args.execution_date
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-env = dbutils.widgets.get("environment")
-start_date = dbutils.widgets.get("start_date")
-execution_date = dbutils.widgets.get("execution_date")
 destination_path = f"state_reporting_{env}.silver.rt_1_2"
 
 
