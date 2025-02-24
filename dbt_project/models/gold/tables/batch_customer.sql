@@ -2,7 +2,7 @@
     materialized='incremental',
     unique_key='batch_customer_dw_id',
 post_hook=[
-        "OPTIMIZE {{ this }} ZORDER BY customer_dw_id;",
+        "OPTIMIZE {{ this }} ZORDER BY batch_customer_dw_id;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
         ]
 ) }}
@@ -10,7 +10,6 @@ post_hook=[
 
 SELECT
     batch_customer_dw_id,
-    customer_dw_id,
     vendor_name,
     drivers_license_number,
     first_name,

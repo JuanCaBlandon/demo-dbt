@@ -11,6 +11,7 @@
 
 WITH tmp AS(
   SELECT
+      {{ dbt_utils.generate_surrogate_key(['CustomerId','EventType','EventDate', "COALESCE(DeviceUsageViolationID, DeviceUsageEventViolationID, CustomerTransactionID)"]) }} AS event_dw_id,
       CustomerId AS customer_id,
       DeviceUsageViolationID AS device_usage_violation_id,
       DeviceUsageEventViolationID AS device_usage_event_violation_id,
@@ -35,7 +36,7 @@ WITH tmp AS(
 ),
 cleaned_data AS(
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['customer_id','event_type','event_date']) }} AS event_dw_id, 
+      event_dw_id, 
       'N/A' AS customer_dw_id,
       customer_id,
       device_usage_violation_id,
@@ -63,7 +64,7 @@ cleaned_data AS(
 
   UNION ALL
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['customer_id','event_type','event_date']) }} AS event_dw_id, 
+      event_dw_id, 
       'N/A' AS customer_dw_id,
       customer_id,
       device_usage_violation_id,
@@ -92,7 +93,7 @@ cleaned_data AS(
 
   UNION ALL
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','event_type','event_date']) }} AS event_dw_id, 
+      event_dw_id, 
       'N/A' AS customer_dw_id,
       tmp.customer_id,
       tmp.device_usage_violation_id,
@@ -126,7 +127,7 @@ cleaned_data AS(
 
   UNION ALL
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','event_type','event_date']) }} AS event_dw_id, 
+      event_dw_id, 
       'N/A' AS customer_dw_id,
       tmp.customer_id,
       tmp.device_usage_violation_id,
@@ -160,7 +161,7 @@ cleaned_data AS(
     
   UNION ALL
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['tmp.customer_id','event_type','event_date']) }} AS event_dw_id, 
+      event_dw_id, 
       customer_dw_id,
       tmp.customer_id,
       tmp.device_usage_violation_id,
@@ -194,33 +195,27 @@ cleaned_data AS(
 )
 
 SELECT
-    event_dw_id, 
-    customer_dw_id,
-    customer_id,
-    device_usage_violation_id,
-    device_usage_event_violation_id,
-    customer_transaction_id,
-    device_usage_id,
-    event_type,
-    violation_reporting_approval_cd,
-    violation_reporting_approval_user,
-    create_date,
-    create_user,
-    modify_date,
-    modify_user,
-    log_entry_time,
-    event_date,
-    vin,
-    new_vin,
-    created_at,
-    modification_date,
-    is_inconsistent,
-    type_inconsistent,
-    num_duplicates
-  FROM cleaned_data
-  {% if is_incremental() %}
-    WHERE event_dw_id NOT IN (SELECT event_dw_id FROM {{ this }})
-{% endif %}
-
-
-
+  event_dw_id, 
+  customer_dw_id,
+  customer_id,
+  device_usage_violation_id,
+  device_usage_event_violation_id,
+  customer_transaction_id,
+  device_usage_id,
+  event_type,
+  violation_reporting_approval_cd,
+  violation_reporting_approval_user,
+  create_date,
+  create_user,
+  modify_date,
+  modify_user,
+  log_entry_time,
+  event_date,
+  vin,
+  new_vin,
+  created_at,
+  modification_date,
+  is_inconsistent,
+  type_inconsistent,
+  num_duplicates
+FROM cleaned_data
