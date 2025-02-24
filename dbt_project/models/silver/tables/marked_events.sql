@@ -32,6 +32,7 @@ WITH base_data AS (
         AND bcc.offense_date >= "{{ var('start_date', '2025-01-01') }}"
     WHERE 
         cec.is_inconsistent = 0
+        AND cec.event_date >= bcc.iid_start_date
         AND cec.event_type <> 'TYPE 1-2'
      {% if is_incremental() %}
         AND event_date > (

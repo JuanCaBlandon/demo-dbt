@@ -60,8 +60,10 @@ def get_violation_events(record_type):
                 AND bcc.is_inconsistent = 0
                 AND bcc.repeat_offender = 1
                 AND bcc.offense_date >= '{start_date}'
-            WHERE cec.is_inconsistent = 0
-            AND cec.event_type = 'TYPE 1-2'
+            WHERE
+                cec.is_inconsistent = 0
+                AND cec.event_date >= bcc.iid_start_date
+                AND cec.event_type = 'TYPE 1-2'
         )
         SELECT
             event_dw_id,
