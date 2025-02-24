@@ -161,8 +161,16 @@ def getReportableEvents(env):
 def submitRecords(events_list, iid_client, session_id):
     """
     Submits device logs for a list of events and stores the responses along with customer_state_dw_id.
+    Tracks submissions of record types 4 or 5 that receive error code 13.
+    
+    Returns:
+        tuple: (submission_results, tracked_records)
+            - submission_results: list of all submission results
+            - tracked_records: list of submissions with record types 4 or 5 and error code 13
     """
+
     submission_results = []
+    tracked_records = []
 
     for event in events_list:
         print(f"Submitting: {event['driversLicenseNumber']}")
@@ -185,6 +193,12 @@ def submitRecords(events_list, iid_client, session_id):
                     'error_code': return_value.ErrorCode,
                     'message': return_value.Message
                 })
+                                
+                # Track record types 4 and 5 submitted successfully
+                if event['recordType'] in [4, 5] and return_value.ErrorCode == 13:
+                    tracked_records.append(event['customer_state_dw_id'])
+
+
         except Exception as e:
             print(f"Error: {str(e)}")
             submission_results.append({
@@ -250,51 +264,55 @@ def updateCustomerStateReported(results, env, execution_date):
         raise
 
 def main():
-    # Get the parser
-    parser = get_parser()
-    args = parser.parse_args()
+    print("We shouldn't do anything yet")
+    # # Get the parser
+    # parser = get_parser()
+    # args = parser.parse_args()
 
-    # Access parameters
-    env = args.environment
-    execution_date = args.execution_date
+    # # Access parameters
+    # env = args.environment
+    # execution_date = args.execution_date
     
-    # Get events to report from Databricks
-    reportable_events = getReportableEvents(env)
+    # # Get events to report from Databricks
+    # reportable_events = getReportableEvents(env)
     
-    if not reportable_events:
-        print("No events to report. Exiting.")
-        return
+    # if not reportable_events:
+    #     print("No events to report. Exiting.")
+    #     return
 
-    base_url = "https://artsdev.iowadot.gov"
+    # base_url = "https://artsdev.iowadot.gov"
     
-    # Retrieve username and password from Databricks secrets
-    username = dbutils.secrets.get(scope="state_reporting", key="iowa_cred")
-    password = dbutils.secrets.get(scope="state_reporting", key="iowa_pass")
+    # # Retrieve username and password from Databricks secrets
+    # username = dbutils.secrets.get(scope="state_reporting", key="iowa_cred")
+    # password = dbutils.secrets.get(scope="state_reporting", key="iowa_pass")
 
-    # Initialize the authentication client
-    wsdl_url = f"{base_url}/Security/Session.asmx?wsdl"
-    service_url = f"{base_url}/Security/Session.asmx"
-    auth_client = SOAPAuthClient(wsdl_url, service_url)
+    # # Initialize the authentication client
+    # wsdl_url = f"{base_url}/Security/Session.asmx?wsdl"
+    # service_url = f"{base_url}/Security/Session.asmx"
+    # auth_client = SOAPAuthClient(wsdl_url, service_url)
 
-    # Authenticate and retrieve session ID
-    session_id = auth_client.authenticate(username=username, password=password)
-    print(f"Successfully authenticated. Session ID: {session_id}")
+    # # Authenticate and retrieve session ID
+    # session_id = auth_client.authenticate(username=username, password=password)
+    # print(f"Successfully authenticated. Session ID: {session_id}")
 
-    # Initialize the Ignition Interlock Service client
-    iid_client = IgnitionInterlockServiceClient(
-        wsdl_url=f"{base_url}/IgnitionInterlockDeviceService/IgnitionInterlockDeviceService.asmx?WSDL",
-        service_url=f"{base_url}/IgnitionInterlockDeviceService/IgnitionInterlockDeviceService.asmx"
-    )
+    # # Initialize the Ignition Interlock Service client
+    # iid_client = IgnitionInterlockServiceClient(
+    #     wsdl_url=f"{base_url}/IgnitionInterlockDeviceService/IgnitionInterlockDeviceService.asmx?WSDL",
+    #     service_url=f"{base_url}/IgnitionInterlockDeviceService/IgnitionInterlockDeviceService.asmx"
+    # )
 
-    # Submit records
-    submission_results = submitRecords(reportable_events, iid_client, session_id)
+    # # Submit records
+    # submission_results, tracked_records  = submitRecords(reportable_events, iid_client, session_id)
     
-    # Store results in DB
-    updateResultsTable(submission_results, env)
+    # # Store results in DB
+    # updateResultsTable(submission_results, env)
 
-    # Update customer_state_reported table
-    updateCustomerStateReported(submission_results, env, execution_date)
+    # # Update customer_state_reported table
+    # updateCustomerStateReported(submission_results, env, execution_date)
 
+    # # Set inactive clients
+    # if tracked_records:
+    #     setInactiveCustomers(tracked_records, execution_date)
 
 if __name__ == "__main__":
     main()
