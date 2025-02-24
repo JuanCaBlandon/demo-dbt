@@ -36,17 +36,17 @@ try:
     result_df = spark.read.table(f"state_reporting_{env}.bronze.state_batch_customer_data_ia").where(f"CAST(CreatedAt AS DATE) = '{execution_date}'")
 
     batch_data = result_df.select(
-        col("VendorName").alias("VendorName"),
+        col("VendorName"),
         col("DriversLicenseNumber"),
         col("LastName"),
         col("FirstName"),
         col("MiddleName"),
-        col("DateOfBirth").alias("DateOfBirth"),
+        col("DateOfBirth"),
         col("VIN"),
-        col("OffenseDate").alias("OffenseDate"),
-        col("RepeatOffender").alias("RepeatOffender"),
-        col("IIDStartDate").alias("IIDStartDate"),
-        col("IIDEndDate").alias("IIDEndDate"),
+        col("OffenseDate"),
+        col("RepeatOffender"),
+        col("IIDStartDate"),
+        col("IIDEndDate"),
         col("CreatedAt").alias("CreationDate")
     )
     
