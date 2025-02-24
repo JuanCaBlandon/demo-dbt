@@ -88,7 +88,8 @@ new_customers_status AS (
         BC.iid_start_date,
         BC.iid_end_date,
         CC.created_at,
-        CC.modification_date
+        CC.modification_date,
+        CC.created_at
     FROM {{ ref('customer_cleaned') }} CC
     LEFT JOIN {{ ref('batch_customer') }} BC
         ON CC.drivers_license_number = BC.drivers_license_number
@@ -114,7 +115,7 @@ inactive_customers AS (
         0 AS active_status,
         'Inactive' AS report_status_cd,
         customer_status,
-        active_status_start_date,
+        new_active_status_start_date AS active_status_start_date,
         '{{ var("execution_date") }}' AS active_status_end_date,
         'Not repeat offender' AS active_status_end_type,
         effective_start_date,
@@ -135,7 +136,7 @@ inactive_customers AS (
         repeat_offender = 0
         AND (
             modification_date < '{{ var("execution_date") }}'
-            OR (modification_date IS NULL AND creation_date <> '{{ var("execution_date") }}')
+            OR (modification_date IS NULL AND created_at <> '{{ var("execution_date") }}')
         )
 )
 
@@ -178,7 +179,7 @@ SELECT
     NCS.offense_date,
     NCS.iid_start_date,
     NCS.iid_end_date,
-    NCS.created_at
+    NCS.created_at,
     NCS.modification_date
 FROM new_customers_status NCS
 LEFT JOIN current_customers CC
