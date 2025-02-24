@@ -35,6 +35,7 @@ WITH Tmp AS(
     ModifyDate AS modify_date,
     ModifyUser AS modify_user,
     CreationDate AS created_at,
+    ModificationDate AS modification_date,
     ROW_NUMBER() OVER (PARTITION BY CustomerID, DriversLicenseNumber, VIN, StateCode, EffectiveStartDate, EffectiveEndDate ORDER BY EffectiveStartDate) AS num_duplicates
   FROM {{ source('BRONZE', 'customer_raw') }}
   WHERE
@@ -73,6 +74,7 @@ cleaned_data AS(
       modify_date,
       modify_user,
       created_at,
+      modification_date,
       1 AS is_inconsistent,
       'duplicates' AS type_inconsistent,
       num_duplicates
@@ -106,6 +108,7 @@ cleaned_data AS(
       modify_date,
       modify_user,
       created_at,
+      modification_date,
       1 AS is_inconsistent,
       'NULL values' AS type_inconsistent,
       num_duplicates
@@ -140,6 +143,7 @@ cleaned_data AS(
       modify_date,
       modify_user,
       created_at,
+      modification_date,
       1 AS is_inconsistent,
       'Max Character Limit' AS type_inconsistent,
       num_duplicates
@@ -180,6 +184,7 @@ cleaned_data AS(
       modify_date,
       modify_user,
       created_at,
+      modification_date,
       0 AS is_inconsistent,
       'N/A' AS type_inconsistent,
       num_duplicates

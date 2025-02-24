@@ -49,16 +49,16 @@ WITH source AS (
         c.created_at
     FROM {{ ref('customer_cleaned') }} as c
     LEFT JOIN {{ ref('batch_customer_cleaned') }} as bc 
-    ON UPPER(c.drivers_license_number) = UPPER(bc.drivers_license_number)
-        AND UPPER(RIGHT(bc.vin,6)) = UPPER(RIGHT(c.vin,6))
+    ON c.drivers_license_number = bc.drivers_license_number
+        AND RIGHT(bc.vin,6)) = RIGHT(c.vin,6)
     WHERE
-        c.is_inconsistent = 0 AND bc.is_inconsistent = 0
+        c.is_inconsistent = 0
         AND  bc.batch_customer_dw_id IS NULL
 
     UNION ALL
     SELECT
-        c.customer_dw_id AS source_table_id,
-        'customer_cleaned' AS source_table_name,
+        bc.batch_customer_dw_id AS source_table_id,
+        'batch_customer_cleaned' AS source_table_name,
         'ia' as state,
         1 AS is_inconsistent,
         'Not present in actives customer table' AS type_inconsistent,
@@ -68,7 +68,7 @@ WITH source AS (
     ON c.drivers_license_number = bc.drivers_license_number
         AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
     WHERE
-        c.is_inconsistent = 0 AND bc.is_inconsistent = 0
+        bc.is_inconsistent = 0
         AND  c.customer_dw_id IS NULL
 
 ),

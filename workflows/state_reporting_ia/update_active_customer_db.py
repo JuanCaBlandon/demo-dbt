@@ -59,16 +59,9 @@ try:
         raise ValueError("No rows to insert")
 
     # Truncate table before inserting
-    truncate_query = f"DELETE FROM {table_name};"
+    delete_query = f"DELETE FROM {table_name};"
 
-    spark.read \
-        .format("jdbc") \
-        .option("url", url) \
-        .option("query", truncate_query) \
-        .option("driver", driver) \
-        .option("user", username) \
-        .option("password", password) \
-        .load()
+    spark._jsparkSession.execute(delete_query)
 
     # Insert new data
     active_customers.write \
