@@ -50,7 +50,7 @@ WITH source AS (
     FROM {{ ref('customer_cleaned') }} as c
     LEFT JOIN {{ ref('batch_customer_cleaned') }} as bc 
     ON c.drivers_license_number = bc.drivers_license_number
-        AND RIGHT(bc.vin,6)) = RIGHT(c.vin,6)
+        AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
     WHERE
         c.is_inconsistent = 0
         AND  bc.batch_customer_dw_id IS NULL
