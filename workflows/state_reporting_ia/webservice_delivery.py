@@ -203,7 +203,7 @@ def submitRecords(events_list, iid_client, session_id):
             print(f"Error: {str(e)}")
             submission_results.append({
                 'customer_state_dw_id': event['customer_state_dw_id'],
-                'error_code': 'ERROR',
+                'error_code': 99,
                 'message': str(e)
             })
 

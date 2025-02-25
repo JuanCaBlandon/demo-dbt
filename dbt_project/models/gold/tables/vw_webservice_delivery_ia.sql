@@ -11,12 +11,12 @@ SELECT
     c.last_name AS lastName,
     c.first_name AS firstName,
     c.middle_name AS middleName,
-    date_format(c.date_of_birth , 'MM-dd-yyyy') AS dateOfBirth,
+    date_format(c.date_of_birth , 'yyyy-MM-dd') AS dateOfBirth,
     c.vin AS VIN,
     me.new_vin AS newVIN, 
-    date_format(c.install_date , 'MM-dd-yyyy') AS ignitionInterlockDeviceInstalledDate,
-    date_format(c.deinstall_date , 'MM-dd-yyyy') AS ignitionInterlockDeviceRemovedDate,
-    date_format(dd.datetime_full , 'MM-dd-yyyy') AS violationDate,
+    date_format(c.install_date , 'yyyy-MM-dd') AS ignitionInterlockDeviceInstalledDate,
+    date_format(c.deinstall_date , 'yyyy-MM-dd') AS ignitionInterlockDeviceRemovedDate,
+    date_format(dd.datetime_full , 'yyyy-MM-dd') AS violationDate,
     rt.id AS recordType
 FROM {{ref('customer_state_reported')}} AS csr
 INNER JOIN {{ref('marked_events')}} AS me
