@@ -109,7 +109,9 @@ class IgnitionInterlockServiceClient:
                 'middleName': log_data.get('middleName'),
                 'dateOfBirth': log_data.get('dateOfBirth'),
                 'VIN': log_data.get('VIN'),
+                'newVIN': log_data.get('newVIN'),
                 'ignitionInterlockDeviceInstalledDate': log_data.get('ignitionInterlockDeviceInstalledDate'),
+                'ignitionInterlockDeviceRemovedDate': log_data.get('ignitionInterlockDeviceRemovedDate'),
                 'violationDate': log_data.get('violationDate'),
                 'recordType': log_data.get('recordType')
             }
@@ -131,8 +133,6 @@ def getReportableEvents(env):
     Returns an empty list if no records are found.
     """
     df_revents = spark.read.table(f"state_reporting_{env}.gold.vw_webservice_delivery_ia")
-
-    df_revents = df_revents.fillna('') 
     
     # Check if there are any records to process
     if df_revents.count() == 0:
@@ -148,7 +148,9 @@ def getReportableEvents(env):
             'middleName': row['middleName'],
             'dateOfBirth': row['dateOfBirth'],
             'VIN': row['VIN'],
+            'newVIN': row['newVIN'],
             'ignitionInterlockDeviceInstalledDate': row['ignitionInterlockDeviceInstalledDate'],
+            'ignitionInterlockDeviceRemovedDate': row['ignitionInterlockDeviceRemovedDate'],
             'violationDate': row['violationDate'],
             'recordType': row['recordType']
         }
@@ -211,16 +213,25 @@ def submitRecords(events_list, iid_client, session_id):
 def updateResultsTable(results, env):
     """
     Updates the results table in Databricks with the submission responses.
+    Ensures that the data types match the table schema.
     """
+    table_name = f"state_reporting_{env}.gold.processed_submissions_ia"
+
+    table_schema = spark.table(table_name).schema
     df_results = spark.createDataFrame(results)
+
+    # Cast columns to match the table schema
+    for field in table_schema:
+        if field.name in df_results.columns:
+            df_results = df_results.withColumn(field.name, df_results[field.name].cast(field.dataType))
+
     try:
         row_count = df_results.count()
-        df_results.write.format("delta").mode("append").saveAsTable(f"state_reporting_{env}.gold.processed_submissions_ia")
-        print(f"Successfully added {row_count} rows to processed_submissions_ia")
+        df_results.write.format("delta").mode("append").saveAsTable(table_name)
+        print(f"Successfully added {row_count} rows to {table_name}")
     except Exception as e:
         print(f"Error writing to Delta table: {str(e)}")
         raise
-
 
 def updateCustomerStateReported(results, env, execution_date):
     """
