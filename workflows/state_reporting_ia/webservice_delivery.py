@@ -179,11 +179,10 @@ def submitRecords(events_list, iid_client, session_id):
 
         # Remove 'customer_state_dw_id' before submitting
         log_data = {key: value for key, value in event.items() if key != 'customer_state_dw_id'}
-
+        print(f"Current log data {log_data}")
         try:
             # Submit the device log using the session ID obtained earlier
             result = iid_client.submit_device_log(session_id, log_data)
-            print(f"Current log data {log_data}")
             # Process the result
             for return_value in result:
                 print(f"Error Code: {return_value.ErrorCode}")
