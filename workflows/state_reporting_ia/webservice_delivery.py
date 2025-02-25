@@ -301,54 +301,54 @@ def setInactiveCustomers(id_list, execution_date, env):
 
 def main():
     print("We shouldn't do anything yet")
-    # # Get the parser
-    # parser = get_parser()
-    # args = parser.parse_args()
+    # Get the parser
+    parser = get_parser()
+    args = parser.parse_args()
 
-    # # Access parameters
-    # env = args.environment
-    # execution_date = args.execution_date
+    # Access parameters
+    env = args.environment
+    execution_date = args.execution_date
     
-    # # Get events to report from Databricks
-    # reportable_events = getReportableEvents(env)
+    # Get events to report from Databricks
+    reportable_events = getReportableEvents(env)
     
-    # if not reportable_events:
-    #     print("No events to report. Exiting.")
-    #     return
+    if not reportable_events:
+        print("No events to report. Exiting.")
+        return
 
-    # base_url = "https://artsdev.iowadot.gov"
+    base_url = "https://artsdev.iowadot.gov"
     
-    # # Retrieve username and password from Databricks secrets
-    # username = dbutils.secrets.get(scope="state_reporting", key="iowa_cred")
-    # password = dbutils.secrets.get(scope="state_reporting", key="iowa_pass")
+    # Retrieve username and password from Databricks secrets
+    username = dbutils.secrets.get(scope="state_reporting", key="iowa_cred")
+    password = dbutils.secrets.get(scope="state_reporting", key="iowa_pass")
 
-    # # Initialize the authentication client
-    # wsdl_url = f"{base_url}/Security/Session.asmx?wsdl"
-    # service_url = f"{base_url}/Security/Session.asmx"
-    # auth_client = SOAPAuthClient(wsdl_url, service_url)
+    # Initialize the authentication client
+    wsdl_url = f"{base_url}/Security/Session.asmx?wsdl"
+    service_url = f"{base_url}/Security/Session.asmx"
+    auth_client = SOAPAuthClient(wsdl_url, service_url)
 
-    # # Authenticate and retrieve session ID
-    # session_id = auth_client.authenticate(username=username, password=password)
-    # print(f"Successfully authenticated. Session ID: {session_id}")
+    # Authenticate and retrieve session ID
+    session_id = auth_client.authenticate(username=username, password=password)
+    print(f"Successfully authenticated. Session ID: {session_id}")
 
-    # # Initialize the Ignition Interlock Service client
-    # iid_client = IgnitionInterlockServiceClient(
-    #     wsdl_url=f"{base_url}/IgnitionInterlockDeviceService/IgnitionInterlockDeviceService.asmx?WSDL",
-    #     service_url=f"{base_url}/IgnitionInterlockDeviceService/IgnitionInterlockDeviceService.asmx"
-    # )
+    # Initialize the Ignition Interlock Service client
+    iid_client = IgnitionInterlockServiceClient(
+        wsdl_url=f"{base_url}/IgnitionInterlockDeviceService/IgnitionInterlockDeviceService.asmx?WSDL",
+        service_url=f"{base_url}/IgnitionInterlockDeviceService/IgnitionInterlockDeviceService.asmx"
+    )
 
-    # # Submit records
-    # submission_results, tracked_records  = submitRecords(reportable_events, iid_client, session_id)
+    # Submit records
+    submission_results, tracked_records  = submitRecords(reportable_events, iid_client, session_id)
     
-    # # Store results in DB
-    # updateResultsTable(submission_results, env)
+    # Store results in DB
+    updateResultsTable(submission_results, env)
 
-    # # Update customer_state_reported table
-    # updateCustomerStateReported(submission_results, env, execution_date)
+    # Update customer_state_reported table
+    updateCustomerStateReported(submission_results, env, execution_date)
 
-    # # Set inactive clients
-    # if tracked_records:
-    #     setInactiveCustomers(tracked_records, execution_date, env)
+    # Set inactive clients
+    if tracked_records:
+        setInactiveCustomers(tracked_records, execution_date, env)
 
 if __name__ == "__main__":
     main()
