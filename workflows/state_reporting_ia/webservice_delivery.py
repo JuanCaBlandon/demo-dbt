@@ -150,9 +150,7 @@ def getReportableEvents(env):
             'middleName': row['middleName'],
             'dateOfBirth': row['dateOfBirth'],
             'VIN': row['VIN'],
-            'newVIN': row['newVIN'],
             'ignitionInterlockDeviceInstalledDate': row['ignitionInterlockDeviceInstalledDate'],
-            'ignitionInterlockDeviceRemovedDate': row['ignitionInterlockDeviceRemovedDate'],
             'violationDate': row['violationDate'],
             'recordType': row['recordType']
         }
