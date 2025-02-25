@@ -319,8 +319,8 @@ def main():
     base_url = "https://artsdev.iowadot.gov"
     
     # Retrieve username and password from Databricks secrets
-    username = dbutils.secrets.get(scope="state_reporting", key="iowa_cred")
-    password = dbutils.secrets.get(scope="state_reporting", key="iowa_pass")
+    username = dbutils.secrets.get(scope="state_reporting", key="iowa_ws_user_prd")
+    password = dbutils.secrets.get(scope="state_reporting", key="iowa_ws_password_prd ")
 
     # Initialize the authentication client
     wsdl_url = f"{base_url}/Security/Session.asmx?wsdl"
