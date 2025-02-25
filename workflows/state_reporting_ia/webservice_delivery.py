@@ -133,6 +133,8 @@ def getReportableEvents(env):
     Returns an empty list if no records are found.
     """
     df_revents = spark.read.table(f"state_reporting_{env}.gold.vw_webservice_delivery_ia")
+
+    df_revents - df_revents.fillna('') 
     
     # Check if there are any records to process
     if df_revents.count() == 0:
