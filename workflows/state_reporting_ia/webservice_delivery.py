@@ -2,6 +2,7 @@ from zeep import Client
 from zeep.transports import Transport
 from requests import Session
 from args_parser import get_parser
+from pyspark.sql.functions import col
 import xml.etree.ElementTree as ET
 import logging.config
 
@@ -217,13 +218,10 @@ def updateResultsTable(results, env):
     """
     table_name = f"state_reporting_{env}.gold.processed_submissions_ia"
 
-    table_schema = spark.table(table_name).schema
     df_results = spark.createDataFrame(results)
 
-    # Cast columns to match the table schema
-    for field in table_schema:
-        if field.name in df_results.columns:
-            df_results = df_results.withColumn(field.name, df_results[field.name].cast(field.dataType))
+    df_results = df_results.withColumn("error_code", col("error_code").cast("int"))
+
 
     try:
         row_count = df_results.count()
