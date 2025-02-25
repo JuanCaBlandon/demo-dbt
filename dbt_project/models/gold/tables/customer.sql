@@ -44,7 +44,9 @@ WITH current_customers AS (
             NULL AS iid_start_date,
             NULL AS iid_end_date,
             NULL AS created_at,
-            NULL AS modification_date
+            NULL AS modification_date,
+            NULL AS is_inconsistent,
+            NULL AS type_inconsistent
     {% endif %}
 ),
 new_customers_status AS (
@@ -89,13 +91,14 @@ new_customers_status AS (
         BC.iid_end_date,
         CC.created_at,
         CC.modification_date,
-        CC.created_at
+        CC.created_at,
+        CC.is_inconsistent,
+        CC.type_inconsistent
     FROM {{ ref('customer_cleaned') }} CC
     LEFT JOIN {{ ref('batch_customer') }} BC
         ON CC.drivers_license_number = BC.drivers_license_number
         AND RIGHT(CC.vin, 6) = RIGHT(BC.vin, 6)
         AND BC.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer') }})
-    WHERE CC.is_inconsistent = 0
 ),
 
 inactive_customers AS (
@@ -117,7 +120,10 @@ inactive_customers AS (
         customer_status,
         new_active_status_start_date AS active_status_start_date,
         '{{ var("execution_date") }}' AS active_status_end_date,
-        'Not repeat offender' AS active_status_end_type,
+        CASE
+            WHEN type_inconsistent = 'deprecated record' THEN 'deprecated record'
+            ELSE 'Not repeat offender' 
+        END AS active_status_end_type,
         effective_start_date,
         effective_end_date,
         device_log_rptg_class_cd,
@@ -130,14 +136,17 @@ inactive_customers AS (
         iid_start_date,
         iid_end_date,
         created_at,
-        modification_date
+        modification_date,
+        is_inconsistent,
+        type_inconsistent
     FROM new_customers_status NCS
     WHERE
-        repeat_offender = 0
+        (repeat_offender = 0 
         AND (
             modification_date < '{{ var("execution_date") }}'
             OR (modification_date IS NULL AND created_at <> '{{ var("execution_date") }}')
-        )
+        ))
+        OR type_inconsistent = 'deprecated record'
 )
 
 SELECT
@@ -180,10 +189,15 @@ SELECT
     NCS.iid_start_date,
     NCS.iid_end_date,
     NCS.created_at,
-    NCS.modification_date
+    NCS.modification_date,
+    NCS.is_inconsistent,
+    NCS.type_inconsistent
 FROM new_customers_status NCS
 LEFT JOIN current_customers CC
     ON NCS.customer_dw_id = CC.customer_dw_id
+LEFT JOIN inactive_customers IC
+    ON NCS.customer_dw_id = IC.customer_dw_id
+WHERE IC.customer_dw_id IS NULL
 
 UNION ALL
 SELECT *

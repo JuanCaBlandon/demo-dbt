@@ -1,5 +1,5 @@
 {{ config(
-		materialized='incremental',
+    materialized='incremental',
     unique_key='customer_dw_id',
     incremental_strategy='merge',
     post_hook=[
@@ -40,13 +40,8 @@ WITH Tmp AS(
   FROM {{ source('BRONZE', 'customer_raw') }}
   WHERE
     StateCode = 'IA'
-  {% if is_incremental() %}
-      AND CreationDate >= COALESCE((SELECT MAX(created_at) from {{ this }}),"{{ var("start_date", "2025-01-01") }}")
-  {% endif %}
-
-
-
 ),
+
 cleaned_data AS(
   SELECT
       {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
@@ -156,7 +151,6 @@ cleaned_data AS(
       vin IS NOT NULL AND LENGTH(vin) > 30
     )
 
-
   UNION ALL
   SELECT
       {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
@@ -205,10 +199,67 @@ cleaned_data AS(
     )
 )
 
-
-SELECT
-  *
-FROM cleaned_data
 {% if is_incremental() %}
-  WHERE customer_dw_id NOT IN (SELECT c.customer_dw_id FROM {{ this }} c)
+  -- Find previous records that should be marked as deprecated
+  , deprecated_records AS (
+    SELECT 
+      existing.customer_dw_id,
+      existing.customer_id,
+      1 AS is_inconsistent,
+      'deprecated record' AS type_inconsistent
+    FROM {{ this }} existing
+    INNER JOIN cleaned_data new_data
+      ON existing.customer_id = new_data.customer_id
+      AND existing.customer_dw_id != new_data.customer_dw_id
+      AND (existing.is_inconsistent = 0 OR existing.type_inconsistent != 'deprecated record')
+  )
+
+  -- Mark old records as deprecated and inconsistent
+  , marked_as_deprecated AS (
+    SELECT 
+      customer_dw_id,
+      customer_reporting_state_id,
+      customer_id,
+      drivers_license_number,
+      first_name,
+      last_name,
+      middle_name,
+      date_of_birth,
+      vin,
+      install_date,
+      deinstall_date,
+      state_code,
+      active_status,
+      report_status_cd,
+      customer_status,
+      active_status_start_date,
+      active_status_end_date,
+      effective_start_date,
+      effective_end_date,
+      device_log_rptg_class_cd,
+      create_date,
+      create_user,
+      modify_date,
+      modify_user,
+      created_at,
+      modification_date,
+      1 AS is_inconsistent,
+      'deprecated record' AS type_inconsistent,
+      num_duplicates
+    FROM {{ this }} 
+    WHERE customer_dw_id IN (SELECT customer_dw_id FROM deprecated_records)
+  )
+
+  , final_data AS (
+    SELECT * FROM marked_as_deprecated
+    
+    UNION ALL
+    
+    SELECT * FROM cleaned_data
+  )
+
+  SELECT * FROM final_data
+
+{% else %}
+  SELECT * FROM cleaned_data
 {% endif %}
