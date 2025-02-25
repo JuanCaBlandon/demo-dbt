@@ -208,7 +208,7 @@ def submitRecords(events_list, iid_client, session_id):
             })
 
     # Update the results table in Databricks
-    return submission_results
+    return submission_results, tracked_records
 
 
 def updateResultsTable(results, env):
@@ -316,7 +316,7 @@ def main():
         print("No events to report. Exiting.")
         return
 
-    base_url = "https://artsdev.iowadot.gov"
+    base_url = "https://arts.iowadot.gov"
     
     # Retrieve username and password from Databricks secrets
     username = dbutils.secrets.get(scope="state_reporting", key="iowa_ws_user_prd")
@@ -330,6 +330,8 @@ def main():
     # Authenticate and retrieve session ID
     session_id = auth_client.authenticate(username=username, password=password)
     print(f"Successfully authenticated. Session ID: {session_id}")
+
+    # TODO: Make sure the session ID is authenticated
 
     # Initialize the Ignition Interlock Service client
     iid_client = IgnitionInterlockServiceClient(
