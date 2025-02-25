@@ -248,6 +248,7 @@ def updateCustomerStateReported(results, env, execution_date):
     )
 
     try:
+        df_status.createOrReplaceTempView("temp_status")
         spark.sql(f"""
             MERGE INTO state_reporting_{env}.gold.customer_state_reported as target
             USING temp_status as source
