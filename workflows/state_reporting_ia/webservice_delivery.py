@@ -109,9 +109,7 @@ class IgnitionInterlockServiceClient:
                 'middleName': log_data.get('middleName'),
                 'dateOfBirth': log_data.get('dateOfBirth'),
                 'VIN': log_data.get('VIN'),
-                'newVIN': log_data.get('newVIN'),
                 'ignitionInterlockDeviceInstalledDate': log_data.get('ignitionInterlockDeviceInstalledDate'),
-                'ignitionInterlockDeviceRemovedDate': log_data.get('ignitionInterlockDeviceRemovedDate'),
                 'violationDate': log_data.get('violationDate'),
                 'recordType': log_data.get('recordType')
             }
