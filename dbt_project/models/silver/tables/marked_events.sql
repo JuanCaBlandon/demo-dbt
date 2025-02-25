@@ -33,7 +33,6 @@ WITH base_data AS (
     WHERE 
         cec.is_inconsistent = 0
         AND cec.event_date >= bcc.iid_start_date
-        AND cec.event_date >= bcc.offense_date -- Is this rreally needed?
         AND cec.event_type <> 'TYPE 1-2'
      {% if is_incremental() %}
         AND event_date > (
