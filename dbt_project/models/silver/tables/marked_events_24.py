@@ -59,6 +59,7 @@ def model(dbt, session):
             INNER JOIN customer_cleaned cc 
                 ON cc.customer_id = cec.customer_id
                 AND cc.is_inconsistent = 0
+                AND cc.is_current = 1
             INNER JOIN batch_customer_cleaned AS bcc
                 ON cc.drivers_license_number = bcc.drivers_license_number
                 AND RIGHT(bcc.vin,6) = RIGHT(cc.vin,6)

@@ -36,6 +36,7 @@ WITH Tmp AS(
     ModifyUser AS modify_user,
     CreationDate AS created_at,
     ModificationDate AS modification_date,
+    1 AS is_current,
     ROW_NUMBER() OVER (PARTITION BY CustomerID, DriversLicenseNumber, VIN, StateCode, EffectiveStartDate, EffectiveEndDate ORDER BY EffectiveStartDate) AS num_duplicates
   FROM {{ source('BRONZE', 'customer_raw') }}
   WHERE
@@ -72,7 +73,8 @@ cleaned_data AS(
       modification_date,
       1 AS is_inconsistent,
       'duplicates' AS type_inconsistent,
-      num_duplicates
+      num_duplicates,
+      is_current
   FROM Tmp
   WHERE num_duplicates > 1
 
@@ -106,7 +108,8 @@ cleaned_data AS(
       modification_date,
       1 AS is_inconsistent,
       'NULL values' AS type_inconsistent,
-      num_duplicates
+      num_duplicates,
+      is_current
   FROM Tmp
   WHERE num_duplicates = 1 AND 
     (drivers_license_number IS NULL OR first_name IS NULL OR last_name IS NULL  OR date_of_birth IS NULL OR vin IS NULL)
@@ -141,7 +144,8 @@ cleaned_data AS(
       modification_date,
       1 AS is_inconsistent,
       'Max Character Limit' AS type_inconsistent,
-      num_duplicates
+      num_duplicates,
+      is_current
   FROM Tmp
   WHERE num_duplicates = 1 AND (
       drivers_license_number IS NOT NULL  AND LENGTH(drivers_license_number) > 50 OR 
@@ -181,7 +185,8 @@ cleaned_data AS(
       modification_date,
       0 AS is_inconsistent,
       'N/A' AS type_inconsistent,
-      num_duplicates
+      num_duplicates,
+      is_current
   FROM Tmp
   WHERE
     num_duplicates = 1
@@ -203,15 +208,11 @@ cleaned_data AS(
   -- Find previous records that should be marked as deprecated
   , deprecated_records AS (
     SELECT 
-      existing.customer_dw_id,
-      existing.customer_id,
-      1 AS is_inconsistent,
-      'deprecated record' AS type_inconsistent
+      existing.customer_dw_id
     FROM {{ this }} existing
     INNER JOIN cleaned_data new_data
       ON existing.customer_id = new_data.customer_id
       AND existing.customer_dw_id != new_data.customer_dw_id
-      AND (existing.is_inconsistent = 0 OR existing.type_inconsistent != 'deprecated record')
   )
 
   -- Mark old records as deprecated and inconsistent
@@ -243,22 +244,19 @@ cleaned_data AS(
       modify_user,
       created_at,
       modification_date,
-      1 AS is_inconsistent,
-      'deprecated record' AS type_inconsistent,
-      num_duplicates
+      is_inconsistent,
+      type_inconsistent,
+      num_duplicates,
+      0 AS is_current
     FROM {{ this }} 
     WHERE customer_dw_id IN (SELECT customer_dw_id FROM deprecated_records)
   )
+  SELECT * FROM marked_as_deprecated
+  
+  UNION ALL
+  
+  SELECT * FROM cleaned_data
 
-  , final_data AS (
-    SELECT * FROM marked_as_deprecated
-    
-    UNION ALL
-    
-    SELECT * FROM cleaned_data
-  )
-
-  SELECT * FROM final_data
 
 {% else %}
   SELECT * FROM cleaned_data

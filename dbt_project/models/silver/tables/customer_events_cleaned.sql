@@ -119,6 +119,7 @@ cleaned_data AS(
   FROM tmp
   LEFT JOIN {{ ref('customer_cleaned') }} AS c
     ON  tmp.customer_id = c.customer_id
+    AND c.is_current = 1
   WHERE 
     tmp.num_duplicates = 1
     AND tmp.customer_id IS NOT NULL
@@ -154,6 +155,7 @@ cleaned_data AS(
   INNER JOIN {{ ref('customer_cleaned') }} AS c
     ON  tmp.customer_id = c.customer_id
     AND c.is_inconsistent = 1
+    AND c.is_current = 1
   WHERE 
     tmp.num_duplicates = 1
     AND tmp.customer_id IS NOT NULL
@@ -187,6 +189,7 @@ cleaned_data AS(
   FROM tmp
   INNER JOIN {{ ref('customer_cleaned') }} AS c
     ON  tmp.customer_id = c.customer_id
+    AND c.is_current = 1
   WHERE 
     tmp.num_duplicates = 1
     AND tmp.customer_id IS NOT NULL

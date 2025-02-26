@@ -50,10 +50,11 @@ WITH source AS (
         c.created_at
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
     LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned as bc 
-    ON c.drivers_license_number = bc.drivers_license_number
+        ON c.drivers_license_number = bc.drivers_license_number
         AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
     WHERE
         c.is_inconsistent = 0
+        AND c.is_current = 1
         AND  bc.batch_customer_dw_id IS NULL
 
     UNION ALL
@@ -68,6 +69,7 @@ WITH source AS (
     LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
     ON c.drivers_license_number = bc.drivers_license_number
         AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
+        AND c.is_current = 1
     WHERE
         bc.is_inconsistent = 0
         AND  c.customer_dw_id IS NULL

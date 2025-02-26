@@ -15,3 +15,9 @@ sources:
     schema: silver
     tables:
       - name: rt_1_2
+  - name: GOLD
+    description: IA webservice sumbissions log
+    database: "state_reporting_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
+    schema: gold
+    tables:
+      - name: processed_submissions_ia

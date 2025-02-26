@@ -19,6 +19,7 @@ WITH bc AS (
     FROM {{ ref('marked_events')}} AS me
     INNER JOIN {{ ref('customer')}} AS c
         ON me.customer_id = c.customer_id
+        AND c.is_current = 1
     INNER JOIN {{ ref('batch_customer') }} AS bc
         ON UPPER(c.drivers_license_number) = UPPER(bc.drivers_license_number)
         AND UPPER(RIGHT(bc.vin,6)) = UPPER(RIGHT(c.vin,6))
