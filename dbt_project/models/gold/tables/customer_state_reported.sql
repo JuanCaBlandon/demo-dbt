@@ -15,7 +15,10 @@ WITH bc AS (
         me.record_dw_id,
         rt.record_type_dw_id,
         dd.datetime_id,
-        CAST(NULL AS INT) AS status
+        CAST(NULL AS INT) AS status,
+        CAST(NULL AS DATETIME) AS submitted_at,
+        CAST(NULL AS INT) AS action_required,
+        CAST(NULL AS STRING) AS submitted_by
     FROM {{ ref('marked_events')}} AS me
     INNER JOIN {{ ref('customer')}} AS c
         ON me.customer_id = c.customer_id
@@ -87,7 +90,9 @@ SELECT
     bc.record_type_dw_id,
     bc.datetime_id,
     bc.status,
-    CAST(NULL AS TIMESTAMP) AS submitted_at
+    bc.submitted_at,
+    bc.action_required,
+    bc.submitted_by
 FROM bc
 INNER JOIN {{ ref('record_type')}} AS rt
     ON bc.record_type_dw_id = rt.record_type_dw_id
@@ -106,7 +111,9 @@ SELECT
     bc.record_type_dw_id,
     bc.datetime_id,
     bc.status,
-    CAST(NULL AS TIMESTAMP) AS submitted_at
+    bc.submitted_at,
+    bc.action_required,
+    bc.submitted_by
 FROM bc
 INNER JOIN t7_events USING(record_dw_id)
 {% if is_incremental() %}
@@ -123,7 +130,9 @@ SELECT
     bc.record_type_dw_id,
     bc.datetime_id,
     bc.status,
-    CAST(NULL AS TIMESTAMP) AS submitted_at
+    bc.submitted_at,
+    bc.action_required,
+    bc.submitted_by
 FROM bc
 INNER JOIN t4_events USING(record_dw_id)
 {% if is_incremental() %}
@@ -141,7 +150,9 @@ SELECT
     bc.record_type_dw_id,
     bc.datetime_id,
     bc.status,
-    CAST(NULL AS TIMESTAMP) AS submitted_at
+    bc.submitted_at,
+    bc.action_required,
+    bc.submitted_by
 FROM bc
 INNER JOIN t5_events USING(record_dw_id)
 {% if is_incremental() %}

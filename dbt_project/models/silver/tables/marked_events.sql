@@ -113,7 +113,7 @@ FROM base_data b
 WHERE event_type = 'TYPE 3'
 
 
--- Authorized uninstall
+-- Unauthorized uninstall
 UNION ALL
 SELECT
     {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'4'"]) }} AS record_dw_id, 
@@ -125,12 +125,12 @@ SELECT
     device_usage_event_violation_id event_id,
     event_date,
     4 AS record_type,
-    'autorized_uninstall' record_description
+    'unauthorized_uninstall' record_description
 FROM base_data b
 WHERE event_type = 'TYPE 4'
 
 
--- Unauthorized uninstall
+-- Authorized uninstall
 UNION ALL
 SELECT
     {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'5'"]) }} AS record_dw_id, 
@@ -142,7 +142,7 @@ SELECT
     customer_transaction_id event_id,
     event_date,
     5 AS record_type,
-    'unautorized_uninstall' record_description
+    'authorized_uninstall' record_description
 FROM base_data b
 WHERE event_type = 'TYPE 5'
 
