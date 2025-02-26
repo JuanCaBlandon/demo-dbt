@@ -16,7 +16,7 @@ WITH bc AS (
         rt.record_type_dw_id,
         dd.datetime_id,
         CAST(NULL AS INT) AS status,
-        CAST(NULL AS DATETIME) AS submitted_at,
+        CAST(NULL AS TIMESTAMP) AS submitted_at,
         CAST(NULL AS INT) AS action_required,
         CAST(NULL AS STRING) AS submitted_by
     FROM {{ ref('marked_events')}} AS me
