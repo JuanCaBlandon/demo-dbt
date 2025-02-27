@@ -44,3 +44,7 @@ models:
       +materialized: table
       +schema: gold
       +tags: ["gold_ia"]
+    compliance:
+      +materialized: table
+      +schema: compliance
+      +tags: ["compliance_state"]

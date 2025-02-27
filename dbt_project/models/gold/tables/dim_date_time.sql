@@ -36,8 +36,8 @@ SELECT
 FROM (
     SELECT date_id, date_full,year,quarter,month,year_month,week,day,day_of_week, day_name, month_name, is_weekday, is_leapyear
     FROM {{ ref('dim_date') }}
-    WHERE date_full >= "{{ var("start_date", "2024-01-01") }}"
-    AND date_full <= DATE_TRUNC('MONTH', ADD_MONTHS(GETDATE(), 1)) 
+    WHERE date_full >= "{{ var("start_date", "2025-01-01") }}"
+    AND date_full <= DATE_TRUNC('MONTH', ADD_MONTHS("{{ var("execution_date", "2025-01-01") }}", 1)) 
     {% if is_incremental() %}
      AND month > (select MAX(month) from {{ this }})
  {% endif %}

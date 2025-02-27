@@ -1,119 +1,72 @@
-print("test reconnect repo")
-# Databricks notebook source
-from pyspark.sql.functions import col, length, substring, regexp_replace, split, when, regexp_extract, current_timestamp, to_timestamp
+import logging
+from args_parser import get_parser
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+from pyspark.sql.functions import col, substring, regexp_replace, to_timestamp, to_date, lit, when
 
 
-file_path = "/FileStore/Intoxalock_20241218.txt"
+# Get the parser
+parser = get_parser()
+args = parser.parse_args()
 
-df = spark.read.text(file_path)
+# Access parameters
+env = args.environment
+execution_date = args.execution_date
+str_execution_date = execution_date.replace("-", "")
 
-#Remove spaces and separate by comma when possible
-df = df.select(
-    regexp_replace(col("value"), r"\s{3,}", "  ").alias("value")
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+source_path = f"/Volumes/ia_batch_files_raw_{env}/default/ia_batch_files_raw_{env}/extracted_files/Intoxalock_{str_execution_date}.txt"
+destination_path = f"state_reporting_{env}.bronze.state_batch_customer_data_ia"
+
+try:
+    df = spark.read.text(source_path)
+    if df.count() == 0:
+        raise ValueError("Empty file detected")
+except Exception as e:
+    logger.error(f"Error reading file: {str(e)}")
+    raise
+
+batch_file = df.select(
+    regexp_replace(substring(col("value"), 1, 30), r"\s{3,}", "").alias("VendorName"),
+    regexp_replace(substring(col("value"), 31, 50), r"\s{3,}", "").alias("DriversLicenseNumber"),
+    regexp_replace(substring(col("value"), 81, 80), r"\s{3,}", "").alias("LastName"),
+    regexp_replace(substring(col("value"), 161, 80), r"\s{3,}", "").alias("FirstName"),
+    regexp_replace(substring(col("value"), 241, 80), r"\s{3,}", "").alias("MiddleName"),
+    regexp_replace(substring(col("value"), 321, 10), r"\s{3,}", "").alias("DateOfBirth"),
+    regexp_replace(substring(col("value"), 331, 30), r"\s{3,}", "").alias("VIN"),
+    regexp_replace(substring(col("value"), 361, 10), r"\s{3,}", "").alias("OffenseDate"),
+    regexp_replace(substring(col("value"), 371, 1), r"\s{3,}", "").alias("RepeatOffender"),
+    regexp_replace(substring(col("value"), 372, 10), r"\s{3,}", "").alias("IIDStartDate"),
+    regexp_replace(substring(col("value"), 382, 10), r"\s{3,}", "").alias("IIDEndDate")
 )
-df = df.select(
-    regexp_replace(col("value"), r"\s{2,}", ",").alias("value")
+batch_file = batch_file.select([when(col(c) == "", None).otherwise(col(c)).alias(c) for c in batch_file.columns])
+
+date_columns = ["DateOfBirth", "OffenseDate", "IIDStartDate", "IIDEndDate"]
+batch_file = batch_file.select(
+    *[to_date(col(c), "yyyy-MM-dd").alias(c) if c in date_columns else col(c) for c in batch_file.columns]
 )
-
-
-#Vendor Name and License Number
-part_1 = df.select(
-    substring(col("value"), 1, 14).alias("vendor_name"),
-    substring(col("value"), 16, 9).alias("DriversLicenseNumber"),
-    substring(col("value"), 26, 1000).alias("rest"),
-)
-
-
-#First, Middle and Last Name
-part_2 = part_1.select(
-    col("vendor_name"),
-    col("DriversLicenseNumber"),
-    split(col("rest"), ",", 2).getItem(0).alias("LastName"),
-    split(col("rest"), ",", 3).getItem(1).alias("FirstName"),
-    split(col("rest"), ",", 3).getItem(2).alias("remaining_rest")
-).withColumn(
-    "MiddleName",
-    when(
-        regexp_extract(col("remaining_rest"), r"^[A-Za-z]+", 0) != "",
-        split(col("remaining_rest"), ",").getItem(0)
-    ).otherwise(None)
-).withColumn(
-    "rest",
-    when(
-        regexp_extract(col("remaining_rest"), r"^[A-Za-z]+", 0) != "",
-        split(col("remaining_rest"), ",",2).getItem(1)
-    ).otherwise(col("remaining_rest"))
-).drop("remaining_rest")
-
-
-#DOB, VIN
-part_3 = part_2.select(
-    col("vendor_name"),
-    col("DriversLicenseNumber"),
-    col("LastName"),
-    col("FirstName"),
-    col("MiddleName"),
-    substring(col("rest"), 1, 10).alias("DateOfBirth"),
-    substring(col("rest"), 11, 10000).alias("remaining_rest"),
-).withColumn(
-    "VIN",
-    split(col("remaining_rest"), ",", 2).getItem(0)
-).withColumn(
-    "rest",
-    split(col("remaining_rest"), ",", 2).getItem(1)
-)
-
-
-#Offense Date, Repeat Offender,
-part_4 = part_3.select(
-    col("vendor_name"),
-    col("DriversLicenseNumber"),
-    col("LastName"),
-    col("FirstName"),
-    col("MiddleName"),
-    col("DateOfBirth"),
-    col("VIN"),
-    substring(col("rest"), 1, 10).alias("offense_date"),
-    substring(col("rest"), 11, 1).alias("repeat_offender").cast("int"),
-    substring(col("rest"), 12, 10000).alias("remaining_rest")
-).withColumn(
-    "rest",
-    regexp_replace(col("remaining_rest"), r"^,", "")
-).drop("remaining_rest")
-
-part_4 = part_4.withColumn("offense_date", to_timestamp(col("offense_date"), "yyyy-MM-dd"))
-
-
-#IID start and end Date
-part_5 = part_4.select(
-    col("vendor_name"),
-    col("DriversLicenseNumber"),
-    col("LastName"),
-    col("FirstName"),
-    col("MiddleName"),
-    col("DateOfBirth"),
-    col("VIN"),
-    col("offense_date"),
-    col("repeat_offender"),
-    col("rest")
-).withColumn(
-    "IID_Start_Date",
-    when(
-        length(col("rest")) > 10,
-        substring(col("rest"), 1, 10)
-    ).otherwise(None)
-).withColumn(
-    "IID_End_Date",
-    when(
-        length(col("rest")) > 10,
-        substring(col("rest"), 11, 10)
-    ).otherwise(col("rest"))
-).drop("rest")
-
+#Remove duplicates, and get the one with Higher End Date
+batch_file = batch_file.withColumn("VIN_6_digits", F.expr("right(VIN, 6)"))
+window_spec = Window.partitionBy("DriversLicenseNumber", "VIN_6_digits").orderBy(F.desc("IIDEndDate"))
+batch_file = batch_file.withColumn("row_number", F.row_number().over(window_spec)).filter(F.col("row_number") == 1).drop("row_number","VIN_6_digits")
 
 #Created At
-part_5 = part_5.withColumn("created_at", current_timestamp())
+batch_file = batch_file.withColumn("CreatedAt", to_timestamp(lit(execution_date)))
 
+# Ensure the schema of the DataFrame matches the schema of the Delta table
+existing_table_schema = spark.table(f"state_reporting_{env}.bronze.state_batch_customer_data_ia").schema
 
-#Write to delta table
-part_5.write.format("delta").mode("append").saveAsTable("state_reporting_dev.bronze.state_batch_customer_data_ia_test")
+batch_file = batch_file.select([col(field.name).cast(field.dataType) for field in existing_table_schema])
+
+# Write to delta table
+
+try:
+    row_count = batch_file.count()
+    batch_file.write.format("delta").mode("append").saveAsTable(destination_path)
+    logger.info(f"Successfully added {row_count} rows to {destination_path}")
+except Exception as e:
+    logger.error(f"Error writing to Delta table: {str(e)}")
+    raise

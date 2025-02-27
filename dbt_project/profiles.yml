@@ -5,7 +5,7 @@ dbt_project:
       host: "{{ env_var('DBT_DB_HOST') }}"
       http_path: "{{ env_var('DBT_DB_PATH') }}"
       schema: "{{ env_var('DBT_DB_SCHEMA', '') }}"
-      threads: 8
+      threads: 12
       type: databricks
       auth_type: oauth
       client_id: "{{ env_var('DBW_SP_CLIENT_ID') }}"
