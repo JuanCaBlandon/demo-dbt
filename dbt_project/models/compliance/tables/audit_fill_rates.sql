@@ -1,5 +1,6 @@
 {{ config(
     materialized='incremental',
+    database='compliance_' ~ var('DEPLOYMENT_ENVIRONMENT'),
     unique_key=['table_name', 'column_name', 'execution_date'],
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY table_name, column_name;",
@@ -7,7 +8,7 @@
     ]
 ) }}
 
-{% set silver_tables = dbt_utils.get_relations_by_prefix(schema='SILVER', prefix='%cleaned') %}
+{% set silver_tables = dbt_utils.get_relations_by_prefix(database='state_reporting_' ~ var('DEPLOYMENT_ENVIRONMENT'), schema='SILVER', prefix='%cleaned') %}
 
 WITH fill_rates AS (
     {% for table in silver_tables %}

@@ -4,12 +4,17 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 # Initialize Spark session
 def model(dbt, session):
     dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
+    start_date = dbt.config.get("start_date", "2025-01-01")
+    execution_date = dbt.config.get("execution_date")
 
     customer_events_cleaned = dbt.ref("customer_events_cleaned")
     customer_cleaned = dbt.ref("customer_cleaned")
+    batch_customer_cleaned = dbt.ref("batch_customer_cleaned")
+
     
     customer_events_cleaned.createOrReplaceTempView("customer_events_cleaned")
     customer_cleaned.createOrReplaceTempView("customer_cleaned")
+    batch_customer_cleaned.createOrReplaceTempView("batch_customer_cleaned")
 
     # Handle incremental logic
     if dbt.is_incremental:
@@ -28,7 +33,7 @@ def model(dbt, session):
         # Initialize an empty DataFrame on first run
         previous_events_df = pd.DataFrame(columns=["drivers_license_number", "event_date"])
 
-    base_df = session.sql("""
+    base_df = session.sql(f"""
         WITH base_data AS (
             SELECT
                 cec.event_dw_id,
@@ -42,6 +47,15 @@ def model(dbt, session):
             FROM customer_events_cleaned cec
             INNER JOIN customer_cleaned cc 
                 ON cc.customer_id = cec.customer_id
+                AND cc.is_inconsistent = 0
+                AND cc.is_current = 1
+            INNER JOIN batch_customer_cleaned AS bcc
+                ON bcc.drivers_license_number = cc.drivers_license_number
+                AND RIGHT(bcc.vin,6) = RIGHT(cc.vin,6)
+                AND bcc.created_at = '{execution_date}'
+                AND bcc.is_inconsistent = 0
+                AND bcc.repeat_offender = 1
+                AND bcc.offense_date >= '{start_date}'
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
         )
@@ -93,7 +107,7 @@ def model(dbt, session):
             # Get the last event date, defaulting to 2025-01-01 if not found
             last_event_date = last_events_dict.get(
                 row.drivers_license_number, 
-                pd.Timestamp(dbt.config.get("start_date", "2025-01-01"))
+                pd.Timestamp(start_date)
             )
             
             # Convert dates to pandas Timestamp objects

@@ -46,6 +46,5 @@ models:
       +tags: ["gold_ia"]
     compliance:
       +materialized: table
-      database: "compliance_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
       +schema: compliance
       +tags: ["compliance_state"]

@@ -1,4 +1,4 @@
-version: 2
+version: 3
 
 sources:
   - name: BRONZE
@@ -9,3 +9,15 @@ sources:
       - name: customer_raw
       - name: state_batch_customer_data_ia
       - name: customer_events
+  - name: SILVER
+    description: Record types 1 and 2 processed
+    database: "state_reporting_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
+    schema: silver
+    tables:
+      - name: rt_1_2
+  - name: GOLD
+    description: IA webservice sumbissions log
+    database: "state_reporting_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
+    schema: gold
+    tables:
+      - name: processed_submissions_ia

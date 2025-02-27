@@ -7,6 +7,9 @@
 
 SELECT
     csr.customer_state_dw_id,
+    psi.error_code,
+    psi.message,
+    psi.submitted_at,
     c.drivers_license_number AS driversLicenseNumber,
     c.last_name AS lastName,
     c.first_name AS firstName,
@@ -29,5 +32,7 @@ INNER JOIN {{ref('batch_customer')}} bc
     ON csr.batch_customer_dw_id = bc.batch_customer_dw_id
 INNER JOIN {{ref('record_type')}} rt
     ON csr.record_type_dw_id = rt.record_type_dw_id
-WHERE csr.status IS NULL OR csr.status = 2;
+INNER JOIN {{source('GOLD', 'processed_submissions_ia')}} psi
+    ON csr.customer_state_dw_id = psi.customer_state_dw_id;
+
      

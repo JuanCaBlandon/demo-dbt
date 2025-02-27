@@ -1,19 +1,38 @@
 import pandas as pd
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
+import logging
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType, TimestampType
 
-# Initialize Spark session
 def model(dbt, session):
+    cluster_id = dbt.var("cluster_id")
     dbt.config(materialized="incremental",submission_method="all_purpose_cluster",cluster_id="0204-173204-ojxrab09")
 
+    start_date = dbt.var("start_date")
+    execution_date = dbt.var("execution_date")
+
+    # Reference tables
     customer_events_cleaned = dbt.ref("customer_events_cleaned")
     customer_cleaned = dbt.ref("customer_cleaned")
+    batch_customer_cleaned = dbt.ref("batch_customer_cleaned")
     
+    # Create temp views
     customer_events_cleaned.createOrReplaceTempView("customer_events_cleaned")
     customer_cleaned.createOrReplaceTempView("customer_cleaned")
+    batch_customer_cleaned.createOrReplaceTempView("batch_customer_cleaned")
+
+    # Define schema outside conditional blocks
+    result_schema = StructType([
+        StructField("event_dw_id", StringType(), True),
+        StructField("drivers_license_number", StringType(), True),
+        StructField("customer_id", LongType(), True),
+        StructField("event_id_type", StringType(), True),
+        StructField("event_id", LongType(), True),
+        StructField("event_date", TimestampType(), True),
+        StructField("record_type", IntegerType(), True),
+        StructField("record_description", StringType(), True)
+    ])
 
     # Handle incremental logic
     if dbt.is_incremental:
-        # Fetch previous events for incremental processing
         previous_events_df = session.sql(f"""
             SELECT
                 drivers_license_number, 
@@ -22,13 +41,10 @@ def model(dbt, session):
             WHERE record_type = 1
             GROUP BY drivers_license_number
         """).toPandas()
- 
-
     else:
-        # Initialize an empty DataFrame on first run
         previous_events_df = pd.DataFrame(columns=["drivers_license_number", "event_date"])
 
-    base_df = session.sql("""
+    base_df = session.sql(f"""
         WITH base_data AS (
             SELECT
                 cec.event_dw_id,
@@ -42,6 +58,15 @@ def model(dbt, session):
             FROM customer_events_cleaned cec
             INNER JOIN customer_cleaned cc 
                 ON cc.customer_id = cec.customer_id
+                AND cc.is_inconsistent = 0
+                AND cc.is_current = 1
+            INNER JOIN batch_customer_cleaned AS bcc
+                ON cc.drivers_license_number = bcc.drivers_license_number
+                AND RIGHT(bcc.vin,6) = RIGHT(cc.vin,6)
+                AND bcc.created_at = '{execution_date}'
+                AND bcc.is_inconsistent = 0
+                AND bcc.repeat_offender = 1
+                AND bcc.offense_date >= '{start_date}'
             WHERE cec.is_inconsistent = 0
             AND cec.event_type = 'TYPE 1-2'
         )
@@ -62,26 +87,27 @@ def model(dbt, session):
             RANGE BETWEEN INTERVAL 24 HOURS PRECEDING AND CURRENT ROW
         ) >= 5
     """)
-
+    logging.info(f"Records after base query: {base_df.count()}")
 
     # Convert to Pandas for processing
     events24 = base_df.toPandas()
+    # logger.warn(f"Records in events24 DataFrame: {len(events24)}")
 
-    result_schema = StructType([
-        StructField("event_dw_id", StringType(), True),
-        StructField("drivers_license_number", StringType(), True),
-        StructField("customer_id", IntegerType(), True),
-        StructField("event_id_type", StringType(), True),
-        StructField("event_id", IntegerType(), True),
-        StructField("event_date", TimestampType(), True),
-        StructField("record_type", IntegerType(), True),
-        StructField("record_description", StringType(), True)
-    ])
-
+    # Initialize an empty DataFrame with the correct column types
     marked_violations24 = pd.DataFrame(columns=[
         "event_dw_id", "drivers_license_number", "customer_id",
         "event_id_type", "event_id", "event_date", "record_type", "record_description"
-    ])
+    ]).astype({
+        'event_dw_id': 'str',
+        'drivers_license_number': 'str',
+        'customer_id': 'int64',
+        'event_id_type': 'str',
+        'event_id': 'int64',
+        'event_date': 'datetime64[ns]',
+        'record_type': 'int32',
+        'record_description': 'str'
+    })
+
     if not events24.empty:
         # Create a dictionary for faster lookups
         last_events_dict = dict(zip(
@@ -90,17 +116,17 @@ def model(dbt, session):
         ))
 
         for row in events24.itertuples(index=False):
-            # Get the last event date, defaulting to 2025-01-01 if not found
+            # Get the last event date, defaulting to start_date if not found
             last_event_date = last_events_dict.get(
                 row.drivers_license_number, 
-                pd.Timestamp(dbt.config.get("start_date", "2025-01-01"))
+                pd.Timestamp(start_date)
             )
             
             # Convert dates to pandas Timestamp objects
             current_event_start_date = pd.Timestamp(row.event_start_date)
             current_event_date = pd.Timestamp(row.event_date)
 
-            if current_event_start_date > last_event_date:
+            if (current_event_start_date > last_event_date):
                 new_row = {
                     "event_dw_id": str(row.event_dw_id),
                     "drivers_license_number": str(row.drivers_license_number),
@@ -116,7 +142,9 @@ def model(dbt, session):
                 
                 # Update the last event date in our dictionary
                 last_events_dict[row.drivers_license_number] = current_event_date
-    else:
-        marked_violations24 = session.createDataFrame(marked_violations24, schema=result_schema)
+    # logger.warn(f"Records in marked_violations24: {len(marked_violations24)}")
 
-    return marked_violations24
+    # Convert back to Spark DataFrame with the defined schema
+    marked_violations24_spark = session.createDataFrame(marked_violations24, schema=result_schema)
+    
+    return marked_violations24_spark

@@ -20,9 +20,20 @@ WITH base_data AS (
         cec.event_date,
         cec.new_vin
     FROM {{ ref('customer_events_cleaned') }}  AS cec
-    INNER JOIN {{ ref('customer_cleaned') }}  cc ON cc.customer_id = cec.customer_id
+    INNER JOIN {{ ref('customer_cleaned') }}  cc
+        ON cc.customer_id = cec.customer_id
+        AND cc.is_inconsistent = 0
+        AND cc.is_current = 1
+    INNER JOIN {{ ref('batch_customer_cleaned') }} AS bcc
+        ON cc.drivers_license_number = bcc.drivers_license_number
+        AND RIGHT(bcc.vin,6) = RIGHT(cc.vin,6)
+        AND bcc.created_at = (SELECT MAX(created_at) FROM {{ ref('batch_customer_cleaned') }})
+        AND bcc.is_inconsistent = 0
+        AND bcc.repeat_offender = 1
+        AND bcc.offense_date >= "{{ var('start_date', '2025-01-01') }}"
     WHERE 
         cec.is_inconsistent = 0
+        AND cec.event_date >= bcc.iid_start_date
         AND cec.event_type <> 'TYPE 1-2'
      {% if is_incremental() %}
         AND event_date > (
@@ -47,9 +58,11 @@ SELECT
     event_date,
     record_type,
     record_description
-FROM {{ ref('marked_events_24') }} me24
+FROM {{ source('SILVER', 'rt_1_2') }} me24
+WHERE
+    record_type = 1
 {% if is_incremental() %}
-    WHERE event_date > (
+    AND event_date > (
         SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
         WHERE 
             drivers_license_number = me24.drivers_license_number
@@ -70,9 +83,11 @@ SELECT
     event_date,
     record_type,
     record_description
-FROM {{ ref('marked_events_30') }} me30
+FROM {{ source('SILVER', 'rt_1_2') }} me30
+WHERE
+    record_type = 2
 {% if is_incremental() %}
-    WHERE event_date > (
+    AND event_date > (
         SELECT COALESCE(MAX(event_date), "{{ var('start_date', '2025-01-01') }}") FROM {{ this }}
         WHERE 
             customer_id = me30.customer_id
@@ -98,7 +113,7 @@ FROM base_data b
 WHERE event_type = 'TYPE 3'
 
 
--- Authorized uninstall
+-- Unauthorized uninstall
 UNION ALL
 SELECT
     {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'4'"]) }} AS record_dw_id, 
@@ -110,12 +125,12 @@ SELECT
     device_usage_event_violation_id event_id,
     event_date,
     4 AS record_type,
-    'autorized_uninstall' record_description
+    'unauthorized_uninstall' record_description
 FROM base_data b
 WHERE event_type = 'TYPE 4'
 
 
--- Unauthorized uninstall
+-- Authorized uninstall
 UNION ALL
 SELECT
     {{ dbt_utils.generate_surrogate_key(['event_dw_id',"'5'"]) }} AS record_dw_id, 
@@ -127,7 +142,7 @@ SELECT
     customer_transaction_id event_id,
     event_date,
     5 AS record_type,
-    'unautorized_uninstall' record_description
+    'authorized_uninstall' record_description
 FROM base_data b
 WHERE event_type = 'TYPE 5'
 

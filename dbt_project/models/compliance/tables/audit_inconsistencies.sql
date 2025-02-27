@@ -1,5 +1,6 @@
 {{ config(
     materialized='incremental',
+    database='compliance_' ~ var('DEPLOYMENT_ENVIRONMENT'),
     unique_key='audit_inconsistent_dw_id',
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY audit_inconsistent_dw_id;",
@@ -15,7 +16,7 @@ WITH source AS (
         is_inconsistent,
         type_inconsistent,
         created_at
-    FROM {{ ref('customer_cleaned') }}
+    FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned
     WHERE is_inconsistent = 1
     UNION ALL
     SELECT
@@ -25,7 +26,8 @@ WITH source AS (
         is_inconsistent,
         type_inconsistent,
         created_at
-    FROM {{ ref('batch_customer_cleaned') }}
+        
+    FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned
     WHERE is_inconsistent = 1
     UNION ALL
     SELECT
@@ -35,23 +37,42 @@ WITH source AS (
         is_inconsistent,
         type_inconsistent,
         created_at
-    FROM {{ ref('customer_events_cleaned') }}
+    FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_events_cleaned
     WHERE is_inconsistent = 1
 
     UNION ALL
-SELECT
-    c.customer_dw_id AS source_table_id,
-    'customer_cleaned' AS source_table_name,
-    'ia' as state,
-    1 AS is_inconsistent,
-    'dont Match with batch file' AS type_inconsistent,
-    c.created_at
-FROM {{ ref('customer_cleaned') }} as c
-LEFT JOIN {{ ref('batch_customer_cleaned') }} as bc 
-ON UPPER(c.drivers_license_number) = UPPER(bc.drivers_license_number)
-    AND UPPER(RIGHT(bc.vin,6)) = UPPER(RIGHT(c.vin,6))
-WHERE c.is_inconsistent = 0 AND bc.is_inconsistent = 0
-  AND  bc.batch_customer_dw_id IS NULL
+    SELECT
+        c.customer_dw_id AS source_table_id,
+        'customer_cleaned' AS source_table_name,
+        'ia' as state,
+        1 AS is_inconsistent,
+        'Not present in batch file' AS type_inconsistent,
+        c.created_at
+    FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
+    LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned as bc 
+        ON c.drivers_license_number = bc.drivers_license_number
+        AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
+    WHERE
+        c.is_inconsistent = 0
+        AND c.is_current = 1
+        AND  bc.batch_customer_dw_id IS NULL
+
+    UNION ALL
+    SELECT
+        bc.batch_customer_dw_id AS source_table_id,
+        'batch_customer_cleaned' AS source_table_name,
+        'ia' as state,
+        1 AS is_inconsistent,
+        'Not present in actives customer table' AS type_inconsistent,
+        c.created_at
+    FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned as bc
+    LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
+    ON c.drivers_license_number = bc.drivers_license_number
+        AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
+        AND c.is_current = 1
+    WHERE
+        bc.is_inconsistent = 0
+        AND  c.customer_dw_id IS NULL
 
 ),
 source2 AS (
