@@ -222,13 +222,13 @@ def main():
 
     # Access parameters
     env = args.environment
-    execution_date = args.execution_date
     
     # Get events to report from Databricks
     reportable_events = getReportableEvents(env)
     
     if not reportable_events:
         print("No events to report. Exiting.")
+        dbutils.jobs.taskValues.set(key="save_results", value=0)
         return
 
     base_url = "https://arts.iowadot.gov"
