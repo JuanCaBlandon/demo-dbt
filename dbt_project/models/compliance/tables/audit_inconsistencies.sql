@@ -48,12 +48,14 @@ SELECT
     1 AS is_inconsistent,
     8 AS id_inconsistent,
     c.created_at
-FROM {{ ref('customer_cleaned') }} as c
-LEFT JOIN {{ ref('batch_customer_cleaned') }} as bc 
-ON UPPER(c.drivers_license_number) = UPPER(bc.drivers_license_number)
-    AND UPPER(RIGHT(bc.vin,6)) = UPPER(RIGHT(c.vin,6))
-WHERE c.is_inconsistent = 0 AND bc.is_inconsistent = 0
-  AND  bc.batch_customer_dw_id IS NULL
+ FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
+    LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned as bc 
+        ON c.drivers_license_number = bc.drivers_license_number
+        AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
+    WHERE
+        c.is_inconsistent = 0
+        AND c.is_current = 1
+        AND  bc.batch_customer_dw_id IS NULL
 
     UNION ALL
     SELECT
