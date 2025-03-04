@@ -72,7 +72,7 @@ def insert_data(schema, data, jdbc_url, connection_properties) -> DataFrame:
     
 ## Batch data #########################
 batch_df = spark.read.table("state_reporting_dev.silver.batch_customer_cleaned")\
-                .where(f'id_inconsistent = 5 and created_at = {execution_date}')
+                .where(f'inconsistency_id = 5 and created_at = {execution_date}')
 
 pandas_df = batch_df.toPandas()
 html_batch = pandas_df.to_html()
@@ -84,7 +84,7 @@ insert_batch = [("Iowa-Compliance@intoxalock.com","statedatabrickfeed@intoxalock
 
 ## Customers data #####################
 customer_df = spark.read.table("state_reporting_dev.silver.customer_cleaned")\
-                    .where(f'id_inconsistent = 8 and created_at = {execution_date}')
+                    .where(f'inconsistency_id = 8 and created_at = {execution_date}')
 
 pandas_customer_df = customer_df.toPandas()
 html_customer = pandas_customer_df.to_html()
