@@ -12,6 +12,7 @@ def updateResultsTable(results, env):
     df_results = spark.createDataFrame(results)
 
     df_results = df_results.withColumn("error_code", col("error_code").cast("int"))
+    df_results = df_results.withColumn("submitted_at", col("submitted_at").cast("timestamp"))
 
 
     try:
@@ -19,7 +20,7 @@ def updateResultsTable(results, env):
         df_results.write.format("delta").mode("append").saveAsTable(table_name)
         print(f"Successfully added {row_count} rows to {table_name}")
     except Exception as e:
-        print(f"Error writing to Delta table: {str(e)}")
+        print(f"Error writing to Delta table {table_name}: {str(e)}")
         raise
 
 def updateCustomerStateReported(results, env):
