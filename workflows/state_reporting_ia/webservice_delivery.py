@@ -193,7 +193,7 @@ def submitRecords(events_list, iid_client, session_id):
                     'customer_state_dw_id': event['customer_state_dw_id'],
                     'error_code': return_value.ErrorCode,
                     'message': return_value.Message,
-                    'submitted_at': datetime.now()
+                    'submitted_at': datetime.now().isoformat()
                 })
                                 
                 # Track record types 4 and 5 submitted successfully
@@ -207,7 +207,7 @@ def submitRecords(events_list, iid_client, session_id):
                 'customer_state_dw_id': event['customer_state_dw_id'],
                 'error_code': 99,
                 'message': str(e),
-                'submitted_at': datetime.now()
+                'submitted_at': datetime.now().isoformat()
             })
 
     # Update the results table in Databricks
