@@ -77,7 +77,8 @@ audit_df = spark.read.table(f"compliance_{env}.compliance.audit_inconsistencies"
 
 ## Batch data #########################
 cleaned_df = spark.read.table(f"state_reporting_{env}.silver.batch_customer_cleaned").where(f'created_at = {execution_date}')
-batch_df = cleaned_df.join(audit_df, (cleaned_df.batch_customer_dw_id == audit_df.source_table_id) & (audit_df.inconsistency_id == 9),"inner")
+batch_df = cleaned_df.join(audit_df, (cleaned_df.batch_customer_dw_id == audit_df.source_table_id) & (audit_df.inconsistency_id == 9),"inner")\
+            .select('vendor_name','drivers_license_number','first_name','last_name','middle_name','date_of_birth','vin','offense_date','repeat_offender','iid_start_date','iid_end_date')
 
 pandas_df = batch_df.toPandas()
 html_batch = pandas_df.to_html()
@@ -89,7 +90,8 @@ insert_batch = [(email_to,email_from,"","","Iowa DataFeed",html_batch,0,"IA Data
 
 ## Customers data #####################
 cus_cleaned_df = spark.read.table(f"state_reporting_{env}.silver.customer_cleaned").where(f'created_at = {execution_date}')
-customer_df = cus_cleaned_df.join(audit_df, (cus_cleaned_df.customer_dw_id == audit_df.source_table_id) & (audit_df.inconsistency_id == 7),"inner")
+customer_df = cus_cleaned_df.join(audit_df, (cus_cleaned_df.customer_dw_id == audit_df.source_table_id) & (audit_df.inconsistency_id == 7),"inner")\
+                .select('customer_id','drivers_license_number','first_name','last_name','middle_name','date_of_birth','vin','install_date','deinstall_date','state_code')
 
 
 pandas_customer_df = customer_df.toPandas()
