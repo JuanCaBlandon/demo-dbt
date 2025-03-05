@@ -162,6 +162,7 @@ def main():
 
 
     if submission_results:
+        print(f"submission_results {submission_results}")
         # Store results in DB
         updateResultsTable(submission_results, env)
 
@@ -170,6 +171,7 @@ def main():
             # Set inactive clients
 
         if tracked_records:
+            print(f"tracked results {tracked_records}")
             setInactiveCustomers(tracked_records, execution_date, env)
         else:
             print("No RT 4 and 5 successfully reported")
