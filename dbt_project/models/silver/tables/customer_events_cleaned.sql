@@ -57,7 +57,7 @@ cleaned_data AS(
       created_at,
       modification_date,
       1 AS is_inconsistent,
-      'Duplicates' AS type_inconsistent,
+      1 AS id_inconsistent,
       num_duplicates
   FROM tmp
   WHERE num_duplicates > 1
@@ -85,7 +85,7 @@ cleaned_data AS(
       created_at,
       modification_date,
       1 AS is_inconsistent,
-      'NULL values' AS type_inconsistent,
+      2 AS id_inconsistent,
     num_duplicates
   FROM tmp
   WHERE num_duplicates = 1 AND 
@@ -114,7 +114,7 @@ cleaned_data AS(
       tmp.created_at,
       tmp.modification_date,
       1 AS is_inconsistent,
-      'Without reference entity' AS type_inconsistent,
+      5 AS id_inconsistent,
       tmp.num_duplicates
   FROM tmp
   LEFT JOIN {{ ref('customer_cleaned') }} AS c
@@ -149,7 +149,7 @@ cleaned_data AS(
       tmp.created_at,
       tmp.modification_date,
       1 AS is_inconsistent,
-      'Reference entity inconsistent' AS type_inconsistent,
+      11 AS id_inconsistent,
       tmp.num_duplicates
   FROM tmp
   INNER JOIN {{ ref('customer_cleaned') }} AS c
@@ -184,7 +184,7 @@ cleaned_data AS(
       tmp.created_at,
       tmp.modification_date,
       0 AS is_inconsistent,
-      'N/A' AS type_inconsistent,
+      6 AS id_inconsistent,
       tmp.num_duplicates
   FROM tmp
   INNER JOIN {{ ref('customer_cleaned') }} AS c
@@ -219,6 +219,6 @@ SELECT
   created_at,
   modification_date,
   is_inconsistent,
-  type_inconsistent,
+  id_inconsistent,
   num_duplicates
 FROM cleaned_data

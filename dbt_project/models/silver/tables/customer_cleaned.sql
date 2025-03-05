@@ -72,7 +72,7 @@ cleaned_data AS(
       created_at,
       modification_date,
       1 AS is_inconsistent,
-      'duplicates' AS type_inconsistent,
+      1 AS id_inconsistent,
       num_duplicates,
       is_current
   FROM Tmp
@@ -107,7 +107,7 @@ cleaned_data AS(
       created_at,
       modification_date,
       1 AS is_inconsistent,
-      'NULL values' AS type_inconsistent,
+      2 AS id_inconsistent,
       num_duplicates,
       is_current
   FROM Tmp
@@ -143,7 +143,7 @@ cleaned_data AS(
       created_at,
       modification_date,
       1 AS is_inconsistent,
-      'Max Character Limit' AS type_inconsistent,
+      7 AS id_inconsistent,
       num_duplicates,
       is_current
   FROM Tmp
@@ -184,7 +184,7 @@ cleaned_data AS(
       created_at,
       modification_date,
       0 AS is_inconsistent,
-      'N/A' AS type_inconsistent,
+      6 AS id_inconsistent,
       num_duplicates,
       is_current
   FROM Tmp
@@ -245,7 +245,7 @@ cleaned_data AS(
       created_at,
       modification_date,
       is_inconsistent,
-      type_inconsistent,
+      id_inconsistent,
       num_duplicates,
       0 AS is_current
     FROM {{ this }} 

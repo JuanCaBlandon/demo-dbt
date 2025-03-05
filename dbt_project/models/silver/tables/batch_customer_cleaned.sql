@@ -46,7 +46,7 @@ cleaned_data AS (
     iid_end_date,
     created_at,
     1 AS is_inconsistent,
-    'duplicates' AS type_inconsistent,
+    1 AS id_inconsistent,
     num_duplicates
   FROM Tmp
   WHERE num_duplicates > 1
@@ -68,7 +68,7 @@ cleaned_data AS (
     iid_end_date,
     created_at,
     1 AS is_inconsistent,
-    'NULL values' AS type_inconsistent,
+    2 AS id_inconsistent,
     num_duplicates
   FROM Tmp
   WHERE num_duplicates = 1 AND 
@@ -95,7 +95,7 @@ cleaned_data AS (
     iid_end_date,
     created_at,
     1 AS is_inconsistent,
-    'repeat offender without dates' AS type_inconsistent,
+    3 AS id_inconsistent,
     num_duplicates
   FROM Tmp
   WHERE num_duplicates = 1 AND 
@@ -118,7 +118,7 @@ cleaned_data AS (
     iid_end_date,
     created_at,
     1 AS is_inconsistent,
-    'no repeat offender with dates' AS type_inconsistent,
+    4 AS id_inconsistent,
     num_duplicates
   FROM Tmp
   WHERE num_duplicates = 1 AND 
@@ -141,7 +141,7 @@ cleaned_data AS (
       iid_end_date,
       created_at,
       0 AS is_inconsistent,
-      'N/A' AS type_inconsistent,
+      6 AS id_inconsistent,
       num_duplicates
   FROM Tmp
   WHERE
@@ -173,7 +173,7 @@ SELECT
     iid_end_date,
     created_at,
     is_inconsistent,
-    type_inconsistent,
+    id_inconsistent,
     num_duplicates
   FROM cleaned_data
   {% if is_incremental() %}

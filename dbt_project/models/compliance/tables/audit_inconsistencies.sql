@@ -14,7 +14,7 @@ WITH source AS (
         'customer_cleaned' AS source_table_name,
         'ia' as state,
         is_inconsistent,
-        type_inconsistent,
+        id_inconsistent,
         created_at
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned
     WHERE is_inconsistent = 1
@@ -24,7 +24,7 @@ WITH source AS (
         'batch_customer_cleaned' AS source_table_name,
         'ia' as state,
         is_inconsistent,
-        type_inconsistent,
+        id_inconsistent,
         created_at
         
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned
@@ -35,20 +35,20 @@ WITH source AS (
         'customer_events_cleaned' AS source_table_name,
         'ia' as state,
         is_inconsistent,
-        type_inconsistent,
+        id_inconsistent,
         created_at
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_events_cleaned
     WHERE is_inconsistent = 1
 
     UNION ALL
-    SELECT
-        c.customer_dw_id AS source_table_id,
-        'customer_cleaned' AS source_table_name,
-        'ia' as state,
-        1 AS is_inconsistent,
-        'Not present in batch file' AS type_inconsistent,
-        c.created_at
-    FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
+SELECT
+    c.customer_dw_id AS source_table_id,
+    'customer_cleaned' AS source_table_name,
+    'ia' as state,
+    1 AS is_inconsistent,
+    8 AS id_inconsistent,
+    c.created_at
+ FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
     LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned as bc 
         ON c.drivers_license_number = bc.drivers_license_number
         AND RIGHT(bc.vin,6) = RIGHT(c.vin,6)
@@ -63,8 +63,8 @@ WITH source AS (
         'batch_customer_cleaned' AS source_table_name,
         'ia' as state,
         1 AS is_inconsistent,
-        'Not present in actives customer table' AS type_inconsistent,
-        c.created_at
+        10 AS id_inconsistent,
+        bc.created_at
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned as bc
     LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
     ON c.drivers_license_number = bc.drivers_license_number
@@ -81,7 +81,7 @@ source2 AS (
         source_table_id,
         source_table_name,
         is_inconsistent,
-        type_inconsistent,
+        id_inconsistent,
         created_at
     FROM source
 )
@@ -91,7 +91,7 @@ SELECT
     source_table_id,
     source_table_name,
     is_inconsistent,
-    type_inconsistent,
+    id_inconsistent,
     created_at
 FROM source2
 {% if is_incremental() %}
