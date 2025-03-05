@@ -37,9 +37,9 @@ FROM (
     SELECT date_id, date_full,year,quarter,month,year_month,week,day,day_of_week, day_name, month_name, is_weekday, is_leapyear
     FROM {{ ref('dim_date') }}
     WHERE date_full >= "{{ var("start_date", "2025-01-01") }}"
-    AND date_full <= DATE_TRUNC('MONTH', ADD_MONTHS("{{ var("execution_date", "2025-01-01") }}", 1)) 
+    AND date_full <= "{{ var("execution_date", "2025-01-01") }}"
     {% if is_incremental() %}
-     AND month > (select MAX(month) from {{ this }})
+     AND date_full > (select MAX(datetime_full) from {{ this }})
  {% endif %}
 ) AS dim_date
 CROSS JOIN hours

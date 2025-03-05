@@ -12,6 +12,7 @@ def updateResultsTable(results, env):
     df_results = spark.createDataFrame(results)
 
     df_results = df_results.withColumn("error_code", col("error_code").cast("int"))
+    df_results = df_results.withColumn("submitted_at", col("submitted_at").cast("timestamp"))
 
 
     try:
@@ -19,7 +20,7 @@ def updateResultsTable(results, env):
         df_results.write.format("delta").mode("append").saveAsTable(table_name)
         print(f"Successfully added {row_count} rows to {table_name}")
     except Exception as e:
-        print(f"Error writing to Delta table: {str(e)}")
+        print(f"Error writing to Delta table {table_name}: {str(e)}")
         raise
 
 def updateCustomerStateReported(results, env):
@@ -162,6 +163,7 @@ def main():
 
 
     if submission_results:
+        print(f"submission_results {submission_results}")
         # Store results in DB
         updateResultsTable(submission_results, env)
 
@@ -170,6 +172,7 @@ def main():
             # Set inactive clients
 
         if tracked_records:
+            print(f"tracked records {tracked_records}")
             setInactiveCustomers(tracked_records, execution_date, env)
         else:
             print("No RT 4 and 5 successfully reported")
