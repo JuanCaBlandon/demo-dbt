@@ -48,9 +48,3 @@ models:
       +materialized: table
       +schema: compliance
       +tags: ["compliance_state"]
-seeds:
-  dbt_project:
-      +database: "compliance_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
-      +enabled: true 
-      +schema: compliance
-      +tags: ["compliance_state"]
