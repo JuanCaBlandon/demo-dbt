@@ -8,5 +8,8 @@ def get_parser():
     parser.add_argument("--start_date", required=False, help="Start date for Events processing")
     parser.add_argument("--end_date", required=False, help="End date for Events processing")
     parser.add_argument("--execution_date", required=False, help="Date when the process is executed")
+    parser.add_argument("--email_from", required=False, help="Email from, to send compliance notification")
+    parser.add_argument("--email_to", required=False, help="Email to, to receive compliance notification")
+
 
     return parser
