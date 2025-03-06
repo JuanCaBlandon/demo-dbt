@@ -14,7 +14,7 @@ WITH source AS (
         'customer_cleaned' AS source_table_name,
         'ia' as state,
         is_inconsistent,
-        id_inconsistent,
+        inconsistency_id,
         created_at
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned
     WHERE is_inconsistent = 1
@@ -24,7 +24,7 @@ WITH source AS (
         'batch_customer_cleaned' AS source_table_name,
         'ia' as state,
         is_inconsistent,
-        id_inconsistent,
+        inconsistency_id,
         created_at
         
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned
@@ -35,7 +35,7 @@ WITH source AS (
         'customer_events_cleaned' AS source_table_name,
         'ia' as state,
         is_inconsistent,
-        id_inconsistent,
+        inconsistency_id,
         created_at
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_events_cleaned
     WHERE is_inconsistent = 1
@@ -46,7 +46,7 @@ SELECT
     'customer_cleaned' AS source_table_name,
     'ia' as state,
     1 AS is_inconsistent,
-    8 AS id_inconsistent,
+    7 AS inconsistency_id, -- Not present in batch file
     c.created_at
  FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
     LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned as bc 
@@ -63,7 +63,7 @@ SELECT
         'batch_customer_cleaned' AS source_table_name,
         'ia' as state,
         1 AS is_inconsistent,
-        10 AS id_inconsistent,
+        9 AS inconsistency_id, -- Not present in actives customer table
         bc.created_at
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.batch_customer_cleaned as bc
     LEFT JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.silver.customer_cleaned as c
@@ -81,7 +81,7 @@ source2 AS (
         source_table_id,
         source_table_name,
         is_inconsistent,
-        id_inconsistent,
+        inconsistency_id,
         created_at
     FROM source
 )
@@ -91,7 +91,7 @@ SELECT
     source_table_id,
     source_table_name,
     is_inconsistent,
-    id_inconsistent,
+    inconsistency_id,
     created_at
 FROM source2
 {% if is_incremental() %}
