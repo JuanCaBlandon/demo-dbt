@@ -40,7 +40,7 @@ WITH batch_customer_inconsistencies AS (
         ON audit.source_table_id = bcc.batch_customer_dw_id
     WHERE source_table_name = 'batch_customer_cleaned'
     {% if is_incremental() %}
-        AND audit.created_at > (SELECT COALESCE(max(detection_date), '1970-01-01') FROM {{ this }})
+        AND audit.created_at > (SELECT COALESCE(max(detection_date), '2025-01-01') FROM {{ this }})
     {% endif %}
 ),
 
@@ -73,7 +73,7 @@ customer_inconsistencies AS (
         ON audit.source_table_id = cc.customer_dw_id
     WHERE source_table_name = 'customer_cleaned'
     {% if is_incremental() %}
-        AND audit.created_at > (SELECT COALESCE(max(detection_date), '1970-01-01') FROM {{ this }})
+        AND audit.created_at > (SELECT COALESCE(max(detection_date), '2025-01-01') FROM {{ this }})
     {% endif %}
 ),
 
@@ -105,7 +105,7 @@ events_inconsistencies AS (
         ON audit.source_table_id = cec.event_dw_id
     WHERE source_table_name = 'customer_events_cleaned'
     {% if is_incremental() %}
-        AND audit.created_at > (SELECT COALESCE(max(detection_date), '1970-01-01') FROM {{ this }})
+        AND audit.created_at > (SELECT COALESCE(max(detection_date), '2025-01-01') FROM {{ this }})
     {% endif %}
 ),
 
@@ -138,7 +138,7 @@ state_reported_inconsistencies AS (
         ON audit.source_table_id = csr.customer_state_dw_id
     WHERE source_table_name = 'customer_state_reported'
     {% if is_incremental() %}
-        AND audit.created_at > (SELECT COALESCE(max(detection_date), '1970-01-01') FROM {{ this }})
+        AND audit.created_at > (SELECT COALESCE(max(detection_date), '2025-01-01') FROM {{ this }})
     {% endif %}
 ),
 

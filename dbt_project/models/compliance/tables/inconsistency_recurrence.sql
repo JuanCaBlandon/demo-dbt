@@ -135,5 +135,5 @@ SELECT
 FROM pattern_detection pd
 
 {% if is_incremental() %}
-    WHERE pd.last_occurrence > (SELECT COALESCE(max(last_occurrence), '1970-01-01') FROM {{ this }})
+    WHERE pd.last_occurrence > (SELECT COALESCE(max(last_occurrence), '2025-01-01') FROM {{ this }})
 {% endif %}

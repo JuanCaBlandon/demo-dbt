@@ -95,7 +95,7 @@ SELECT
 FROM user_info ui
 
 {% if is_incremental() and hist_table_exists and not flags.FULL_REFRESH %}
-    WHERE ui.resolution_date > (SELECT COALESCE(max(resolution_date), '1970-01-01') FROM {{ this }})
+    WHERE ui.resolution_date > (SELECT COALESCE(max(resolution_date), '2025-01-01') FROM {{ this }})
 {% endif %}
 
 {% else %}
