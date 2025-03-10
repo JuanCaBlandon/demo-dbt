@@ -18,10 +18,9 @@ WITH batch_customer_inconsistencies AS (
         audit.source_table_name,
         audit.inconsistency_id,
         audit.created_at as detection_date,
-        ityp.inconsistency_type,
         ityp.inconsistency_description as description,
         'batch_file' as entity,
-        ityp.inconsistencies_category as source,
+        ityp.inconsistency_category as source,
         'PENDING' as status,
         TO_JSON(STRUCT(
             bcc.batch_customer_dw_id as batch_customer_dw_id,
@@ -53,10 +52,9 @@ customer_inconsistencies AS (
         audit.source_table_name,
         audit.inconsistency_id,
         audit.created_at as detection_date,
-        ityp.inconsistency_type,
         ityp.inconsistency_description as description,
         'customer' as entity,
-        ityp.inconsistencies_category as source,
+        ityp.inconsistency_category as source,
         'PENDING' as status,
         TO_JSON(STRUCT(
             cc.customer_dw_id as customer_dw_id,
@@ -87,10 +85,9 @@ events_inconsistencies AS (
         audit.source_table_name,
         audit.inconsistency_id,
         audit.created_at as detection_date,
-        ityp.inconsistency_type,
         ityp.inconsistency_description as description,
         'events' as entity,
-        ityp.inconsistencies_category as source,
+        ityp.inconsistency_category as source,
         'PENDING' as status,
         TO_JSON(STRUCT(
             cec.event_dw_id as event_dw_id,
@@ -120,10 +117,9 @@ state_reported_inconsistencies AS (
         audit.source_table_name,
         audit.inconsistency_id,
         audit.created_at as detection_date,
-        ityp.inconsistency_type,
         ityp.inconsistency_description as description,
         'events' as entity,
-        'WS_REJECTION' as source, -- Específico para fallos de reportes estatales
+        ityp.inconsistency_category as source, -- Específico para fallos de reportes estatales
         'PENDING' as status,
         TO_JSON(STRUCT(
             csr.customer_state_dw_id as customer_state_dw_id,
@@ -162,7 +158,6 @@ SELECT
     cd.business_key,
     cd.source_table_name,
     cd.inconsistency_id,
-    cd.inconsistency_type,
     cd.description,
     cd.detection_date,
     cd.entity,

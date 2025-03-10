@@ -99,7 +99,7 @@ WITH source AS (
             WHEN rt.id = 5 THEN 12
             WHEN rt.id = 7 THEN 13
         END AS inconsistency_id,
-        csr.created_at
+        csr.submitted_at as created_at
     FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.gold.customer_state_reported csr
     INNER JOIN state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.gold.record_type rt USING(record_type_dw_id)
     WHERE status = 3

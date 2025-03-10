@@ -1,27 +1,41 @@
 -- models/historical_inconsistencies.sql
+-- depends_on: {{ ref('current_inconsistencies') }}
+-- depends_on: {{ ref('attention_logs') }}
+-- depends_on: {{ ref('compliance_users') }}
+
 {{ config(
     materialized='incremental',
     database='compliance_' ~ var('DEPLOYMENT_ENVIRONMENT'),
     unique_key='id',
     post_hook=[
-        "OPTIMIZE {{ this }} ZORDER BY id, inconsistency_id;",
+        "OPTIMIZE {{ this }} ZORDER BY id, current_inconsistency_id;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
     ]
 ) }}
 
-{% if adapter.get_relation(this.database, 'attention_logs') is not none %}
+-- Verificar existencia de tablas de manera segura
+{% if execute %}
+    {% set attention_logs_exists = adapter.get_relation(this.database, 'compliance', 'attention_logs') is not none %}
+    {% set compliance_users_exists = adapter.get_relation(this.database, 'compliance', 'compliance_users') is not none %}
+    {% set hist_table_exists = adapter.get_relation(this.database, 'compliance', 'historical_inconsistencies') is not none %}
+{% else %}
+    {% set attention_logs_exists = false %}
+    {% set compliance_users_exists = false %}
+    {% set hist_table_exists = false %}
+{% endif %}
+
+{% if attention_logs_exists %}
 
 WITH resolved_inconsistencies AS (
     -- Identifica inconsistencias que han sido resueltas según los logs de atención
     SELECT 
-        ci.id as inconsistency_id,
-        ci.inconsistency_type,
+        ci.id as current_inconsistency_id,
         ci.inconsistency_id as original_inconsistency_id,
         ci.description,
         ci.detection_date,
         ci.entity,
         ci.business_key,
-        ci.source,
+        ci.source, -- Solo una vez
         ci.technical_details,
         ci.batch_id,
         al.action_date as resolution_date,
@@ -31,15 +45,18 @@ WITH resolved_inconsistencies AS (
         'Manual review and correction' as action_taken -- Valor por defecto
     FROM {{ ref('current_inconsistencies') }} ci
     JOIN {{ ref('attention_logs') }} al 
-        ON ci.id = al.inconsistency_id
+        ON ci.id = al.current_inconsistency_id
     WHERE al.action = 'RESOLVED'
+    {% if hist_table_exists and not flags.FULL_REFRESH %}
+    -- Solo verificar existencia si la tabla ya existe y no es full refresh
     AND NOT EXISTS (
-        -- Verificar que no exista ya en el histórico
         SELECT 1 FROM {{ this }} hist
-        WHERE hist.inconsistency_id = ci.id
+        WHERE hist.current_inconsistency_id = ci.id
     )
+    {% endif %}
 ),
 
+{% if compliance_users_exists %}
 -- Unir con información de usuarios para obtener el nombre
 user_info AS (
     SELECT 
@@ -49,12 +66,20 @@ user_info AS (
     LEFT JOIN {{ ref('compliance_users') }} u
         ON ri.resolution_user_id = u.id
 )
+{% else %}
+-- Si compliance_users no existe aún
+user_info AS (
+    SELECT 
+        ri.*,
+        'System' as resolution_user_name
+    FROM resolved_inconsistencies ri
+)
+{% endif %}
 
 -- Construir la tabla final
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['ui.inconsistency_id', 'ui.resolution_date']) }} as id,
-    ui.inconsistency_id,
-    ui.inconsistency_type,
+    {{ dbt_utils.generate_surrogate_key(['ui.current_inconsistency_id', 'ui.resolution_date']) }} as id,
+    ui.current_inconsistency_id,
     ui.original_inconsistency_id,
     ui.description,
     ui.detection_date,
@@ -65,11 +90,11 @@ SELECT
     ui.comments,
     ui.action_taken,
     ui.business_key,
-    ui.source,
+    ui.source, -- Solo una vez
     ui.batch_id
 FROM user_info ui
 
-{% if is_incremental() %}
+{% if is_incremental() and hist_table_exists and not flags.FULL_REFRESH %}
     WHERE ui.resolution_date > (SELECT COALESCE(max(resolution_date), '1970-01-01') FROM {{ this }})
 {% endif %}
 
@@ -77,8 +102,7 @@ FROM user_info ui
 -- Si attention_logs aún no existe, crear una estructura vacía
 SELECT
     CAST(NULL AS STRING) as id,
-    CAST(NULL AS STRING) as inconsistency_id,
-    CAST(NULL AS STRING) as inconsistency_type,
+    CAST(NULL AS STRING) as current_inconsistency_id,
     CAST(NULL AS INT) as original_inconsistency_id,
     CAST(NULL AS STRING) as description,
     CAST(NULL AS TIMESTAMP) as detection_date,
