@@ -73,6 +73,16 @@ SELECT
     WHERE
         bc.is_inconsistent = 0
         AND  c.customer_dw_id IS NULL
+    UNION ALL
+    SELECT
+        csr.customer_state_dw_id AS source_table_id,
+        'customer_state_reported' AS source_table_name,
+        'ia' as state,
+        1 AS is_inconsistent,
+        11 AS id_inconsistent,
+        bc.created_at
+    FROM state_reporting_{{ var("DEPLOYMENT_ENVIRONMENT") }}.gold.customer_state_reported as csr
+    WHERE csr.status = 0 and action_required = 1
 
 ),
 source2 AS (
