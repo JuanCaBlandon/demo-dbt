@@ -40,7 +40,7 @@ FROM (
     AND date_full <= DATE_TRUNC('MONTH', ADD_MONTHS("{{ var("execution_date", "2025-01-01") }}", 1)) 
     {% if is_incremental() %}
      AND month > (select MAX(month) from {{ this }})
- {% endif %}
+   {% endif %}
 ) AS dim_date
 CROSS JOIN hours
 CROSS JOIN minutes

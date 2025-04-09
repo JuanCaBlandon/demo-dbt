@@ -35,22 +35,12 @@ models:
     bronze:
       +materialized: table
       +schema: bronze
-      +tags: ["bronze_ia"]
+      +tags: ["bronze"]
     silver:
       +materialized: table
       +schema: silver
-      +tags: ["silver_ia"]
+      +tags: ["silver"]
     gold:
       +materialized: table
       +schema: gold
-      +tags: ["gold_ia"]
-    compliance:
-      +materialized: table
-      +schema: compliance
-      +tags: ["compliance_state"]
-seeds:
-  dbt_project:
-      +database: "compliance_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
-      +enabled: true 
-      +schema: compliance
-      +tags: ["compliance_state"]
+      +tags: ["gold"]

@@ -5,8 +5,7 @@
     post_hook=[
         "OPTIMIZE {{ this }} ZORDER BY customer_id ;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
-        ],
-    tags=["silver_ia_1"]
+        ]
 ) }}
 
 WITH Tmp AS(
