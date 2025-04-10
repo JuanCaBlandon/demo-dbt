@@ -2,8 +2,8 @@ version: 3
 
 sources:
   - name: BRONZE
-    description: demo databrciks sql tables
-    database: "demo_databricks_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
+    description: demo databricks sql tables
+    database: "dbw_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
     schema: bronze
     tables:
       - name: customer_raw
