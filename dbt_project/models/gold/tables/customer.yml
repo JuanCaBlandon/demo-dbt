@@ -1,0 +1,109 @@
+version: 2
+
+models:
+  - name: customer
+    description: "Tabla analítica enriquecida de clientes sin inconsistencias"
+    config:
+      tags: ["gold_customer"]
+    
+    columns:
+      - name: customer_dw_id
+        description: "Identificador único del cliente en el data warehouse"
+        tests:
+          - not_null
+          - unique
+      
+      - name: customer_key
+        description: "Clave del cliente del sistema fuente"
+        tests:
+          - not_null
+      
+      - name: geography_key
+        description: "Clave de referencia a la dimensión geográfica"
+      
+      - name: customer_type
+        description: "Tipo de cliente (1, 2, 3)"
+      
+      - name: customer_id
+        description: "Identificador de cliente en formato AW00000NNN"
+        tests:
+          - not_null
+      
+      - name: guid
+        description: "Identificador único global"
+      
+      - name: date_created
+        description: "Fecha de creación del registro del cliente"
+      
+      - name: total_purchases
+        description: "Número total de compras realizadas por el cliente"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              
+      - name: avg_purchase_amount
+        description: "Monto promedio de compras del cliente"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      
+      - name: first_purchase_date
+        description: "Fecha de la primera compra del cliente"
+      
+      - name: last_purchase_date
+        description: "Fecha de la última compra del cliente"
+      
+      - name: customer_segment
+        description: "Segmento del cliente (Frecuente, Regular, Ocasional, Nuevo)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Frecuente', 'Regular', 'Ocasional', 'Nuevo']
+      
+      - name: is_active
+        description: "Indicador de cliente activo (compra en los últimos 90 días)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: created_at
+        description: "Fecha y hora de creación del registro"
+        tests:
+          - not_null
+      
+      - name: modified_at
+        description: "Fecha y hora de la última modificación"
+      
+      - name: is_current
+        description: "Indicador de registro actual"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1]  # Solo valores 1 ya que no manejamos obsoletos
+      
+      - name: date_id
+        description: "Clave foránea a la dimensión de fecha"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_id
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_equal_other_table:
+          compare_model: ref('silver_customer_cleaned')
+
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list: [
+            "customer_dw_id", "customer_key", "geography_key", "customer_type", 
+            "customer_id", "guid", "date_created", "total_purchases", 
+            "avg_purchase_amount", "first_purchase_date", "last_purchase_date", 
+            "customer_segment", "is_active", "created_at", "modified_at", 
+            "is_current", "date_id"
+          ]
+
+      - dbt_utils.expression_is_true:
+          expression: "total_purchases >= 0 AND avg_purchase_amount >= 0"

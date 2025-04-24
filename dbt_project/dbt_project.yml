@@ -35,16 +35,12 @@ models:
     bronze:
       +materialized: table
       +schema: bronze
-      +tags: ["bronze_ia"]
+      +tags: ["bronze_demo"]
     silver:
       +materialized: table
       +schema: silver
-      +tags: ["silver_ia"]
+      +tags: ["silver_demo"]
     gold:
       +materialized: table
       +schema: gold
-      +tags: ["gold_ia"]
-    compliance:
-      +materialized: table
-      +schema: compliance
-      +tags: ["compliance_state"]
+      +tags: ["gold_demo"]
