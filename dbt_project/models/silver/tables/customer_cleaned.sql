@@ -3,209 +3,134 @@
     unique_key='customer_dw_id',
     incremental_strategy='merge',
     post_hook=[
-        "OPTIMIZE {{ this }} ZORDER BY customer_id ;",
+        "OPTIMIZE {{ this }} ZORDER BY customer_key;",
         "ANALYZE TABLE {{ this }} COMPUTE STATISTICS FOR ALL COLUMNS;"
-        ],
-    tags=["silver_ia_1"]
+        ]
 ) }}
 
 WITH Tmp AS(
   SELECT
-    CustomerReportingStateID AS customer_reporting_state_id,
+    CustomerKey AS customer_key,
+    GeographyKey AS geography_key,
+    CustomerType AS customer_type,
     CustomerID AS customer_id,
-    UPPER(DriversLicenseNumber) AS drivers_license_number,
-    FirstName AS first_name,
-    LastName AS last_name,
-    MiddleName AS middle_name,
-    DateOfBirth AS date_of_birth,
-    UPPER(VIN) AS vin,
-    InstallDate AS install_date,
-    DeInstallDate AS deinstall_date,
-    StateCode AS state_code,
-    ActiveStatus AS active_status,
-    ReportStatusCd AS report_status_cd,
-    CustomerStatus AS customer_status,
-    ActiveStatusStartDate AS active_status_start_date,
-    ActiveStatusEndDate AS active_status_end_date,
-    EffectiveStartDate AS effective_start_date,
-    EffectiveEndDate AS effective_end_date,
-    DeviceLogRptgClassCd AS device_log_rptg_class_cd,
-    CreateDate AS create_date,
-    CreateUser AS create_user,
-    ModifyDate AS modify_date,
-    ModifyUser AS modify_user,
-    CreationDate AS created_at,
-    ModificationDate AS modification_date,
-    1 AS is_current,
-    ROW_NUMBER() OVER (PARTITION BY CustomerID, DriversLicenseNumber, VIN, StateCode, EffectiveStartDate, EffectiveEndDate ORDER BY EffectiveStartDate) AS num_duplicates
+    GUID AS guid,
+    TO_TIMESTAMP(DateCreated, 'M/d/yy H:mm') AS date_created,
+    --DateCreated AS date_created,
+    ROW_NUMBER() OVER (PARTITION BY CustomerID ORDER BY TO_TIMESTAMP(DateCreated, 'M/d/yy H:mm')  DESC) AS num_duplicates
   FROM {{ source('BRONZE', 'customer_raw') }}
-  WHERE
-    StateCode = 'IA'
 ),
 
 cleaned_data AS(
+  -- Identificar duplicados
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-      customer_reporting_state_id,
+      {{ dbt_utils.generate_surrogate_key(['customer_key', 'customer_id', 'guid', 'date_created', 'num_duplicates']) }} AS customer_dw_id,
+      customer_key,
+      geography_key,
+      customer_type,
       customer_id,
-      drivers_license_number,
-      first_name,
-      last_name,
-      middle_name,
-      date_of_birth,
-      vin,
-      install_date,
-      deinstall_date,
-      state_code,
-      active_status,
-      report_status_cd,
-      customer_status,
-      active_status_start_date,
-      active_status_end_date,
-      effective_start_date,
-      effective_end_date,
-      device_log_rptg_class_cd,
-      create_date,
-      create_user,
-      modify_date,
-      modify_user,
-      created_at,
-      modification_date,
+      guid,
+      date_created,
       1 AS is_inconsistent,
-      1 AS inconsistency_id, -- Duplicates
+      1 AS inconsistency_id, -- Duplicados
       num_duplicates,
-      is_current
+      1 AS is_current
   FROM Tmp
   WHERE num_duplicates > 1
 
   UNION ALL
+  
+  -- Identificar valores nulos en campos críticos
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-      customer_reporting_state_id,
+      {{ dbt_utils.generate_surrogate_key(['customer_key', 'customer_id', 'guid', 'date_created', 'num_duplicates']) }} AS customer_dw_id,
+      customer_key,
+      geography_key,
+      customer_type,
       customer_id,
-      drivers_license_number,
-      first_name,
-      last_name,
-      middle_name,
-      date_of_birth,
-      vin,
-      install_date,
-      deinstall_date,
-      state_code,
-      active_status,
-      report_status_cd,
-      customer_status,
-      active_status_start_date,
-      active_status_end_date,
-      effective_start_date,
-      effective_end_date,
-      device_log_rptg_class_cd,
-      create_date,
-      create_user,
-      modify_date,
-      modify_user,
-      created_at,
-      modification_date,
+      guid,
+      date_created,
       1 AS is_inconsistent,
-      2 AS inconsistency_id, --Null values
+      2 AS inconsistency_id, -- Valores nulos
       num_duplicates,
-      is_current
+      1 AS is_current
   FROM Tmp
   WHERE num_duplicates = 1 AND 
-    (drivers_license_number IS NULL OR first_name IS NULL OR last_name IS NULL  OR date_of_birth IS NULL OR vin IS NULL)
+    (customer_id IS NULL OR customer_key IS NULL)
 
   UNION ALL
+  
+  -- Identificar valores fuera de rango
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-      customer_reporting_state_id,
+      {{ dbt_utils.generate_surrogate_key(['customer_key', 'customer_id', 'guid', 'date_created', 'num_duplicates']) }} AS customer_dw_id,
+      customer_key,
+      geography_key,
+      customer_type,
       customer_id,
-      drivers_license_number,
-      first_name,
-      last_name,
-      middle_name,
-      date_of_birth,
-      vin,
-      install_date,
-      deinstall_date,
-      state_code,
-      active_status,
-      report_status_cd,
-      customer_status,
-      active_status_start_date,
-      active_status_end_date,
-      effective_start_date,
-      effective_end_date,
-      device_log_rptg_class_cd,
-      create_date,
-      create_user,
-      modify_date,
-      modify_user,
-      created_at,
-      modification_date,
+      guid,
+      date_created,
       1 AS is_inconsistent,
-      6 AS inconsistency_id, -- Max character limit
+      3 AS inconsistency_id, -- Valores fuera de rango
       num_duplicates,
-      is_current
+      1 AS is_current
   FROM Tmp
   WHERE num_duplicates = 1 AND (
-      drivers_license_number IS NOT NULL  AND LENGTH(drivers_license_number) > 50 OR 
-      first_name IS NOT NULL AND LENGTH(first_name) > 80 OR 
-      last_name IS NOT NULL AND LENGTH(last_name) > 80 OR 
-      date_of_birth IS NOT NULL AND LENGTH(date_of_birth) > 10 OR 
-      vin IS NOT NULL AND LENGTH(vin) > 30
+      customer_key < 0 OR
+      geography_key < 0 OR
+      customer_type NOT IN ('1', '2', '3','4','5','6','7','8', '9','10') OR
+      date_created > CURRENT_TIMESTAMP() -- Fecha futura
     )
 
   UNION ALL
+  
+  -- Identificar registros con formato incorrecto
   SELECT
-      {{ dbt_utils.generate_surrogate_key(['customer_id','drivers_license_number', 'first_name','last_name','date_of_birth','vin','effective_start_date','num_duplicates']) }} AS customer_dw_id,
-      customer_reporting_state_id,
+      {{ dbt_utils.generate_surrogate_key(['customer_key', 'customer_id', 'guid', 'date_created', 'num_duplicates']) }} AS customer_dw_id,
+      customer_key,
+      geography_key,
+      customer_type,
       customer_id,
-      drivers_license_number,
-      first_name,
-      last_name,
-      middle_name,
-      date_of_birth,
-      vin,
-      install_date,
-      deinstall_date,
-      state_code,
-      active_status,
-      report_status_cd,
-      customer_status,
-      active_status_start_date,
-      active_status_end_date,
-      effective_start_date,
-      effective_end_date,
-      device_log_rptg_class_cd,
-      create_date,
-      create_user,
-      modify_date,
-      modify_user,
-      created_at,
-      modification_date,
-      0 AS is_inconsistent,
-      0 AS inconsistency_id,
+      guid,
+      date_created,
+      1 AS is_inconsistent,
+      4 AS inconsistency_id, -- Formato incorrecto
       num_duplicates,
-      is_current
+      1 AS is_current
   FROM Tmp
-  WHERE
-    num_duplicates = 1
-    AND drivers_license_number IS NOT NULL
-    AND first_name IS NOT NULL 
-    AND last_name IS NOT NULL 
-    AND date_of_birth IS NOT NULL
-    AND vin IS NOT NULL
-    AND NOT (
-      LENGTH(drivers_license_number) > 50 OR 
-      LENGTH(first_name) > 80 OR 
-      LENGTH(last_name) > 80 OR 
-      LENGTH(date_of_birth) > 10 OR 
-      LENGTH(vin) > 30
+  WHERE num_duplicates = 1 AND (
+      customer_id IS NOT NULL AND NOT REGEXP_LIKE(customer_id, '^AW[0-9]{8}$') OR
+      guid IS NOT NULL AND NOT REGEXP_LIKE(guid, '^\\{[A-F0-9\\-]+\\}$')
     )
+
+  UNION ALL
+  
+  -- Datos correctos
+  SELECT
+      {{ dbt_utils.generate_surrogate_key(['customer_key', 'customer_id', 'guid', 'date_created', 'num_duplicates']) }} AS customer_dw_id,
+      customer_key,
+      geography_key,
+      customer_type,
+      customer_id,
+      guid,
+      date_created,
+      0 AS is_inconsistent,
+      0 AS inconsistency_id, -- Sin inconsistencias
+      num_duplicates,
+      1 AS is_current
+  FROM Tmp
+  WHERE 
+    num_duplicates = 1 AND
+    customer_id IS NOT NULL AND 
+    customer_key IS NOT NULL AND
+    customer_key >= 0 AND
+    (geography_key IS NULL OR geography_key >= 0) AND
+    (customer_type IS NULL OR customer_type IN ('1', '2', '3')) AND
+    (date_created IS NULL OR date_created <= CURRENT_TIMESTAMP()) AND
+    (customer_id IS NULL OR REGEXP_LIKE(customer_id, '^AW[0-9]{8}$')) AND
+    (guid IS NULL OR REGEXP_LIKE(guid, '^\\{[A-F0-9\\-]+\\}$'))
 )
 
 {% if is_incremental() %}
-  -- Find previous records that should be marked as deprecated
+  -- Encontrar registros previos que deben marcarse como obsoletos
   , deprecated_records AS (
     SELECT 
       existing.customer_dw_id
@@ -215,35 +140,16 @@ cleaned_data AS(
       AND existing.customer_dw_id != new_data.customer_dw_id
   )
 
-  -- Mark old records as deprecated and inconsistent
+  -- Marcar registros antiguos como obsoletos e inconsistentes
   , marked_as_deprecated AS (
     SELECT 
       customer_dw_id,
-      customer_reporting_state_id,
+      customer_key,
+      geography_key,
+      customer_type,
       customer_id,
-      drivers_license_number,
-      first_name,
-      last_name,
-      middle_name,
-      date_of_birth,
-      vin,
-      install_date,
-      deinstall_date,
-      state_code,
-      active_status,
-      report_status_cd,
-      customer_status,
-      active_status_start_date,
-      active_status_end_date,
-      effective_start_date,
-      effective_end_date,
-      device_log_rptg_class_cd,
-      create_date,
-      create_user,
-      modify_date,
-      modify_user,
-      created_at,
-      modification_date,
+      guid,
+      date_created,
       is_inconsistent,
       inconsistency_id,
       num_duplicates,
@@ -251,12 +157,12 @@ cleaned_data AS(
     FROM {{ this }} 
     WHERE customer_dw_id IN (SELECT customer_dw_id FROM deprecated_records)
   )
+  
   SELECT * FROM marked_as_deprecated
   
   UNION ALL
   
   SELECT * FROM cleaned_data
-
 
 {% else %}
   SELECT * FROM cleaned_data
