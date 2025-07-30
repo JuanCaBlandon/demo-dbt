@@ -15,9 +15,24 @@ WITH Tmp AS(
     CustomerType AS customer_type,
     CustomerID AS customer_id,
     GUID AS guid,
-    TO_TIMESTAMP(DateCreated, 'M/d/yy H:mm') AS date_created,
-    --DateCreated AS date_created,
-    ROW_NUMBER() OVER (PARTITION BY CustomerID ORDER BY TO_TIMESTAMP(DateCreated, 'M/d/yy H:mm')  DESC) AS num_duplicates
+    COALESCE(
+      TRY_TO_TIMESTAMP(
+        REGEXP_REPLACE(DateCreated, '(\\.\\d{3})\\d*$', '$1'),
+        'yyyy-MM-dd HH:mm:ss.SSS'
+      ),
+      TIMESTAMP('1900-01-01 00:00:00')
+    ) AS date_created,
+
+    ROW_NUMBER() OVER (
+        PARTITION BY CustomerID
+        ORDER BY COALESCE(
+          TRY_TO_TIMESTAMP(
+            REGEXP_REPLACE(DateCreated, '(\\.\\d{3})\\d*$', '$1'),
+            'yyyy-MM-dd HH:mm:ss.SSS'
+          ),
+          TIMESTAMP('1900-01-01 00:00:00')
+        ) DESC
+    ) AS num_duplicates
   FROM {{ source('BRONZE', 'customer_raw') }}
 ),
 
@@ -98,7 +113,8 @@ cleaned_data AS(
   FROM Tmp
   WHERE num_duplicates = 1 AND (
       customer_id IS NOT NULL AND NOT REGEXP_LIKE(customer_id, '^AW[0-9]{8}$') OR
-      guid IS NOT NULL AND NOT REGEXP_LIKE(guid, '^\\{[A-F0-9\\-]+\\}$')
+      guid IS NOT NULL AND NOT REGEXP_LIKE(guid, '^\\{[A-F0-9\\-]+\\}$') OR
+      date_created = TIMESTAMP('1900-01-01 00:00:00')
     )
 
   UNION ALL
@@ -127,6 +143,7 @@ cleaned_data AS(
     (date_created IS NULL OR date_created <= CURRENT_TIMESTAMP()) AND
     (customer_id IS NULL OR REGEXP_LIKE(customer_id, '^AW[0-9]{8}$')) AND
     (guid IS NULL OR REGEXP_LIKE(guid, '^\\{[A-F0-9\\-]+\\}$'))
+    AND date_created <> TIMESTAMP('1900-01-01 00:00:00') 
 )
 
 {% if is_incremental() %}

@@ -1,6 +1,7 @@
 dbt_project:
+  target: "" # targets are defined when running dbt commands
   outputs:
-    tgt:
+    dev:
       catalog: "{{ env_var('DBT_DB_CATALOG') }}"
       host: "{{ env_var('DBT_DB_HOST') }}"
       http_path: "{{ env_var('DBT_DB_PATH') }}"
@@ -10,4 +11,24 @@ dbt_project:
       auth_type: oauth
       client_id: "{{ env_var('DBW_SP_CLIENT_ID') }}"
       client_secret: "{{ env_var('DBW_SP_CLIENT_SECRET') }}"
-  target: tgt
+    uat:
+      catalog: "{{ env_var('DBT_DB_CATALOG') }}"
+      host: "{{ env_var('DBT_DB_HOST') }}"
+      http_path: "{{ env_var('DBT_DB_PATH') }}"
+      schema: "{{ env_var('DBT_DB_SCHEMA', '') }}"
+      threads: 12
+      type: databricks
+      auth_type: oauth
+      client_id: "{{ env_var('DBW_SP_CLIENT_ID') }}"
+      client_secret: "{{ env_var('DBW_SP_CLIENT_SECRET') }}"
+    prod:
+      catalog: "{{ env_var('DBT_DB_CATALOG') }}"
+      host: "{{ env_var('DBT_DB_HOST') }}"
+      http_path: "{{ env_var('DBT_DB_PATH') }}"
+      schema: "{{ env_var('DBT_DB_SCHEMA', '') }}"
+      threads: 12
+      type: databricks
+      auth_type: oauth
+      client_id: "{{ env_var('DBW_SP_CLIENT_ID') }}"
+      client_secret: "{{ env_var('DBW_SP_CLIENT_SECRET') }}"
+

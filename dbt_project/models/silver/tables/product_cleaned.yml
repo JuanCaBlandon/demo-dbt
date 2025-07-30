@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  - name: product_cleaned
+    description: "Datos de productos limpios y validados con control de calidad e identificación de inconsistencias"
+    
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - product_key
+            - product_number
+            - product_name
+
+    columns:
+      - name: product_dw_id
+        description: "Clave primaria del registro (surrogate key generado)"
+        tests:
+          - unique
+          - not_null
+      
+      - name: product_key
+        description: "Clave única del producto en el sistema"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: product_name
+        description: "Nombre del producto"
+        tests:
+          - not_null
+      
+      - name: product_number
+        description: "Número de producto único"
+        tests:
+          - not_null
+      
+      - name: new_flag
+        description: "Indicador si el producto es nuevo"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: flag2
+        description: "Flag adicional del producto"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: standard_cost
+        description: "Costo estándar del producto"
+
+      
+      - name: dealer_price
+        description: "Precio para distribuidores"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: flag3
+        description: "Tercer flag del producto"
+
+      
+      - name: flag4
+        description: "Cuarto flag del producto"
+
+      
+      - name: flag5
+        description: "Quinto flag del producto"
+
+      
+      
+      - name: is_inconsistent
+        description: "Indicador de inconsistencia en los datos (0=consistente, 1=inconsistente)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: inconsistency_id
+        description: "ID del tipo de inconsistencia detectada"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+      
+      - name: num_duplicates
+        description: "Número de registros duplicados encontrados"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      
+      - name: is_current
+        description: "Indicador si es el registro actual (1) o histórico (0)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1] 

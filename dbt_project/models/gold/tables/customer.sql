@@ -59,22 +59,9 @@ WITH enriched_customers AS (
         dd.date_id
 )
 
+SELECT * FROM enriched_customers
+
 {% if is_incremental() %}
-  -- Modo incremental: actualizar registros existentes y añadir nuevos
-  MERGE INTO {{ this }} t
-  USING enriched_customers s
-  ON t.customer_dw_id = s.customer_dw_id
-  WHEN MATCHED THEN
-    UPDATE SET
-      t.total_purchases = s.total_purchases,
-      t.avg_purchase_amount = s.avg_purchase_amount,
-      t.last_purchase_date = s.last_purchase_date,
-      t.customer_segment = s.customer_segment,
-      t.is_active = s.is_active,
-      t.modified_at = s.modified_at
-  WHEN NOT MATCHED THEN
-    INSERT *
-{% else %}
-  -- Primera carga: insertar todos los registros
-  SELECT * FROM enriched_customers
+  -- Este filtro es crucial para 'append' y asegurar que solo se inserten nuevos clientes
+  WHERE customer_dw_id NOT IN (SELECT customer_dw_id FROM {{ this }})
 {% endif %}

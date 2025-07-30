@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: store_cleaned
+    description: "Datos de tiendas limpios y validados con información de encuesta y control de calidad"
+    
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - store_id
+            - store_name
+            - region_id
+
+    columns:
+      - name: store_dw_id
+        description: "Clave primaria del registro (surrogate key generado)"
+        tests:
+          - unique
+          - not_null
+      
+      - name: store_id
+        description: "Identificador único de la tienda"
+        tests:
+          - not_null
+      
+      - name: store_name
+        description: "Nombre de la tienda"
+        tests:
+          - not_null
+      
+      - name: region_id
+        description: "ID de la región donde se encuentra la tienda"
+        tests:
+          - not_null
+      
+      - name: store_survey_json
+        description: "Información de encuesta de la tienda en formato JSON"
+        tests:
+          - not_null
+      
+      - name: guid
+        description: "Identificador global único de la tienda"
+        tests:
+          - not_null
+      
+      
+      - name: annual_sales
+        description: "Ventas anuales de la tienda"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: annual_revenue
+        description: "Ingresos anuales de la tienda"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: bank_name
+        description: "Nombre del banco asociado a la tienda"
+        tests:
+          - not_null
+      
+      - name: business_type
+        description: "Tipo de negocio de la tienda"
+        tests:
+          - not_null
+      
+      - name: year_opened
+        description: "Año en que se abrió la tienda"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1900
+              max_value: 2030
+      
