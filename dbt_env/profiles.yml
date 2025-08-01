@@ -3,12 +3,12 @@ dbt_project:
   outputs:
     dev:
       catalog: 'laboratory_dev'
-      host: "dbc-efc45a0f-0c2a.cloud.databricks.com"
-      http_path: "/sql/1.0/warehouses/171de31b738e4207"
+      host: "dbc-f037e3b9-acf0.cloud.databricks.com"
+      http_path: "/sql/1.0/warehouses/72befe77b3d9c434"
       schema: "{{ env_var('DBT_DB_SCHEMA', '') }}"
       threads: 8
       type: databricks
       auth_type: oauth
       ##method: serviceprincipal
-      client_id: "a564284b-8e82-4f0f-a66e-64ee508ff9e1"
-      client_secret: "dose67273ef0221086b46c03004f587e3649"
+      client_id: "a59259c0-6dfd-45b8-ad0f-f002e9399f84"
+      client_secret: "dosec6538b6834139a9b997d216e0b2ae6b4"
