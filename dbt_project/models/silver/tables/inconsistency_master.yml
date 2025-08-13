@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: inconsistency_master
+    description: "Tabla maestra de tipos de inconsistencias para control de calidad de datos"
+    
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - inconsistency_id
+            - description
+
+    columns:
+      - name: inconsistency_id
+        description: "Identificador único del tipo de inconsistencia"
+        tests:
+          - unique
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 9
+      
+      - name: description
+        description: "Descripción del tipo de inconsistencia"
+        tests:
+          - not_null
+      
+      - name: data_quality_dimension
+        description: "Dimensión de calidad de datos afectada"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Uniqueness', 'Completeness', 'Accuracy', 'Validity', 'Integrity', 'Consistency', 'Timeliness']
+      
+      - name: rationale
+        description: "Explicación del impacto de la inconsistencia en la calidad de datos"
+        tests:
+          - not_null 

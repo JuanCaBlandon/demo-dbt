@@ -1,0 +1,72 @@
+version: 2
+
+models:
+  - name: customer_cleaned
+    description: "Datos de clientes limpios y validados con control de calidad e identificación de inconsistencias"
+    
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - customer_key
+            - customer_id
+            - date_created
+
+    columns:
+      - name: customer_dw_id
+        description: "Clave primaria del registro (surrogate key generado)"
+        tests:
+          - unique
+          - not_null
+      
+      - name: customer_key
+        description: "Clave única del cliente en el sistema"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: geography_key
+        description: "Clave foránea hacia la dimensión de geografía"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: customer_type
+        description: "Tipo de cliente (1-10 según clasificación del negocio)"
+        tests:
+          - accepted_values:
+              values: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+      
+      - name: customer_id
+        description: "Identificador único del cliente en formato AW########"
+        tests:
+          - not_null
+      
+      
+      - name: is_inconsistent
+        description: "Indicador de inconsistencia en los datos (0=consistente, 1=inconsistente)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: inconsistency_id
+        description: "ID del tipo de inconsistencia detectada"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+      
+      - name: num_duplicates
+        description: "Número de registros duplicados encontrados"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      
+      - name: is_current
+        description: "Indicador si es el registro actual (1) o histórico (0)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1] 

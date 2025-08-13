@@ -1,14 +1,14 @@
 dbt_project:
+  target: "dev" 
   outputs:
-    tgt:
+    dev:
       catalog: 'laboratory_dev'
-      host: "dbc-e1b49270-9c5f.cloud.databricks.com"
-      http_path: "/sql/1.0/warehouses/9c456ed3dbb079ce"
+      host: "dbc-f037e3b9-acf0.cloud.databricks.com"
+      http_path: "/sql/1.0/warehouses/72befe77b3d9c434"
       schema: "{{ env_var('DBT_DB_SCHEMA', '') }}"
       threads: 8
       type: databricks
       auth_type: oauth
       ##method: serviceprincipal
-      client_id: "d85facf6-f1ca-4d21-b81b-76ad2f1fc022"
-      client_secret: "dose9367d75ab0572f2b3b58ff85c237f297"
-  target: tgt
+      client_id: "a59259c0-6dfd-45b8-ad0f-f002e9399f84"
+      client_secret: "dosec6538b6834139a9b997d216e0b2ae6b4"

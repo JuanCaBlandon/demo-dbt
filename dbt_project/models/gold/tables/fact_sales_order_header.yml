@@ -1,0 +1,252 @@
+version: 2
+
+models:
+  - name: fact_sales_order_header
+    description: "Tabla de hechos principal para análisis de ventas. Contiene métricas de ventas, indicadores de negocio y relaciones con dimensiones."
+    config:
+      tags: ["gold_sales_fact", "fact_table"]
+    
+    columns:
+      - name: sales_fact_dw_id
+        description: "Clave primaria del fact table (surrogate key)"
+        tests:
+          - unique
+          - not_null
+      
+      - name: sales_order_number
+        description: "Número único de la orden de venta"
+        tests:
+          - not_null
+      
+      - name: sales_order_id
+        description: "ID interno de la orden de venta"
+      
+      - name: customer_key
+        description: "Clave foránea hacia la dimensión customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customer')
+              field: customer_key
+      
+      - name: store_key
+        description: "Clave foránea hacia la dimensión store"
+        tests:
+          - relationships:
+              to: ref('store_cleaned')
+              field: store_id
+      
+      - name: sales_person_key
+        description: "Clave del vendedor responsable"
+      
+      - name: order_date_id
+        description: "Clave foránea hacia dim_date para fecha de orden"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_id
+      
+      - name: due_date_id
+        description: "Clave foránea hacia dim_date para fecha de vencimiento"
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_id
+      
+      - name: ship_date_id
+        description: "Clave foránea hacia dim_date para fecha de envío"
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_id
+      
+      - name: sub_total
+        description: "Subtotal de la orden antes de impuestos y flete"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: tax_amount
+        description: "Monto de impuestos aplicados"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: freight
+        description: "Costo de flete"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: total_due
+        description: "Monto total de la orden"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: tax_percentage
+        description: "Porcentaje de impuestos sobre el subtotal"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      
+      - name: freight_percentage
+        description: "Porcentaje de flete sobre el subtotal"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      
+      - name: days_to_ship
+        description: "Días transcurridos desde la orden hasta el envío"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: days_to_due
+        description: "Días transcurridos desde la orden hasta el vencimiento"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: order_channel
+        description: "Canal de la orden (Online/Offline)"
+        tests:
+          - accepted_values:
+              values: ['Online', 'Offline', 'Unknown']
+      
+      - name: order_status
+        description: "Estado actual de la orden"
+        tests:
+          - accepted_values:
+              values: ['In Process', 'Approved', 'Backordered', 'Rejected', 'Shipped', 'Cancelled', 'Unknown']
+      
+      - name: order_value_category
+        description: "Categoría de valor de la orden"
+        tests:
+          - accepted_values:
+              values: ['High Value', 'Medium Value', 'Low Value', 'Minimal Value']
+      
+      - name: customer_type
+        description: "Tipo de cliente"
+      
+      - name: customer_segment
+        description: "Segmento del cliente"
+        tests:
+          - accepted_values:
+              values: ['Frecuente', 'Regular', 'Ocasional', 'Nuevo']
+      
+      - name: store_name
+        description: "Nombre de la tienda"
+      
+      - name: store_type
+        description: "Tipo de tienda"
+      
+      - name: is_shipped
+        description: "Indicador si la orden ha sido enviada"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: is_on_time
+        description: "Indicador si la orden fue enviada a tiempo"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: is_urgent_order
+        description: "Indicador si es una orden urgente (≤3 días)"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: is_premium_order
+        description: "Indicador si es una orden premium"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: customer_is_active
+        description: "Indicador si el cliente está activo"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: is_inconsistent
+        description: "Indicador de inconsistencia en los datos"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: inconsistency_id
+        description: "ID del tipo de inconsistencia"
+      
+      - name: modified_date
+        description: "Fecha de última modificación del registro"
+      
+      - name: fact_created_at
+        description: "Fecha de creación del registro en el fact table"
+        tests:
+          - not_null
+      
+      - name: order_year
+        description: "Año de la orden"
+        tests:
+          - not_null
+      
+      - name: order_quarter
+        description: "Trimestre de la orden"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 4
+      
+      - name: order_month
+        description: "Mes de la orden"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 12
+      
+      - name: order_week
+        description: "Semana del año de la orden"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 53
+      
+      - name: order_day_name
+        description: "Nombre del día de la semana"
+        tests:
+          - accepted_values:
+              values: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      
+      - name: order_is_weekday
+        description: "Indicador si la orden fue hecha en día laboral"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "total_due = sub_total + tax_amount + freight"
+          config:
+            severity: warn
+      
+      - dbt_utils.expression_is_true:
+          expression: "is_shipped = 1 AND ship_date_id IS NOT NULL"
+          config:
+            severity: warn
+      
+      - dbt_utils.expression_is_true:
+          expression: "is_urgent_order = 1 AND days_to_due <= 3"
+          config:
+            severity: warn 

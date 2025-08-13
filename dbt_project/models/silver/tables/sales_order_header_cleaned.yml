@@ -1,0 +1,164 @@
+version: 2
+
+models:
+  - name: sales_order_header_cleaned
+    description: "Datos de encabezados de órdenes de venta limpios y validados con control de calidad"
+    
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - sales_order_number
+            - customer_key
+            - order_date
+
+    columns:
+      - name: sales_header_dw_id
+        description: "Clave primaria del registro (surrogate key generado)"
+        tests:
+          - unique
+          - not_null
+      
+      - name: sales_order_number
+        description: "Número único de la orden de venta"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: revision_number
+        description: "Número de revisión de la orden"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      
+      - name: due_date
+        description: "Fecha de vencimiento de la orden"
+      
+      - name: ship_date
+        description: "Fecha de envío de la orden"
+      
+      - name: status
+        description: "Estado de la orden (1-6 según clasificación del sistema)"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 6
+      
+      - name: online_order_flag
+        description: "Indicador si la orden fue realizada online (1) o offline (0)"
+        tests:
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: sales_order_id
+        description: "ID interno de la orden de venta"
+
+      
+      - name: purchase_order_number
+        description: "Número de orden de compra asociada"
+      
+      - name: account_number
+        description: "Número de cuenta del cliente"
+      
+      - name: customer_key
+        description: "Clave foránea hacia la dimensión customer"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: store_key
+        description: "Clave foránea hacia la dimensión store"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: -1
+      
+      - name: sales_person_key
+        description: "Clave del vendedor responsable"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: bill_to_address_key
+        description: "Clave de la dirección de facturación"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: ship_to_address_key
+        description: "Clave de la dirección de envío"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: ship_method_key
+        description: "Clave del método de envío"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: credit_card_key
+        description: "Clave de la tarjeta de crédito"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: credit_card_approval_code
+        description: "Código de aprobación de la tarjeta de crédito"
+      
+      - name: sub_total
+        description: "Subtotal de la orden antes de impuestos y flete"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: tax_amount
+        description: "Monto de impuestos aplicados"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: freight
+        description: "Costo de flete"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: total_due
+        description: "Monto total de la orden"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      
+      - name: comment
+        description: "Comentarios adicionales de la orden"
+      
+      
+      - name: is_inconsistent
+        description: "Indicador de inconsistencia en los datos (0=consistente, 1=inconsistente)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+      
+      - name: inconsistency_id
+        description: "ID del tipo de inconsistencia detectada"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 9
+      
+      - name: num_duplicates
+        description: "Número de registros duplicados encontrados"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      
+      - name: is_current
+        description: "Indicador si es el registro actual (1) o histórico (0)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1] 

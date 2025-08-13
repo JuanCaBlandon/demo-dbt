@@ -31,16 +31,21 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   dbt_project:
-    # Config indicated by + and applies to all files under models/example/
+    +persist_docs:
+      relation: true
+      columns: true
     bronze:
+      +database: laboratory_{{ target.name }}
       +materialized: table
       +schema: bronze
       +tags: ["bronze_demo"]
     silver:
+      +database: laboratory_{{ target.name }}
       +materialized: table
       +schema: silver
       +tags: ["silver_demo"]
     gold:
+      +database: laboratory_{{ target.name }}
       +materialized: table
       +schema: gold
       +tags: ["gold_demo"]

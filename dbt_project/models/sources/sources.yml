@@ -3,7 +3,7 @@ version: 3
 sources:
   - name: BRONZE
     description: laboratory sql tables
-    database: "laboratory_{{ var('DEPLOYMENT_ENVIRONMENT') }}"
+    database: "laboratory_{{ target.name }}" 
     schema: bronze
     tables:
       - name: customer_raw
